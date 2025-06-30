@@ -1,0 +1,13 @@
+local function printTable(...) --вывод массива
+	local inp = {...}
+	for	i, v in pairs(inp) do
+		if type(inp[i]) == "table" then
+			for i,v in pairs(inp[i]) do
+				print(i,"-",v)
+			end
+		else
+			error("The variable type 'table' is not a table")
+		end
+	end
+end
+
