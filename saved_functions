@@ -11,3 +11,24 @@ local function printTable(...) --вывод массива
 	end
 end
 
+local function createWindow(ter, x, y, w, h, visible, blit, tColor, bColor, text) --создание окна
+	local win
+	if not ter then ter = term.current() end
+	if not tColor then tColor = colors.black end
+	if not bColor then bColor = colors.white end
+	if not text then text = "" end
+	if blit then win = blittle.createWindow(ter, x, y, w, h, visible)
+	else win = window.create(ter, x, y, w, h, visible) end
+    	win.setBackgroundColor(bColor)
+    	win.setTextColor(tColor)
+    	win.clear()
+		win.write(text)
+	return win
+end
+
+local function centerText(text, y) --центровка текста
+  local w, h = term.getSize()
+  local txt = text
+  term.setCursorPos((w / 2 - math.floor(#txt / 2) + 1), y)
+  write(txt)
+end
