@@ -3,7 +3,7 @@ local term = term
 windows = {}  -- Список всех окон
 local sWidth, sHeight = term.getSize()
 local taskbar = window.create(term.current(), 1, sHeight, sWidth, 1)  -- Панель задач внизу
-
+--local sosal22
 -- Функция создания окна
 function createWindow(title, x, y, width, height)
     local win = {
