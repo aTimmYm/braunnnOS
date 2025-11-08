@@ -1,14 +1,3 @@
-d4bc5551df2c4cbfbc9dccca1edeb103   NFP/Chess.nfp
-f45527cbf0729f9510ed8adf712755ad   NFP/MusicAlbum.nfp
-c3b823f073d7ff60ece9cf7f5127901e   NFP/Player.nfp
-e0f9111511e8754f505c0de5498ec570   NFP/Volume.nfp
-680fdcd7e9802f844e8b730695bf1df6   NFP/arguments.nfp
-e33ce01189eca3a1d2bd6129b5a57cfe   NFP/calculator.nfp
-3593a4687a5d80b371382ab43c95ac27   NFP/default.nfp
-ceb8034e8b675bb3991417ed61b62d7c   NFP/explorer.nfp
-ee0c754a996457afc2ba764b55d4900d   NFP/messenger.nfp
-78534d234974df44be880b7cd6a6c72b   NFP/settings.nfp
-88c5f60f6d513d4d0bb16620001f46c9   NFP/shell.nfp
 9c2e4249ca3020150f242d60e7866302   converter_main.lua
 60c2c30e32d3de4d180cf6ebe7edda65   home/Games/Chess/Chess.lua
 ca6a0a27c9e2032daebb53d238ff5511   home/Games/Chess/Chess_Data/cfunc.lua
@@ -43,6 +32,4 @@ f48a98088418587ce561b5dec5a45ec5   sbin/settings.lua
 31be6abb14135e6289ba6af9128f97a3   sbin/shell.lua
 6c456c7746a47aa1f58033b0573f951e   startup.lua
 d6a8eb45494d2466a6d8d72ef591e965   updater.lua
-634f586a69e26f51ce152f569d1982d2   usr/settings.conf
-244203d2496b921a21cdd99e2e57482c   usr/sys.conf
 7f194caa2df0ed1de926fd0ec26101e1   utility/ImageBLITTLE.lua
