@@ -31,5 +31,5 @@ bbbb8a0f7aab18dc6179ff64a6dae421   sbin/ico/settings.ico
 d5f0fe2d129363e4dff43d0b37575e8d   sbin/settings.lua
 31be6abb14135e6289ba6af9128f97a3   sbin/shell.lua
 cd81e630c5a34ea323816c2163ce66b3   startup.lua
-d6a8eb45494d2466a6d8d72ef591e965   updater.lua
+cedb391e8c78179d483f3fbee49fc8fc   updater.lua
 7f194caa2df0ed1de926fd0ec26101e1   utility/ImageBLITTLE.lua
