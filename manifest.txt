@@ -14,7 +14,6 @@ ee0c754a996457afc2ba764b55d4900d   NFP/messenger.nfp
 ca6a0a27c9e2032daebb53d238ff5511   home/Games/Chess/Chess_Data/cfunc.lua
 d05119ae7307b31058fed885744757ee   home/Games/Chess/Chess_Data/interface_classes.lua
 a65296abd8f0d4b19bf3f0c331045603   home/Games/Chess/Chess_Data/obj_classes
-77f44bf90fc50a9f2f292d6f6c77c069   home/Music/windows_bassboosted.dfpwm
 65cf1641217c90a3ed40c166fbdff758   init.lua
 653aeeef4cb942e75783d78d5adfe846   lib/blittle
 ca6a0a27c9e2032daebb53d238ff5511   lib/cfunc.lua
