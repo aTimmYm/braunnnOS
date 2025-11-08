@@ -1,25 +1,24 @@
 name: Generate Manifest
 
-# Запускать этот скрипт при каждом push в ветку 'main'
 on:
   push:
     paths-ignore: ['manifest.txt']
     branches:
-      - main # (или 'master', если у тебя так называется)
+      - main
 
 permissions:
-  contents: write  # Это ключевой момент для разрешения push
+  contents: write
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      # 1. Загружаем код из репозитория
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-      # 2. Генерируем новый манифест
-      - name: Generate manifest file
+      - name: Generate new manifest with MD5 hashes
         run: |
           find . -type f \
             -not -path "./.git/*" \
@@ -27,27 +26,24 @@ jobs:
             -not -name ".gitignore" \
             -not -name "manifest.txt" \
             -not -name "README.md" \
-            | sed 's|^\./||' | sort > new_manifest.txt
+            -exec md5sum {} + | sed 's| \./|  |' | sort -k2 > new_manifest.txt
 
-      # 3. Проверяем, отличается ли новый манифест от старого
       - name: Check for changes
         id: diff
         run: |
-          if ! cmp -s "new_manifest.txt" "manifest.txt"; then
+          if [ ! -f "manifest.txt" ] || ! cmp -s "new_manifest.txt" "manifest.txt"; then
             echo "changed=true" >> $GITHUB_OUTPUT
             mv new_manifest.txt manifest.txt
           else
             echo "changed=false" >> $GITHUB_OUTPUT
             rm new_manifest.txt
           fi
-        continue-on-error: true # manifest.txt может не существовать при первом запуске
 
-      # 4. Если он изменился, делаем новый коммит и push
       - name: Commit and push if changed
         if: steps.diff.outputs.changed == 'true'
         run: |
           git config --global user.name 'GitHub Actions Bot'
           git config --global user.email 'actions@github.com'
           git add manifest.txt
-          git commit -m "Auto: Update manifest.txt"
+          git commit -m "Auto: Update manifest.txt with MD5 hashes"
           git push
