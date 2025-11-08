@@ -10,7 +10,7 @@ aa8aeb8ffad596f8c8bd24ea171387ed   lib/deskManager.lua
 40725790a99ad7ae70309fc8fb3a811e   lib/events
 5b67b4ac2507c540e78149c5344b144e   lib/ui.lua
 d41d8cd98f00b204e9800998ecf8427e   new_manifest.txt
-5cd84c662c855d66811991395a95660e   sbin/MPlayer.lua
+79925705b8a945962593d910ef54adbc   sbin/MPlayer.lua
 7e554e61628f2c4328fbffc85cd20e8f   sbin/MPlayer_Data/MusicAlbum.ico
 9e6521e00a9180af7ae353d42d0da143   sbin/MPlayer_Data/cache
 c9a08598762a20141b6e027b6a284fa1   sbin/MPlayer_Data/player.conf
