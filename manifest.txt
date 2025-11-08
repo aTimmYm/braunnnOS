@@ -14,10 +14,6 @@ ee0c754a996457afc2ba764b55d4900d   NFP/messenger.nfp
 ca6a0a27c9e2032daebb53d238ff5511   home/Games/Chess/Chess_Data/cfunc.lua
 d05119ae7307b31058fed885744757ee   home/Games/Chess/Chess_Data/interface_classes.lua
 a65296abd8f0d4b19bf3f0c331045603   home/Games/Chess/Chess_Data/obj_classes
-9fbb5d01734749a6b310656819ce35b6   home/Music/Lies Yxu Tell - scarlxrd.dfpwm
-94dfeb36fe898c06cc83d7a4be3b6da7   home/Music/Like A G6 (feat. The Cataracs   DEV) - Far East Movement.dfpwm
-5b0408213c31b2db56abd695565de20f   home/Music/Loudly - RIMSKY.dfpwm
-2dc78cbfdbbe3591cf057e4eefd66e19   home/Music/Love is Gonna Save Us - ARTBAT and Benny Benassi.dfpwm
 36db7a652d69f1ce90f05b4b7bc42160   home/Music/Molodist - SadSvit.dfpwm
 ce427f6fa3384ee0f0974fdcf030856b   home/Music/Never Gonna Give You Up.dfpwm
 50e9307695963609952db04c589831fc   home/Music/Rammstein - Du hast.dfpwm
