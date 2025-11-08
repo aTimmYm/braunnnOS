@@ -14,13 +14,6 @@ ee0c754a996457afc2ba764b55d4900d   NFP/messenger.nfp
 ca6a0a27c9e2032daebb53d238ff5511   home/Games/Chess/Chess_Data/cfunc.lua
 d05119ae7307b31058fed885744757ee   home/Games/Chess/Chess_Data/interface_classes.lua
 a65296abd8f0d4b19bf3f0c331045603   home/Games/Chess/Chess_Data/obj_classes
-2bf2f8b22aa736b7a5a0ee48b19f8d51   home/Music/$UICIDEBOY$ - FOR THE LAST TIME.dfpwm
-dd781578ffa5624af7d69e1aa5470d70   home/Music/At The Speed Of Light - Dimrain47 .dfpwm
-0d76630158067e427c4e702798ba33b6   home/Music/Blouses Blue (feat. Cidro Onetoo   Perry Porter) - Konrad Ol.dfpwm
-1afd19e218f91c4ab492e9c77f37f905   home/Music/Cassette - SadSvit.dfpwm
-e9521dc3c55c415d006636b45dc2931a   home/Music/DJ Snake Lil Jon - Turn Down for What.dfpwm
-82bd0cf4c375751d26ec9ead75e79bcd   home/Music/Ex Machina - Metrik.dfpwm
-3b7bd5b97a6b493a395ea8d26113706b   home/Music/Indica - LeLxx.dfpwm
 9fbb5d01734749a6b310656819ce35b6   home/Music/Lies Yxu Tell - scarlxrd.dfpwm
 94dfeb36fe898c06cc83d7a4be3b6da7   home/Music/Like A G6 (feat. The Cataracs   DEV) - Far East Movement.dfpwm
 5b0408213c31b2db56abd695565de20f   home/Music/Loudly - RIMSKY.dfpwm
