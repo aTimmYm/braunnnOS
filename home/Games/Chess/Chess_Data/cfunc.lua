@@ -1,0 +1,124 @@
+local M = {}
+
+function M.DEBUG()
+    local dbg = peripheral.wrap("left")
+    return dbg
+end
+
+function M.write(string, x, y, bgcol, txtcol)
+    local tx, ty = term.getCursorPos()
+    local tbgcol = term.getBackgroundColor()
+    local ttxtcol = term.getTextColor()
+
+    term.setTextColor(txtcol or ttxtcol)
+    term.setBackgroundColor(bgcol or tbgcol)
+    term.setCursorPos(x or tx,y or ty)
+    term.write(string)
+
+    term.setCursorPos(tx,ty)
+    term.setTextColor(ttxtcol)
+    term.setBackgroundColor(tbgcol)
+end
+
+function M.drawFilledBox(sX,sY,eX,eY,color)
+    for i=sY,eY do
+        M.write(string.rep(" ",eX-sX+1),sX,i,color)
+    end
+end
+
+function M.printTable(...) --вывод массива
+	local table = {...}
+	for	_,v in pairs(table) do
+		if type(v) == "table" then
+			for i,v in pairs(v) do
+				print(i,"-",v)
+			end
+		else
+			error("The variable type 'table' is not a table")
+		end
+	end
+end
+
+function M.findMaxLenStrOfArray(array)
+    local max = 0
+    for _, v in pairs(array) do
+        max = math.max(max,#v)
+    end
+    return max
+end
+
+function M.termClear(bg,txt)
+    --local temp = {{term.getCursorPos()}, term.getTextColor(), term.getBackgroundColor()}
+    term.setCursorPos(1,1)
+    term.setBackgroundColor(bg or colors.black)
+    term.setTextColor(txt or colors.white)
+    term.clear()
+    --term.setCursorPos(temp[1][1], temp[1][2])
+    --term.setBackgroundColor(temp[2])
+    --term.setTextColor(temp[3])
+end
+
+function M.round(x)
+    return math.floor(x + 0.5)
+end
+
+function M.openFile(root,path,args)
+    local func, load_err = loadfile(path, _ENV)
+    if not func then
+        local infoWin = UI.New_MsgWin(root,"INFO")
+        infoWin:callWin(" Load error ",tostring(load_err))
+    else
+        M.termClear()
+        local ret, exec_err = pcall(func,args)
+        if not ret then
+            local infoWin = UI.New_MsgWin(root,"INFO")
+            infoWin:callWin(" ERROR ",tostring(exec_err))
+        end
+    end
+    term.setCursorBlink(false)
+    os.queueEvent("term_resize")
+end
+
+function M.readFile(filePath)
+    local lines = {}
+    for line in io.lines(filePath) do
+        table.insert(lines,line)
+    end
+    if #lines == 1 or #lines == 0 then return lines[1] end
+    return lines
+end
+
+function M.readConf(filePath)
+    local lines = {}
+    for line in io.lines(filePath) do
+        if line:match("^%s*$") or line:match("^%s*#") then
+            goto continue
+        end
+        local key, value = line:match("^%s*([^=]+)%s*=%s*(.+)%s*$")
+        if value == "true" then
+            lines[key] = true
+        elseif value == "false" then
+            lines[key] = false
+        else
+            lines[key] = tonumber(value) or value
+        end
+        ::continue::
+    end
+    return lines
+end
+
+function M.saveConf(filePath, file)
+    local openFile = fs.open(filePath, "w")
+    for key, value in pairs(file) do
+        openFile.write(key .. "=" .. tostring(value).."\n")
+    end
+    openFile.close()
+end
+
+function M.playSound(sound, volume)
+    if bOS.speaker then
+        bOS.speaker.playSound(sound, volume)
+    end
+end
+
+return M

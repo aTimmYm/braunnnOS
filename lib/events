@@ -1,0 +1,240 @@
+local events = {}
+
+events.TOP = {
+    ["mouse_click"] = true,
+    ["mouse_scroll"] = true,
+}
+
+events.FOCUS = {
+    ["mouse_up"] = true,
+    ["mouse_drag"] = true,
+    ["char"] = true,
+    ["key"] = true,
+    ["key_up"] = true,
+    ["paste"] = true,
+    ["term_resize"] = true,
+}
+
+events.KEYS = {
+    "1","2","3","4","5","6","7","8","9","0", --10
+    "q","w","e","r","t","y","u","i","o","p", --20
+    "a","s","d","f","g","h","j","k","l", --29
+    string.char(24)..string.char(95),"z","x","c","v","b","n","m", string.char(27).."-", --38
+    " "..string.char(2).." ", ",", string.char(27), "  SPACE  ",string.char(26), ".", string.char(17)..string.char(172)
+}
+
+events.SHIFT_KEYS = {
+    "!","@","#","$","%","^","?","*","(",")", --10
+    "Q","W","E","R","T","Y","U","I","O","P", --20
+    "A","S","D","F","G","H","J","K","L", --29
+    string.char(24)..string.char(95),"Z","X","C","V","B","N","M", string.char(27).."-", --38
+    " "..string.char(2).." ", ";", string.char(27), "  SPACE  ",string.char(26), ":", string.char(17)..string.char(172)
+}
+
+events.PALETTE = {
+    ["Default"] = function (conf,path)
+        term.setPaletteColor(colors.white,0.94,0.94,0.94)
+        term.setPaletteColor(colors.black,0.07,0.07,0.07)
+        term.setPaletteColor(colors.gray,0.3,0.3,0.3)
+        term.setPaletteColor(colors.lightGray,0.6,0.6,0.6)
+        term.setPaletteColor(colors.red,0.8,0.3,0.3)
+        term.setPaletteColor(colors.blue,0.2,0.4,0.8)
+        term.setPaletteColor(colors.yellow,0.87,0.87,0.42)
+        term.setPaletteColor(colors.green,0.34,0.65,0.31)
+        return
+    end,
+
+    ["HighContrast"] = function (conf,path)
+        term.setPaletteColor(colors.white,1,1,1)
+        term.setPaletteColor(colors.black,0,0,0)
+        term.setPaletteColor(colors.gray,0.25,0.25,0.25)
+        term.setPaletteColor(colors.lightGray,0.75,0.75,0.75)
+        term.setPaletteColor(colors.red,1,0,0)
+        term.setPaletteColor(colors.blue,0,0,1)
+        term.setPaletteColor(colors.yellow,1,1,0)
+        term.setPaletteColor(colors.green,0,1,0)
+        return
+    end,
+
+    ["LightMode"] = function (conf, path)
+        term.setPaletteColor(colors.black, 1.0, 1.0, 1.0)  -- Чистый белый
+        term.setPaletteColor(colors.white, 0.0, 0.0, 0.0)  -- Чистый черный
+        term.setPaletteColor(colors.lightGray, 0.5, 0.5, 0.5)
+        term.setPaletteColor(colors.gray, 0.8, 0.8, 0.8)
+        term.setPaletteColor(colors.red, 0.8, 0.4, 0.4)
+        term.setPaletteColor(colors.blue, 0.4, 0.6, 0.9)
+        term.setPaletteColor(colors.yellow, 0.9, 0.9, 0.5)
+        term.setPaletteColor(colors.green, 0.4, 0.8, 0.4)
+        return
+    end,
+
+    ["Pastel"] = function (conf, path)
+        term.setPaletteColor(colors.white, 0.95, 0.95, 0.95)
+        term.setPaletteColor(colors.black, 0.2, 0.2, 0.2)
+        term.setPaletteColor(colors.gray, 0.4, 0.4, 0.4)
+        term.setPaletteColor(colors.lightGray, 0.7, 0.7, 0.7)
+        term.setPaletteColor(colors.red, 0.9, 0.6, 0.6)
+        term.setPaletteColor(colors.blue, 0.6, 0.7, 0.9)
+        term.setPaletteColor(colors.yellow, 0.9, 0.9, 0.6)
+        term.setPaletteColor(colors.green, 0.6, 0.9, 0.6)
+        return
+    end,
+
+    ["Monochrome"] = function (conf, path)
+        term.setPaletteColor(colors.white, 0.9, 0.9, 0.9)
+        term.setPaletteColor(colors.black, 0.1, 0.1, 0.1)
+        term.setPaletteColor(colors.gray, 0.3, 0.3, 0.3)
+        term.setPaletteColor(colors.lightGray, 0.6, 0.6, 0.6)
+        term.setPaletteColor(colors.red, 0.5, 0.5, 0.5)  -- Серый оттенок для "красного"
+        term.setPaletteColor(colors.blue, 0.4, 0.4, 0.4)
+        term.setPaletteColor(colors.yellow, 0.7, 0.7, 0.7)
+        term.setPaletteColor(colors.green, 0.5, 0.5, 0.5)
+        return
+    end,
+
+    ["Ocean"] = function (conf, path)
+        term.setPaletteColor(colors.white, 0.95, 0.95, 1.0)  -- Легкий голубоватый белый
+        term.setPaletteColor(colors.black, 0.0, 0.1, 0.2)  -- Темно-синий фон
+        term.setPaletteColor(colors.gray, 0.2, 0.3, 0.4)
+        term.setPaletteColor(colors.lightGray, 0.5, 0.6, 0.7)
+        term.setPaletteColor(colors.red, 0.8, 0.4, 0.4)  -- Коралловый красный
+        term.setPaletteColor(colors.blue, 0.1, 0.4, 0.8)
+        term.setPaletteColor(colors.yellow, 0.8, 0.8, 0.4)  -- Песочный желтый
+        term.setPaletteColor(colors.green, 0.2, 0.6, 0.5)  -- Морской зеленый
+        return
+    end,
+
+    ["Sunset"] = function (conf, path)
+        term.setPaletteColor(colors.white, 1.0, 0.95, 0.9)  -- Теплый белый
+        term.setPaletteColor(colors.black, 0.1, 0.0, 0.1)  -- Темно-фиолетовый фон
+        term.setPaletteColor(colors.gray, 0.3, 0.2, 0.3)
+        term.setPaletteColor(colors.lightGray, 0.6, 0.5, 0.6)
+        term.setPaletteColor(colors.red, 0.9, 0.3, 0.2)  -- Огненный красный
+        term.setPaletteColor(colors.blue, 0.2, 0.3, 0.7)  -- Сумеречный синий
+        term.setPaletteColor(colors.yellow, 0.9, 0.6, 0.2)  -- Оранжевый желтый
+        term.setPaletteColor(colors.green, 0.4, 0.6, 0.2)  -- Теплый зеленый
+        return
+    end,
+
+    ["Neon"] = function (conf, path)
+        term.setPaletteColor(colors.white, 1.0, 1.0, 1.0)  -- Яркий белый
+        term.setPaletteColor(colors.black, 0.0, 0.0, 0.0)  -- Чёрный фон
+        term.setPaletteColor(colors.gray, 0.2, 0.2, 0.2)
+        term.setPaletteColor(colors.lightGray, 0.5, 0.5, 0.5)
+        term.setPaletteColor(colors.red, 1.0, 0.0, 0.5)  -- Неоновый розовый
+        term.setPaletteColor(colors.blue, 0.0, 0.8, 1.0)  -- Неоновый голубой
+        term.setPaletteColor(colors.yellow, 1.0, 1.0, 0.0)  -- Неоновый жёлтый
+        term.setPaletteColor(colors.green, 0.0, 1.0, 0.0)  -- Неоновый зелёный
+        return
+    end,
+
+    ["Retro"] = function (conf, path)
+        term.setPaletteColor(colors.white, 0.9, 0.8, 0.7)  -- Тёплый белый
+        term.setPaletteColor(colors.black, 0.1, 0.1, 0.2)  -- Тёмно-синий
+        term.setPaletteColor(colors.gray, 0.4, 0.4, 0.5)
+        term.setPaletteColor(colors.lightGray, 0.7, 0.7, 0.8)
+        term.setPaletteColor(colors.red, 0.8, 0.2, 0.2)  -- Кирпичный красный
+        term.setPaletteColor(colors.blue, 0.2, 0.2, 0.6)  -- Индиго
+        term.setPaletteColor(colors.yellow, 0.8, 0.6, 0.2)  -- Горчичный
+        term.setPaletteColor(colors.green, 0.2, 0.5, 0.2)  -- Оливковый
+        return
+    end,
+
+    ["Forest"] = function (conf, path)
+        term.setPaletteColor(colors.white, 0.95, 0.95, 0.9)  -- Светлый с зелёным оттенком
+        term.setPaletteColor(colors.black, 0.05, 0.1, 0.05)  -- Тёмно-зелёный фон
+        term.setPaletteColor(colors.gray, 0.3, 0.4, 0.3)
+        term.setPaletteColor(colors.lightGray, 0.6, 0.7, 0.6)
+        term.setPaletteColor(colors.red, 0.7, 0.3, 0.2)  -- Коричневый красный
+        term.setPaletteColor(colors.blue, 0.2, 0.4, 0.6)  -- Речной синий
+        term.setPaletteColor(colors.yellow, 0.8, 0.7, 0.3)  -- Лиственный жёлтый
+        term.setPaletteColor(colors.green, 0.3, 0.6, 0.3)  -- Лесной зелёный
+        return
+    end,
+
+    ["Desert"] = function (conf, path)
+        term.setPaletteColor(colors.white, 1.0, 0.95, 0.85)  -- Песчаный белый
+        term.setPaletteColor(colors.black, 0.2, 0.1, 0.0)  -- Тёмно-коричневый
+        term.setPaletteColor(colors.gray, 0.5, 0.4, 0.3)
+        term.setPaletteColor(colors.lightGray, 0.8, 0.7, 0.6)
+        term.setPaletteColor(colors.red, 0.9, 0.4, 0.2)  -- Терракотовый
+        term.setPaletteColor(colors.blue, 0.3, 0.5, 0.7)  -- Небесный синий
+        term.setPaletteColor(colors.yellow, 0.9, 0.8, 0.4)  -- Пустынный жёлтый
+        term.setPaletteColor(colors.green, 0.4, 0.5, 0.2)  -- Кактусовый зелёный
+        return
+    end,
+
+    ["Space"] = function (conf, path)
+        term.setPaletteColor(colors.white, 0.9, 0.9, 1.0)  -- Звёздный белый
+        term.setPaletteColor(colors.black, 0.0, 0.0, 0.1)  -- Космическая тьма
+        term.setPaletteColor(colors.gray, 0.2, 0.2, 0.3)
+        term.setPaletteColor(colors.lightGray, 0.4, 0.4, 0.5)
+        term.setPaletteColor(colors.red, 0.8, 0.2, 0.4)  -- Неоновый красный
+        term.setPaletteColor(colors.blue, 0.1, 0.3, 0.8)  -- Галактический синий
+        term.setPaletteColor(colors.yellow, 0.8, 0.8, 0.9)  -- Лунный жёлтый
+        term.setPaletteColor(colors.green, 0.2, 0.8, 0.6)  -- Аурора зелёный
+        return
+    end,
+
+    ["Candy"] = function (conf, path)
+        term.setPaletteColor(colors.white, 1.0, 1.0, 1.0)
+        term.setPaletteColor(colors.black, 0.1, 0.1, 0.1)
+        term.setPaletteColor(colors.gray, 0.4, 0.4, 0.4)
+        term.setPaletteColor(colors.lightGray, 0.7, 0.7, 0.7)
+        term.setPaletteColor(colors.red, 1.0, 0.4, 0.6)  -- Малиновый
+        term.setPaletteColor(colors.blue, 0.4, 0.6, 1.0)  -- Голубая конфета
+        term.setPaletteColor(colors.yellow, 1.0, 0.8, 0.4)  -- Лимонный
+        term.setPaletteColor(colors.green, 0.4, 1.0, 0.6)  -- Мятный
+        return
+    end,
+
+    ["CyberNeon"] = function (conf, path)
+        term.setPaletteColor(colors.white, 0.9, 0.9, 1.0)  -- Неоновый белый с синим оттенком
+        term.setPaletteColor(colors.black, 0.0, 0.0, 0.1)  -- Тёмная ночь города
+        term.setPaletteColor(colors.gray, 0.2, 0.2, 0.3)
+        term.setPaletteColor(colors.lightGray, 0.4, 0.4, 0.5)
+        term.setPaletteColor(colors.red, 1.0, 0.0, 0.6)  -- Неоновый розовый/красный
+        term.setPaletteColor(colors.blue, 0.0, 0.7, 1.0)  -- Электрический синий
+        term.setPaletteColor(colors.yellow, 1.0, 1.0, 0.0)  -- Кислотный жёлтый
+        term.setPaletteColor(colors.green, 0.0, 1.0, 0.6)  -- Неоновый зелёный
+        return
+    end,
+
+    ["CyberGlitch"] = function (conf, path)
+        term.setPaletteColor(colors.white, 1.0, 1.0, 1.0)  -- Чистый белый для вспышек
+        term.setPaletteColor(colors.black, 0.05, 0.0, 0.1)  -- Глубокий фиолетовый чёрный
+        term.setPaletteColor(colors.gray, 0.3, 0.2, 0.3)
+        term.setPaletteColor(colors.lightGray, 0.5, 0.4, 0.5)
+        term.setPaletteColor(colors.red, 0.9, 0.1, 0.3)  -- Глитч-красный
+        term.setPaletteColor(colors.blue, 0.2, 0.5, 0.9)  -- Цифровой синий
+        term.setPaletteColor(colors.yellow, 0.9, 0.6, 0.1)  -- Оранжевый glitch
+        term.setPaletteColor(colors.green, 0.1, 0.8, 0.4)  -- Зелёный сбой
+        return
+    end,
+
+    ["CyberSunset"] = function (conf, path)
+        term.setPaletteColor(colors.white, 1.0, 0.9, 0.8)  -- Тёплый неоновый белый
+        term.setPaletteColor(colors.black, 0.1, 0.0, 0.05)  -- Тёмно-фиолетовый
+        term.setPaletteColor(colors.gray, 0.3, 0.2, 0.25)
+        term.setPaletteColor(colors.lightGray, 0.6, 0.5, 0.55)
+        term.setPaletteColor(colors.red, 0.9, 0.3, 0.5)  -- Закатный розовый
+        term.setPaletteColor(colors.blue, 0.2, 0.4, 0.8)  -- Сумеречный синий
+        term.setPaletteColor(colors.yellow, 0.9, 0.5, 0.2)  -- Оранжевый неон
+        term.setPaletteColor(colors.green, 0.3, 0.7, 0.2)  -- Токсичный зелёный
+        return
+    end,
+
+    ["TechNoir"] = function (conf, path)
+        term.setPaletteColor(colors.white, 0.8, 0.8, 0.9)  -- Холодный белый
+        term.setPaletteColor(colors.black, 0.0, 0.0, 0.0)  -- Абсолютная тьма
+        term.setPaletteColor(colors.gray, 0.25, 0.25, 0.3)
+        term.setPaletteColor(colors.lightGray, 0.5, 0.5, 0.6)
+        term.setPaletteColor(colors.red, 0.8, 0.0, 0.2)  -- Кровавый красный
+        term.setPaletteColor(colors.blue, 0.0, 0.3, 0.8)  -- Глубокий синий
+        term.setPaletteColor(colors.yellow, 0.8, 0.8, 0.0)  -- Жёлтый предупреждения
+        term.setPaletteColor(colors.green, 0.0, 0.6, 0.4)  -- Матричный зелёный
+        return
+    end
+}
+
+return events
