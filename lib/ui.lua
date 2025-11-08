@@ -1019,30 +1019,41 @@ end
 ---@param txtcol color|number|nil
 ---@param show_seconds boolean|nil
 ---@return table object clock
-function UI.New_Clock(root, bg, txtcol, show_seconds)
+function UI.New_Clock(root, bg, txtcol, show_seconds, is_24h)
     expect(1, root, "table")
     expect(2, bg, "number", "nil")
     expect(3, txtcol, "number", "nil")
     expect(4, show_seconds, "boolean", "nil")
+    expect(5, is_24h, "boolean", "nil")
 
     local instance = New_Widget(root, bg or root.bg, txtcol or colors.white)
     instance.show_seconds = show_seconds ~= false
-    instance.format = instance.show_seconds and "%H:%M:%S" or "%H:%M"
+    instance.is_24h = is_24h ~= false
     instance.updt_rate = 1
+
+    local function updateFormat()
+        if instance.is_24h then
+            instance.format = instance.show_seconds and "%H:%M:%S" or "%H:%M"
+        else
+            instance.format = instance.show_seconds and "%I:%M:%S %p" or "%I:%M %p"
+        end
+    end
+
+    updateFormat()
     instance.time = os.date(instance.format)
     instance.timer = os.startTimer(instance.updt_rate)
     instance.dirty = true
 
     instance.updateSize = function(self)
-        self.size = {w = self.show_seconds and 8 or 5, h = 1}
+        local len = #os.date(self.format)
+        self.size = { w = len, h = 1 }
     end
     instance:updateSize()
+
     instance.draw = function(self)
         c.write(self.time, self.pos.x, self.pos.y, self.bg, self.txtcol)
-        if not self.show_seconds then
-            c.write(string.rep(" ", math.max(0, self.size.w - #self.time)), self.pos.x + #self.time, self.pos.y, self.bg, self.txtcol)
-        end
     end
+
     instance.updateTime = function(self)
         self.time = os.date(self.format)
         if type(self.time) ~= "string" then
@@ -1051,9 +1062,14 @@ function UI.New_Clock(root, bg, txtcol, show_seconds)
         self.timer = os.startTimer(self.updt_rate)
         self.dirty = true
     end
-    instance.onMouseDown = function(self)
-        self.show_seconds = not self.show_seconds
-        self.format = self.show_seconds and "%H:%M:%S" or "%H:%M"
+
+    instance.setFormat = function(self, Show_seconds, Is_24h)
+        expect(1, Show_seconds, "boolean", "nil")
+        expect(2, Is_24h, "boolean", "nil")
+
+        self.show_seconds = Show_seconds ~= false
+        self.is_24h = Is_24h ~= false
+        updateFormat()
         self.time = os.date(self.format)
         self:updateSize()
         self.dirty = true
@@ -1061,14 +1077,16 @@ function UI.New_Clock(root, bg, txtcol, show_seconds)
             self.parent:onLayout()
         end
     end
+
     local temp_onEvent = instance.onEvent
-    instance.onEvent = function(self,evt)
+    instance.onEvent = function(self, evt)
         if evt[1] == "timer" and evt[2] == self.timer then
             self:updateTime()
             return true
         end
         return temp_onEvent(self, evt)
     end
+
     return instance
 end
 

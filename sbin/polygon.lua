@@ -3,7 +3,7 @@ local root = UI.New_Root()
 -----------------------------------------------------
 -----| СЕКЦИЯ ОБЪЯВЛЕНИЯ ПЕРЕМЕННЫХ ПРОГРАММЫ |------
 local fslist = {} for i=1,64 do fslist[i]="Item - "..i end
-
+local conf = c.readConf("usr/settings.conf")
 local dropdown_array = {
     "One","Two","Three","Four", "Five", "Six"
 }
@@ -27,7 +27,7 @@ buttonError.reSize = function(self)
 end
 surface:addChild(buttonError)
 
-local clock = UI.New_Clock(root,surface.bg,colors.white)
+local clock = UI.New_Clock(root,surface.bg,colors.white, conf["show_seconds"], conf["24format"])
 clock.reSize = function(self)
     self.pos.x = self.parent.size.w + self.parent.pos.x - self.size.w
 end
