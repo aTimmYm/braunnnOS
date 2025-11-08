@@ -16,7 +16,7 @@ jobs:
     steps:
       # 1. Загружаем код из репозитория
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       # 2. Генерируем новый манифест
       - name: Generate manifest file
@@ -34,10 +34,10 @@ jobs:
         id: diff
         run: |
           if ! cmp -s "new_manifest.txt" "manifest.txt"; then
-            echo "::set-output name=changed::true"
+            echo "changed=true" >> $GITHUB_OUTPUT
             mv new_manifest.txt manifest.txt
           else
-            echo "::set-output name=changed::false"
+            echo "changed=false" >> $GITHUB_OUTPUT
             rm new_manifest.txt
           fi
         continue-on-error: true # manifest.txt может не существовать при первом запуске
