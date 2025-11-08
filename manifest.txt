@@ -40,6 +40,7 @@ ca6a0a27c9e2032daebb53d238ff5511   lib/cfunc.lua
 aa8aeb8ffad596f8c8bd24ea171387ed   lib/deskManager.lua
 40725790a99ad7ae70309fc8fb3a811e   lib/events
 961f929d949e999034c330932dc7a1db   lib/ui.lua
+d41d8cd98f00b204e9800998ecf8427e   new_manifest.txt
 5cd84c662c855d66811991395a95660e   sbin/MPlayer.lua
 7e554e61628f2c4328fbffc85cd20e8f   sbin/MPlayer_Data/MusicAlbum.ico
 9e6521e00a9180af7ae353d42d0da143   sbin/MPlayer_Data/cache
@@ -56,7 +57,7 @@ f420705bb6aeced24f1e2dcdbc818ff0   sbin/ico/explorer.ico
 22b8b48e5600d9073054d8f003e3c832   sbin/ico/player.ico
 bbbb8a0f7aab18dc6179ff64a6dae421   sbin/ico/settings.ico
 6bacd99cdcd6a49fdbd4efab032efee4   sbin/ico/shell.ico
-e9da50c4d57b1924236f34c39da1d096   sbin/messenger.lua
+1a7904e2afe01d92e11c0507529c3e79   sbin/messenger.lua
 905d3a5b8b6e5a24c570aea99d420b93   sbin/polygon.lua
 28fcbfb88b30436657fd88478c7deb50   sbin/settings.lua
 31be6abb14135e6289ba6af9128f97a3   sbin/shell.lua
