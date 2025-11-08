@@ -14,26 +14,6 @@ ee0c754a996457afc2ba764b55d4900d   NFP/messenger.nfp
 ca6a0a27c9e2032daebb53d238ff5511   home/Games/Chess/Chess_Data/cfunc.lua
 d05119ae7307b31058fed885744757ee   home/Games/Chess/Chess_Data/interface_classes.lua
 a65296abd8f0d4b19bf3f0c331045603   home/Games/Chess/Chess_Data/obj_classes
-2bf2f8b22aa736b7a5a0ee48b19f8d51   home/Music/$UICIDEBOY$ - FOR THE LAST TIME.dfpwm
-dd781578ffa5624af7d69e1aa5470d70   home/Music/At The Speed Of Light - Dimrain47 .dfpwm
-0d76630158067e427c4e702798ba33b6   home/Music/Blouses Blue (feat. Cidro Onetoo   Perry Porter) - Konrad Ol.dfpwm
-1afd19e218f91c4ab492e9c77f37f905   home/Music/Cassette - SadSvit.dfpwm
-e9521dc3c55c415d006636b45dc2931a   home/Music/DJ Snake Lil Jon - Turn Down for What.dfpwm
-82bd0cf4c375751d26ec9ead75e79bcd   home/Music/Ex Machina - Metrik.dfpwm
-3b7bd5b97a6b493a395ea8d26113706b   home/Music/Indica - LeLxx.dfpwm
-9fbb5d01734749a6b310656819ce35b6   home/Music/Lies Yxu Tell - scarlxrd.dfpwm
-94dfeb36fe898c06cc83d7a4be3b6da7   home/Music/Like A G6 (feat. The Cataracs   DEV) - Far East Movement.dfpwm
-5b0408213c31b2db56abd695565de20f   home/Music/Loudly - RIMSKY.dfpwm
-2dc78cbfdbbe3591cf057e4eefd66e19   home/Music/Love is Gonna Save Us - ARTBAT and Benny Benassi.dfpwm
-36db7a652d69f1ce90f05b4b7bc42160   home/Music/Molodist - SadSvit.dfpwm
-ce427f6fa3384ee0f0974fdcf030856b   home/Music/Never Gonna Give You Up.dfpwm
-50e9307695963609952db04c589831fc   home/Music/Rammstein - Du hast.dfpwm
-2db5591b0a8b6f384844c02e2782e0e3   home/Music/Runnin Low - Kieran Alleyne.dfpwm
-5fad2d95ff6bb7a3fe20829d8fdbd455   home/Music/Zubazhinya (Yulia Tymoshenko).dfpwm
-1414a3e8afde13a5f30a0d6b0396f36c   home/Music/doom_eternal.dfpwm
-f6ad4ac97006d815b074a4f1386e38b1   home/Music/rockstar (feat. 21 Savage) - Post Malone.dfpwm
-b1ec446a806089bced391d6f1e43c744   home/Music/venjent-r-u-guna-move-official-full-version_456243189.dfpwm
-77f44bf90fc50a9f2f292d6f6c77c069   home/Music/windows_bassboosted.dfpwm
 65cf1641217c90a3ed40c166fbdff758   init.lua
 653aeeef4cb942e75783d78d5adfe846   lib/blittle
 ca6a0a27c9e2032daebb53d238ff5511   lib/cfunc.lua
@@ -62,7 +42,7 @@ bbbb8a0f7aab18dc6179ff64a6dae421   sbin/ico/settings.ico
 d5f0fe2d129363e4dff43d0b37575e8d   sbin/settings.lua
 31be6abb14135e6289ba6af9128f97a3   sbin/shell.lua
 6c456c7746a47aa1f58033b0573f951e   startup.lua
-d315d8aa583fe25ecab9f2591a160122   updater.lua
+d6a8eb45494d2466a6d8d72ef591e965   updater.lua
 2cdbf915888271296ea57b8c3e512c45   usr/settings.conf
 244203d2496b921a21cdd99e2e57482c   usr/sys.conf
 7f194caa2df0ed1de926fd0ec26101e1   utility/ImageBLITTLE.lua
