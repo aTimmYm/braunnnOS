@@ -17,14 +17,14 @@ local trackButtons = {}
 local artistS = {}
 
 if not fs.exists("sbin/MPlayer_Data/cache") then
-    local file fs.open("sbin/MPlayer_Data/cache","w")
+    local file = fs.open("sbin/MPlayer_Data/cache","w")
     file.write("return {}")
     file.close()
 end
 local cache = require("sbin/MPlayer_Data/cache")
 local confPath = "sbin/MPlayer_Data/player.conf"
 if not fs.exists(confPath) then
-    local file fs.open(confPath,"w")
+    local file = fs.open(confPath,"w")
     file.write("play_next=true\nvolume=1")
     file.close()
 end
