@@ -15,7 +15,7 @@ d41d8cd98f00b204e9800998ecf8427e   new_manifest.txt
 9e6521e00a9180af7ae353d42d0da143   sbin/MPlayer_Data/cache
 c9a08598762a20141b6e027b6a284fa1   sbin/MPlayer_Data/player.conf
 4461760019647e8a2ddf428b038b5fa8   sbin/MPlayer_Data/volume.ico
-ff052cda3d36c98007fb15080ddb97ee   sbin/Messenger_Data/register.lua
+7456e72e42be4764773d94ca6cbd4ef3   sbin/Messenger_Data/register.lua
 294b5a4ac416dbfc3d3ead33b299a7d9   sbin/calculator.lua
 71417fba9a1f04c95dfb39de6156fd32   sbin/explorer.lua
 6d73676cc347e3afa96d4a9c8296ca4c   sbin/ico/Chess.ico
