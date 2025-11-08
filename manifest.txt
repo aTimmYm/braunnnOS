@@ -14,8 +14,6 @@ ee0c754a996457afc2ba764b55d4900d   NFP/messenger.nfp
 ca6a0a27c9e2032daebb53d238ff5511   home/Games/Chess/Chess_Data/cfunc.lua
 d05119ae7307b31058fed885744757ee   home/Games/Chess/Chess_Data/interface_classes.lua
 a65296abd8f0d4b19bf3f0c331045603   home/Games/Chess/Chess_Data/obj_classes
-1414a3e8afde13a5f30a0d6b0396f36c   home/Music/doom_eternal.dfpwm
-f6ad4ac97006d815b074a4f1386e38b1   home/Music/rockstar (feat. 21 Savage) - Post Malone.dfpwm
 b1ec446a806089bced391d6f1e43c744   home/Music/venjent-r-u-guna-move-official-full-version_456243189.dfpwm
 77f44bf90fc50a9f2f292d6f6c77c069   home/Music/windows_bassboosted.dfpwm
 65cf1641217c90a3ed40c166fbdff758   init.lua
