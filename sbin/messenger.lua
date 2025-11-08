@@ -18,7 +18,7 @@ local friends = require("friends")
 local protocol = "messenger"
 local friendsSort = {}
 local selectedFriend = {}
-local a = 1000
+local a = 1001
 local serverID = rednet.lookup(protocol, "messenger_main")
 -----------------------------------------------------
 if not account_key then
