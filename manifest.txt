@@ -39,7 +39,7 @@ b1ec446a806089bced391d6f1e43c744   home/Music/venjent-r-u-guna-move-official-ful
 ca6a0a27c9e2032daebb53d238ff5511   lib/cfunc.lua
 aa8aeb8ffad596f8c8bd24ea171387ed   lib/deskManager.lua
 40725790a99ad7ae70309fc8fb3a811e   lib/events
-961f929d949e999034c330932dc7a1db   lib/ui.lua
+5b67b4ac2507c540e78149c5344b144e   lib/ui.lua
 d41d8cd98f00b204e9800998ecf8427e   new_manifest.txt
 5cd84c662c855d66811991395a95660e   sbin/MPlayer.lua
 7e554e61628f2c4328fbffc85cd20e8f   sbin/MPlayer_Data/MusicAlbum.ico
@@ -58,10 +58,10 @@ f420705bb6aeced24f1e2dcdbc818ff0   sbin/ico/explorer.ico
 bbbb8a0f7aab18dc6179ff64a6dae421   sbin/ico/settings.ico
 6bacd99cdcd6a49fdbd4efab032efee4   sbin/ico/shell.ico
 1a7904e2afe01d92e11c0507529c3e79   sbin/messenger.lua
-905d3a5b8b6e5a24c570aea99d420b93   sbin/polygon.lua
+2b2b731ac0a0e23c8bd2006169fe79f3   sbin/polygon.lua
 d5f0fe2d129363e4dff43d0b37575e8d   sbin/settings.lua
 31be6abb14135e6289ba6af9128f97a3   sbin/shell.lua
 6c456c7746a47aa1f58033b0573f951e   startup.lua
-79094513d3cf20d074db747f6d5a457a   usr/settings.conf
+2cdbf915888271296ea57b8c3e512c45   usr/settings.conf
 244203d2496b921a21cdd99e2e57482c   usr/sys.conf
 7f194caa2df0ed1de926fd0ec26101e1   utility/ImageBLITTLE.lua
