@@ -114,6 +114,10 @@ local client_type = {
             msgLabel:setText(response.error)
         end
     end,
+    ["lookup"] = function (response,sId)
+        if response.sProtocol ~= protocol then return end
+        if serverID ~= sId then serverID = sId end
+    end
 }
 
 root.mainloop = function(self)
@@ -122,10 +126,10 @@ root.mainloop = function(self)
         local evt = {os.pullEventRaw()}
         --print(textutils.serialise(evt))
         if evt[1] == "rednet_message" then
-            local type = evt[3].type
-            if client_type[type] then
+            local sType = evt[3].sType
+            if client_type[sType] then
                 os.cancelTimer(timer)
-                client_type[type](evt[3])
+                client_type[sType](evt[3])
             end
         end
         if evt[1] == "timer" and evt[2] == timer then msgLabel:setText("Server do not response.") end
