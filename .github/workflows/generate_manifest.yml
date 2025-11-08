@@ -1,0 +1,49 @@
+name: Generate Manifest
+
+# Запускать этот скрипт при каждом push в ветку 'main'
+on:
+  push:
+    branches:
+      - main # (или 'master', если у тебя так называется)
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      # 1. Загружаем код из репозитория
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # 2. Генерируем новый манифест
+      - name: Generate manifest file
+        run: |
+          find . -type f \
+            -not -path "./.git/*" \
+            -not -path "./.github/*" \
+            -not -name ".gitignore" \
+            -not -name "manifest.txt" \
+            -not -name "README.md" \
+            | sed 's|^\./||' | sort > new_manifest.txt
+
+      # 3. Проверяем, отличается ли новый манифест от старого
+      - name: Check for changes
+        id: diff
+        run: |
+          if ! cmp -s "new_manifest.txt" "manifest.txt"; then
+            echo "::set-output name=changed::true"
+            mv new_manifest.txt manifest.txt
+          else
+            echo "::set-output name=changed::false"
+            rm new_manifest.txt
+          fi
+        continue-on-error: true # manifest.txt может не существовать при первом запуске
+
+      # 4. Если он изменился, делаем новый коммит и push
+      - name: Commit and push if changed
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          git config --global user.name 'GitHub Actions Bot'
+          git config --global user.email 'actions@github.com'
+          git add manifest.txt
+          git commit -m "Auto: Update manifest.txt"
+          git push
