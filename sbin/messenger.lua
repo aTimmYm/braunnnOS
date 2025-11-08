@@ -203,12 +203,14 @@ root.mainloop = function (self)
             if client_type[sType] then
                 client_type[sType](evt[3],evt[2])
             end
+            goto continue
         end
         if evt[1] == "terminate" then
             c.termClear(self.bg)
             self.running_program = false
         end
         self:onEvent(evt)
+        ::continue::
     end
     c.termClear()
 end
