@@ -4,6 +4,11 @@ local root = UI.New_Root()
 -----| СЕКЦИЯ ОБЪЯВЛЕНИЯ ПЕРЕМЕННЫХ ПРОГРАММЫ |------
 local pageBuffer
 local settingsPath = "usr/settings.conf"
+if not fs.exists(settingsPath) then
+    local file = fs.open(settingsPath,"w")
+    file.write("isMonitor=false\npalette=Default\nmonitorScale=1\n24format=true\nshow_seconds=false")
+    file.close()
+end
 local conf = c.readConf(settingsPath)
 local EVENTS = require("events")
 
