@@ -45,7 +45,6 @@ local function download_updates()
         end
     end
     print("Update Success. Rebooting") os.sleep(2)
-    os.reboot()
 end
 
 local response = http.get(manifest_url)
@@ -59,4 +58,5 @@ if response then
     file.write(server_manifest)
     file.close()
     fs.delete("manifest_temp.txt")
+    os.reboot()
 end
