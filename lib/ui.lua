@@ -292,11 +292,11 @@ function UI.New_Label(root,text,bg,txtcol,align)
             while i <= #mass do
                 local word = mass[i]
                 if #word > self.size.w then
-                    local remainder = string.sub(word, self.size.w + 1)
+                    local remainder = word:sub(self.size.w + 1)
                     if remainder ~= "" then
                         table.insert(mass, i + 1, remainder)
                     end
-                    mass[i] = string.sub(word, 1, self.size.w)
+                    mass[i] = word:sub(1, self.size.w)
                     word = mass[i]
                 end
                 local space_len = (row_txt == "" and 0 or 1)
@@ -452,7 +452,7 @@ function UI.New_Shortcut(root, text, filepath, icopath,bg,txtcol)
         blittle.draw(self.blittle_img, dX, dY)
         local txtcol = self.held and colors.lightGray or self.txtcol
         if #self.text >= self.size.w then
-            c.write(string.sub(self.text, 1, self.size.w-2).."..",
+            c.write(self.text:sub(1, self.size.w-2).."..",
             self.pos.x, dY + self.blittle_img.height,self.bg,txtcol)
         else
             c.write(string.rep(" ",math.floor((self.size.w-#self.text)/2))..self.text..
@@ -554,7 +554,7 @@ function UI.New_Running_Label(root, text, bg, txtcol, align, scroll_speed, gap)
         local visible_chars = {}
         for i = 0, self.size.w - 1 do
             local idx = ((pos - 1 + i) % cycle_len) + 1
-            visible_chars[#visible_chars + 1] = string.sub(segment, idx, idx)
+            visible_chars[#visible_chars + 1] = segment:sub(idx, idx)
         end
         local visible_text = table.concat(visible_chars)
 
@@ -890,7 +890,7 @@ function UI.New_Textfield(root,bg,txtcol,hint,hidden)
             c.write(self.hint..string.rep(" ",self.size.w-#self.hint),self.pos.x,self.pos.y,self.bg,colors.lightGray)
         else
             term.setCursorPos(bX,self.pos.y)
-            c.write(string.sub(text,self.writePos+1,math.min(#self.text,self.writePos+self.size.w))..string.rep(" ",self.size.w-#self.text+self.writePos),self.pos.x,self.pos.y,self.bg,self.txtcol)
+            c.write(text:sub(self.writePos+1,math.min(#self.text,self.writePos+self.size.w))..string.rep(" ",self.size.w-#self.text+self.writePos),self.pos.x,self.pos.y,self.bg,self.txtcol)
         end
         if bX < self.pos.x or bX > self.pos.x+self.size.w-1 then term.setCursorBlink(false)
         elseif self.root.focus == self then
@@ -935,24 +935,24 @@ function UI.New_Textfield(root,bg,txtcol,hint,hidden)
         return true
     end
     instance.onCharTyped = function(self,chr)
-        self.text = string.sub(self.text,1,self.offset-1) .. chr .. string.sub(self.text,self.offset,#self.text)
+        self.text = self.text:sub(1,self.offset-1) .. chr .. self.text:sub(self.offset,#self.text)
         self:moveCursorPos(self.offset + 1)
         self.dirty = true
         return true
     end
     instance.onPaste = function(self,text)
-        self.text = string.sub(self.text,1,self.offset-1) .. text .. string.sub(self.text,self.offset,#self.text)
+        self.text = self.text:sub(1,self.offset-1) .. text .. self.text:sub(self.offset,#self.text)
         self:moveCursorPos(self.offset + #text)
         self.dirty = true
         return true
     end
     instance.onKeyDown = function(self,key,held)
         if key == keys.backspace then
-            self.text = string.sub(self.text,1,math.max(self.offset-2,0)) .. string.sub(self.text,self.offset,#self.text)
+            self.text = self.text:sub(1,math.max(self.offset-2,0)) .. self.text:sub(self.offset,#self.text)
             self.writePos = math.max(self.writePos - 1,0)
             self:moveCursorPos(self.offset-1)
         elseif key == keys.delete then
-            self.text = string.sub(self.text,1,self.offset-1) .. string.sub(self.text,self.offset+1,#self.text)
+            self.text = self.text:sub(1,self.offset-1) .. self.text:sub(self.offset+1,#self.text)
         elseif key == keys.left then
             self:moveCursorPos(self.offset-1)
         elseif key == keys.right then
