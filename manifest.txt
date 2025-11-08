@@ -12,8 +12,6 @@ aa8aeb8ffad596f8c8bd24ea171387ed   lib/deskManager.lua
 d41d8cd98f00b204e9800998ecf8427e   new_manifest.txt
 79925705b8a945962593d910ef54adbc   sbin/MPlayer.lua
 7e554e61628f2c4328fbffc85cd20e8f   sbin/MPlayer_Data/MusicAlbum.ico
-9e6521e00a9180af7ae353d42d0da143   sbin/MPlayer_Data/cache
-c9a08598762a20141b6e027b6a284fa1   sbin/MPlayer_Data/player.conf
 4461760019647e8a2ddf428b038b5fa8   sbin/MPlayer_Data/volume.ico
 216bdfa82ddd757ec8d45c51f6e0a9f4   sbin/Messenger_Data/register.lua
 294b5a4ac416dbfc3d3ead33b299a7d9   sbin/calculator.lua
