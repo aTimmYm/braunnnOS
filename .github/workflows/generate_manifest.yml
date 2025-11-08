@@ -3,8 +3,12 @@ name: Generate Manifest
 # Запускать этот скрипт при каждом push в ветку 'main'
 on:
   push:
+    paths-ignore: ['manifest.txt']
     branches:
       - main # (или 'master', если у тебя так называется)
+
+permissions:
+  contents: write  # Это ключевой момент для разрешения push
 
 jobs:
   build:
