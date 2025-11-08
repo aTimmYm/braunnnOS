@@ -87,12 +87,12 @@ buttonClose.pressed = function(self)
 end
 
 buttonLogin.pressed = function(self)
-    rednet.send(serverID, {type = "login", login = textfieldLogin.text, password = textfieldPassword.text}, protocol)
+    rednet.send(serverID, {cType = "login", login = textfieldLogin.text, password = textfieldPassword.text}, protocol)
     if not timer then timer = os.startTimer(5) end
 end
 
 buttonRegister.pressed = function(self)
-    rednet.send(serverID, {type = "registration", login = textfieldLogin.text, password = textfieldPassword.text}, protocol)
+    rednet.send(serverID, {cType = "registration", login = textfieldLogin.text, password = textfieldPassword.text}, protocol)
     if not timer then timer = os.startTimer(5) end
 end
 
@@ -129,7 +129,7 @@ root.mainloop = function(self)
             local sType = evt[3].sType
             if client_type[sType] then
                 os.cancelTimer(timer)
-                client_type[sType](evt[3])
+                client_type[sType](evt[3],evt[2])
             end
         end
         if evt[1] == "timer" and evt[2] == timer then msgLabel:setText("Server do not response.") end
