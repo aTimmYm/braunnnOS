@@ -23,6 +23,11 @@ if not fs.exists("sbin/MPlayer_Data/cache") then
 end
 local cache = require("sbin/MPlayer_Data/cache")
 local confPath = "sbin/MPlayer_Data/player.conf"
+if not fs.exists(confPath) then
+    local file fs.open(confPath,"w")
+    file.write("play_next=true\nvolume=1")
+    file.close()
+end
 local conf = c.readConf(confPath)
 local played = {}
 local Path = "home/Music/"
