@@ -16,6 +16,19 @@ end
 local surface = UI.New_Box(root,colors.white)
 root:addChild(surface)
 
+local label = UI.New_Label(root,"Settings",colors.white,colors.black)
+label.reSize = function(self)
+    self.pos.x = 2
+    self.size.w = self.parent.size.w-self.pos.x
+end
+surface:addChild(label)
+
+local buttonClose = UI.New_Button(root,"x",colors.white,colors.black)
+buttonClose.reSize = function(self)
+    self.pos.x = self.parent.size.w
+end
+surface:addChild(buttonClose)
+
 local box = UI.New_Box(root,colors.black)
 box.reSize = function(self)
     self.pos = {x=1,y=2}
@@ -73,11 +86,11 @@ tumblerLabel.reSize = function(self)
 end
 page1:addChild(tumblerLabel)
 
-local tumbler = UI.New_Tumbler(root,colors.white, colors.lightGray, colors.gray, conf["isMonitor"])
-tumbler.reSize = function(self)
+local monitorTumbler = UI.New_Tumbler(root,colors.white, colors.lightGray, colors.gray, conf["isMonitor"])
+monitorTumbler.reSize = function(self)
     self.pos = {x = self.parent.size.w+self.parent.pos.x-3, y = tumblerLabel.pos.y}
 end
-page1:addChild(tumbler)
+page1:addChild(monitorTumbler)
 
 local dropdownLabel = UI.New_Label(root, "Monitor Scale")
 dropdownLabel.reSize = function(self)
@@ -92,50 +105,43 @@ dropdown.reSize = function(self)
 end
 page1:addChild(dropdown)
 
-local page2 = UI.New_Box(root, colors.red)
+local page2 = UI.New_Box(root)
 page2.reSize = function(self)
     self.pos = {x=box.size.w+box.pos.x,y=box.pos.y}
     self.size = {w=self.parent.size.w-self.pos.x+1,h=box.size.h}
 end
 
-local label = UI.New_Label(root,"Settings",colors.white,colors.black)
-label.reSize = function(self)
-    self.pos.x = 2
-    self.size.w = self.parent.size.w-self.pos.x
+local time24FormatLabel = UI.New_Label(root, "Enable 24h format")
+time24FormatLabel.reSize = function (self)
+    self.pos = {x = self.parent.pos.x + 1, y = self.parent.pos.y + 1}
+    self.size = {w = #self.text, h = 1}
 end
-surface:addChild(label)
+page2:addChild(time24FormatLabel)
 
-local buttonClose = UI.New_Button(root,"x",colors.white,colors.black)
-buttonClose.reSize = function(self)
-    self.pos.x = self.parent.size.w
+local time24FormatTumbler = UI.New_Tumbler(root, colors.lightGray, colors.gray, _, conf["24format"])
+time24FormatTumbler.reSize = function (self)
+    self.pos = {x = self.parent.pos.x + self.parent.size.w - 3, y = time24FormatLabel.pos.y}
 end
-surface:addChild(buttonClose)
+page2:addChild(time24FormatTumbler)
+
+local showSecondsLabel = UI.New_Label(root, "Show seconds")
+showSecondsLabel.reSize = function (self)
+    self.pos = {x = self.parent.pos.x + 1, y = self.parent.pos.y + 3}
+    self.size = {w = #self.text, h = 1}
+end
+page2:addChild(showSecondsLabel)
+
+local showSecondsTumbler = UI.New_Tumbler(root, colors.lightGray, colors.gray, _, conf["show_seconds"])
+showSecondsTumbler.reSize = function (self)
+    self.pos = {x = self.parent.pos.x + self.parent.size.w - 3, y = showSecondsLabel.pos.y}
+end
+page2:addChild(showSecondsTumbler)
 
 local page3 = UI.New_Box(root)
 page3.reSize = function(self)
     self.pos = {x=box.size.w+box.pos.x,y=box.pos.y}
     self.size = {w=self.parent.size.w-self.pos.x+1,h=box.size.h}
 end
-
---[[local defPaltLabel = ui.label(root, "Default palette:")
-function defPaltLabel:reSize()
-    self.pos = {x = self.parent.pos.x + 1, y = self.parent.pos.y + 3}
-    self.size = {w = #self.text, h = 1}
-end
-page3:addChild(defPaltLabel)
-
-local defCols = ui.label(root)
-function defCols:reSize()
-    self.pos = {x = defPaltLabel.pos.x + defPaltLabel.size.w + 1, y = defPaltLabel.pos.y}
-    self.size = {w = 4, h = 1}
-end
-function defCols:draw()
-    c.write(" ", self.pos.x, self.pos.y, colors.brown)
-    c.write(" ", self.pos.x+1, self.pos.y, colors.magenta)
-    c.write(" ", self.pos.x+2, self.pos.y, colors.pink)
-    c.write(" ", self.pos.x+3, self.pos.y, colors.purple)
-end
-page3:addChild(defCols)]]
 
 local labelCurrCols = UI.New_Label(root, "Current colors: ",colors.white,colors.black)
 labelCurrCols.reSize = function(self)
@@ -204,10 +210,20 @@ buttonCOLORS.pressed = function(self)
     setPage(page3)
 end
 
-tumbler.pressed = function(self)
+monitorTumbler.pressed = function(self)
     conf["isMonitor"] = not self.on
     c.saveConf(settingsPath, conf)
     c.playSound("minecraft:block.lever.click",3)
+end
+
+time24FormatTumbler.pressed = function(self)
+    conf["24format"] = not self.on
+    c.saveConf(settingsPath, conf)
+end
+
+showSecondsTumbler.pressed = function(self)
+    conf["show_seconds"] = not self.on
+    c.saveConf(settingsPath, conf)
 end
 
 dropdown.pressed = function(self)
