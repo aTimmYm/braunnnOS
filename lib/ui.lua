@@ -1555,8 +1555,8 @@ function UI.New_Keyboard(root)
         { 41, 5, 5 }, -- dot
         { 42, 6, 5, "space" },
         { 43, 14, 5, "left" },
-        { 44, 15, 5, "down"},
-        { 45, 16, 5, "up"},
+        { 44, 15, 5, "up"},
+        { 45, 16, 5, "down"},
         { 46, 17, 5, "right" },
         { 47, 18, 5, "enter" },
     }
@@ -1666,7 +1666,7 @@ function UI.New_Keyboard(root)
     end
     instance.reSize = function(self)
         self.size = {w=21,h=7}
-        self.pos = {x=math.floor((self.root.size.w-self.size.w)/2),y=self.root.size.h-self.size.h+1}
+        self.pos = {x=math.floor((self.root.size.w-self.size.w)/2)+1,y=self.root.size.h-self.size.h+1}
     end
     local temp_onLayout = instance.onLayout
     instance.onLayout = function(self)
