@@ -4,5 +4,6 @@
 /NFP
 /usr/settings.conf
 /usr/sys.conf
+manifest.txt
 sbin/MPlayer_Data/player.conf
 sbin/MPlayer_Data/cache
