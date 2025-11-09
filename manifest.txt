@@ -9,9 +9,9 @@ ca6a0a27c9e2032daebb53d238ff5511   lib/cfunc.lua
 aa8aeb8ffad596f8c8bd24ea171387ed   lib/deskManager.lua
 916edb95e57cc65c7090dcee6352b973   lib/events
 0e8430925597fb135103b506fe2c669f   lib/palette
-022284f08151696c8d61ea8bd1f0cf2d   lib/ui.lua
+4280d094ee37f49c71bb395d4691eb1e   lib/ui.lua
 d41d8cd98f00b204e9800998ecf8427e   new_manifest.txt
-f3121209937ba8f4f87a3029047eeb3e   sbin/MPlayer.lua
+66e0e9934ac1eb94ff227f56536bf314   sbin/MPlayer.lua
 7e554e61628f2c4328fbffc85cd20e8f   sbin/MPlayer_Data/MusicAlbum.ico
 4461760019647e8a2ddf428b038b5fa8   sbin/MPlayer_Data/volume.ico
 216bdfa82ddd757ec8d45c51f6e0a9f4   sbin/Messenger_Data/register.lua
