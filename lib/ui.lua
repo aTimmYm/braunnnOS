@@ -1499,7 +1499,6 @@ function UI.New_Keyboard(root)
     -- Стани: 0=default, 1=shift, 2=caps, 3=smileys
     instance.upper = 0
 
-    -- 1. (НОВЕ) Розкладки інтегровані безпосередньо сюди
     local layout_default = {
         "1","2","3","4","5","6","7","8","9","0", --10
         "q","w","e","r","t","y","u","i","o","p", --20
@@ -1539,8 +1538,6 @@ function UI.New_Keyboard(root)
         layout_default[47],  -- 47: Enter (Спеціальна)
     }
 
-    -- 2. Визначаємо розкладку як масив даних
-    -- (Ця таблиця не змінилася)
     local keyLayout = {
         -- Ряд 1: Цифри (y=1)
         { 1, 1, 1 }, { 2, 3, 1 }, { 3, 5, 1 }, { 4, 7, 1 }, { 5, 9, 1 }, { 6, 11, 1 }, { 7, 13, 1 }, { 8, 15, 1 }, { 9, 17, 1 }, { 10, 19, 1 },
@@ -1564,7 +1561,6 @@ function UI.New_Keyboard(root)
         { 47, 18, 5, "enter" },
     }
 
-    --- Допоміжна функція для зміни розкладки ---
     local function setKeyboardLayout(keyboard, layoutTable, newUpperState)
         keyboard.upper = newUpperState
         for k, child in pairs(keyboard.child) do
@@ -1582,7 +1578,6 @@ function UI.New_Keyboard(root)
         if keyboard.child[39] then keyboard.child[39].dirty = true end
     end
 
-    -- 3. Визначаємо спеціальні дії
     local specialActions = {
         backspace = function(self)
             os.queueEvent("key", keys.backspace)
@@ -1606,15 +1601,14 @@ function UI.New_Keyboard(root)
             os.queueEvent("key", keys.down)
         end,
 
-        -- (ОНОВЛЕНО) Посилається на локальні layout_* таблиці
         shift = function(self)
             local keyboard = self.parent
             if keyboard.upper == 0 then
-                setKeyboardLayout(keyboard, layout_shift, 1) -- на Shift
+                setKeyboardLayout(keyboard, layout_shift, 1) -- Shift
             elseif keyboard.upper == 1 then
-                setKeyboardLayout(keyboard, layout_shift, 2) -- на Caps
+                setKeyboardLayout(keyboard, layout_shift, 2) -- Caps
             elseif keyboard.upper == 2 then
-                setKeyboardLayout(keyboard, layout_default, 0) -- на Default
+                setKeyboardLayout(keyboard, layout_default, 0)
             elseif keyboard.upper == 3 then
                 self.held = false
             end
@@ -1624,21 +1618,19 @@ function UI.New_Keyboard(root)
         smile = function(self)
             local keyboard = self.parent
             if keyboard.upper == 3 then
-                setKeyboardLayout(keyboard, layout_default, 0) -- Повертаємось на Default
+                setKeyboardLayout(keyboard, layout_default, 0)
             else
-                setKeyboardLayout(keyboard, layout_smile, 3) -- Переходимо на Smileys
+                setKeyboardLayout(keyboard, layout_smile, 3)
             end
         end
     }
 
-    -- 4. Створюємо всі кнопки в одному циклі
     for _, keyDef in ipairs(keyLayout) do
         local keyIndex = keyDef[1]
         local relX = keyDef[2]
         local relY = keyDef[3]
         local actionName = keyDef[4]
 
-        -- (ОНОВЛЕНО) Використовуємо 'layout_default' для початкового тексту
         if layout_default[keyIndex] then
             local btn = UI.New_Key_Button(root, layout_default[keyIndex])
 
@@ -1663,7 +1655,6 @@ function UI.New_Keyboard(root)
         end
     end
 
-    -- Решта функцій (draw, reSize, onLayout, onEvent) без змін
     instance.draw = function(self)
         for i = 1, self.size.h-2 do
             c.write(string.char(149), self.size.w+self.pos.x-1, self.pos.y+i,self.txtcol, self.bg)
@@ -1745,10 +1736,10 @@ function UI.New_ScrollBox(root,bg)
     end
     instance.redraw = function(self)
         local OldCurPos = {term.getCursorPos()}
-        local OldTxtCol = term.getTextColor()
-        local OldBgCol = term.getBackgroundColor()
-        local OldCurBlink = term.getCursorBlink()
         term.redirect(self.win)
+        term.setTextColor(self.term.getTextColor())
+        term.setBackgroundColor(self.term.getBackgroundColor())
+        term.setCursorBlink(self.term.getCursorBlink())
         if self.dirty then self:draw() self.dirty = false end
         for _,child in pairs(self.visibleChild) do
             local tempX, tempY = child.pos.x, child.pos.y
@@ -1760,9 +1751,6 @@ function UI.New_ScrollBox(root,bg)
         end
         term.redirect(self.term)
         term.setCursorPos(OldCurPos[1], OldCurPos[2])
-        term.setTextColor(OldTxtCol)
-        term.setBackgroundColor(OldBgCol)
-        term.setCursorBlink(OldCurBlink)
     end
     local temp_onLayout = instance.onLayout
     instance.onLayout = function(self)

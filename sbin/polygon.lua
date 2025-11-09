@@ -71,7 +71,6 @@ scrollBox.reSize = function(self)
     self.pos = {x = 2, y = textfield.pos.y+2}
     self.size = {w = list.pos.x-self.pos.x-2, h = self.parent.size.h-self.pos.y}
     self.win.reposition(self.pos.x, self.pos.y, self.size.w, self.size.h)
-    self.win.redraw()
 end
 surface:addChild(scrollBox)
 
