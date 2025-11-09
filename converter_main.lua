@@ -379,6 +379,7 @@ term.setTextColor(colors.yellow)
 print("\nExample: folder/file")
 term.setTextColor(termTxtcol)
 
+os.queueEvent("paste", "home/Music/")
 local fileSave = read()
 if checkExit(fileSave) then return end
 fileSave = fileSave .. ".dfpwm"
