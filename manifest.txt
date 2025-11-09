@@ -28,6 +28,6 @@ f91660ba7da67e45a776b04e1dfa55f6   sbin/messenger.lua
 cd74cd09a3ecda67efd8ebf63d37cdd4   sbin/polygon.lua
 d5f0fe2d129363e4dff43d0b37575e8d   sbin/settings.lua
 f7aa91f944f697fc04defbb5f68dbf29   sbin/shell.lua
-cd81e630c5a34ea323816c2163ce66b3   startup.lua
-cedb391e8c78179d483f3fbee49fc8fc   updater.lua
+cfd23e331fb9243cdfedec91f75dfc6e   startup.lua
+5c2106b1caad872939726802e795eb62   updater.lua
 7f194caa2df0ed1de926fd0ec26101e1   utility/ImageBLITTLE.lua
