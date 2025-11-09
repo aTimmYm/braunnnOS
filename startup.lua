@@ -46,6 +46,9 @@ if peripheral.find("monitor") then
     bOS.monitor[2] = conf["isMonitor"]
 end
 
+if mobile then mobile.openKeyboard(false) end
+--pcall(mobile.openKeyboard,false)
+
 if bOS.monitor[2] and bOS.monitor[1] then
     local scale = conf["monitorScale"]
     if scale then bOS.monitor[1].setTextScale(scale) end

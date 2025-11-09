@@ -34,7 +34,7 @@ end
 
 local function download_updates()
     if not files[1] then print("No updates") os.sleep(2) return end
-    for i,v in pairs(files) do
+    for _,v in pairs(files) do
         local request = http.get("https://raw.githubusercontent.com/aTimmYm/braunnnOS/refs/heads/main/"..v)
         if request then
             local action = "Updating"
