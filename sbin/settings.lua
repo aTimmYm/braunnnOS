@@ -6,6 +6,7 @@ local pageBuffer
 local settingsPath = "usr/settings.conf"
 local conf = c.readConf(settingsPath)
 local PALETTE = require("palette")
+local version = "1.1"
 
 local dropdownChooseArr = {}
 for k, _ in pairs(PALETTE) do
@@ -206,7 +207,7 @@ braunnnOS.reSize = function (self)
 end
 page4:addChild(braunnnOS)
 
-local versionLabel = UI.New_Label(root,"version 1.1",_,colors.lightGray)
+local versionLabel = UI.New_Label(root,"version "..version,_,colors.lightGray)
 versionLabel.reSize = function (self)
     self.pos = {x = braunnnOS.pos.x, y = braunnnOS.pos.y + 1}
     self.size.w = #self.text
