@@ -1669,7 +1669,7 @@ function UI.New_Keyboard(root)
         self.pos = {x=math.floor((self.root.size.w-self.size.w)/2)+1,y=self.root.size.h-self.size.h+1}
     end
     local temp_onLayout = instance.onLayout
-    instance.onLayout = function(self)
+    instance.onLayout = function (self)
         self:reSize()
         self.dirty = true
         temp_onLayout(self)
