@@ -4,7 +4,7 @@ bOS.init = true
 package.path = package.path .. ";/lib/?" .. ";/lib/?.lua"
 c = require("cfunc")
 UI = require("ui")
-local EVENTS = require("events")
+local PALETTE = require("palette")
 local conf = c.readConf("usr/settings.conf")
 local dM = require("deskManager")
 os.loadAPI("lib/blittle")
@@ -62,8 +62,8 @@ dM.makeShortcuts()
 dM.setRadio(radioButton_horizontal)
 radioButton_horizontal:changeCount(dM.updateNumDesks())
 
-if EVENTS.PALETTE[conf["palette"]] then
-    EVENTS.PALETTE[conf["palette"]]()
+if PALETTE[conf["palette"]] then
+    PALETTE[conf["palette"]]()
 end
 -----------------------------------------------------
 --| СЕКЦИЯ ПЕРЕОПРЕДЕЛЕНИЯ ФУНКЦИОНАЛЬНЫХ МЕТОДОВ |--
