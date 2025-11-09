@@ -1496,126 +1496,174 @@ end
 function UI.New_Keyboard(root)
     local instance = UI.New_Container(root)
     instance.focus = nil
+    -- Стани: 0=default, 1=shift, 2=caps, 3=smileys
     instance.upper = 0
 
-    --Buttons for keyboard:
-    local btn
-    for i = 1, 19, 2 do
-        btn = UI.New_Key_Button(root, EVENTS.KEYS[math.ceil(i/2)]) -- 0-9
-        instance:addChild(btn)
-        btn.reSize = function(self)
-            self.pos = {x=self.parent.pos.x + i, y=self.parent.pos.y + 1}
-        end
-    end
+    -- 1. (НОВЕ) Розкладки інтегровані безпосередньо сюди
+    local layout_default = {
+        "1","2","3","4","5","6","7","8","9","0", --10
+        "q","w","e","r","t","y","u","i","o","p", --20
+        "a","s","d","f","g","h","j","k","l", --29
+        string.char(24)..string.char(95),"z","x","c","v","b","n","m", string.char(27).."-", --38
+        " "..string.char(2).." ", ",", ".", "  SPACE",string.char(27), string.char(24), string.char(25), string.char(26), string.char(17)..string.char(172)
+    }
 
-    for i = 1, 19, 2 do
-        btn = UI.New_Key_Button(root, EVENTS.KEYS[math.ceil(i/2)+10]) --qwerty
-        instance:addChild(btn)
-        btn.reSize = function(self)
-            self.pos = {x=self.parent.pos.x + i, y=self.parent.pos.y + 2}
-        end
-    end
+    local layout_shift = {
+        "1","2","3","4","5","6","7","8","9","0", --10 string.char(27)
+        "Q","W","E","R","T","Y","U","I","O","P", --20
+        "A","S","D","F","G","H","J","K","L", --29
+        string.char(24)..string.char(95),"Z","X","C","V","B","N","M", string.char(27).."-", --38
+        " "..string.char(2).." ", ",", ".", "  SPACE", string.char(27), string.char(24), string.char(25), string.char(26), string.char(17)..string.char(172)
+    }
 
-    for i = 3, 19, 2 do
-        btn = UI.New_Key_Button(root, EVENTS.KEYS[math.ceil(i/2)+19]) --asdfgh
-        instance:addChild(btn)
-        btn.reSize = function(self)
-            self.pos = {x=self.parent.pos.x + i-1, y=self.parent.pos.y + 3}
-        end
-    end
+    local layout_smile = {
+        -- Ряд 1 (індекси 1-10)
+        "!", "\"", "#", ";", "%", ":", "?", "*", "(", ")",
+        -- Ряд 2 (індекси 11-20)
+        "~", "@", "T", "$", string.char(19), "^", "&", "=", "+", "-",
+        -- Ряд 3 (індекси 21-29)
+        "_", "`", "'", string.char(171), string.char(187), "{", "}", "[", "]",
+        -- Ряд 4 (індекси 30-38)
+        layout_default[30], -- 30: Shift (Спеціальна, залишаємо)
+        string.char(177), string.char(191), "|", "/", "\\", "<", ">", -- 31-37 (z,x,c,v,b,n,m)
+        layout_default[38], -- 38: Backspace (Спеціальна, залишаємо)
+        -- Ряд 5 (індекси 39-45)
+        "ABC",         -- 39: "Smile" button, тепер це "ABC"
+        layout_default[40], -- 40: Comma (Спеціальна)
+        layout_default[41], -- 41: Dot (Спеціальна)
+        layout_default[42], -- 42: Space (Спеціальна)
+        layout_default[43], -- 43: Left (Спеціальна)
+        layout_default[44], -- 44: Up (Спеціальна)
+        layout_default[45], -- 45: Down (Спеціальна)
+        layout_default[46], -- 46: Right (Спеціальна)
+        layout_default[47],  -- 47: Enter (Спеціальна)
+    }
 
-    btn = UI.New_Key_Button(root, EVENTS.KEYS[30]) --shift
-    instance:addChild(btn)
-    btn.reSize = function(self)
-        self.pos = {x=self.parent.pos.x + 1, y=self.parent.pos.y + 4}
-    end
-    btn.onMouseUp = function(self,btn,x,y)
-        if self:check(x,y) and self.held == true then self:pressed() end
-        if self.parent.upper == 0 then self.held = false end
-        self.dirty = true
-        return true
-    end
-    btn.pressed = function(self)
-        if self.parent.upper == 0 then
-            self.parent.upper = 1
-            for k,_ in pairs(self.parent.child) do
-                self.parent.child[k]:setText(string.upper(EVENTS.SHIFT_KEYS[k]))
+    -- 2. Визначаємо розкладку як масив даних
+    -- (Ця таблиця не змінилася)
+    local keyLayout = {
+        -- Ряд 1: Цифри (y=1)
+        { 1, 1, 1 }, { 2, 3, 1 }, { 3, 5, 1 }, { 4, 7, 1 }, { 5, 9, 1 }, { 6, 11, 1 }, { 7, 13, 1 }, { 8, 15, 1 }, { 9, 17, 1 }, { 10, 19, 1 },
+        -- Ряд 2: QWERTY (y=2)
+        { 11, 1, 2 }, { 12, 3, 2 }, { 13, 5, 2 }, { 14, 7, 2 }, { 15, 9, 2 }, { 16, 11, 2 }, { 17, 13, 2 }, { 18, 15, 2 }, { 19, 17, 2 }, { 20, 19, 2 },
+        -- Ряд 3: ASDF (y=3)
+        { 21, 2, 3 }, { 22, 4, 3 }, { 23, 6, 3 }, { 24, 8, 3 }, { 25, 10, 3 }, { 26, 12, 3 }, { 27, 14, 3 }, { 28, 16, 3 }, { 29, 18, 3 },
+        -- Ряд 4: ZXCV (y=4)
+        { 30, 1, 4, "shift" },
+        { 31, 4, 4 }, { 32, 6, 4 }, { 33, 8, 4 }, { 34, 10, 4 }, { 35, 12, 4 }, { 36, 14, 4 }, { 37, 16, 4 },
+        { 38, 18, 4, "backspace" },
+        -- Ряд 5: Нижній (y=5)
+        { 39, 1, 5, "smile" },
+        { 40, 4, 5 }, -- comma
+        { 41, 5, 5 }, -- dot
+        { 42, 6, 5, "space" },
+        { 43, 14, 5, "left" },
+        { 44, 15, 5, "down"},
+        { 45, 16, 5, "up"},
+        { 46, 17, 5, "right" },
+        { 47, 18, 5, "enter" },
+    }
+
+    --- Допоміжна функція для зміни розкладки ---
+    local function setKeyboardLayout(keyboard, layoutTable, newUpperState)
+        keyboard.upper = newUpperState
+        for k, child in pairs(keyboard.child) do
+            if layoutTable[k] then
+                child:setText(layoutTable[k])
             end
-        elseif self.parent.upper == 1 then
-            self:setText(string.char(23)..string.char(95))
-            self.parent.upper = 2
-        elseif self.parent.upper == 2 then
-            self.parent.upper = 0
-            for k,_ in pairs(self.parent.child) do
-                self.parent.child[k]:setText(EVENTS.KEYS[k])
+        end
+        if newUpperState == 2 then
+            keyboard.child[30]:setText(string.char(23)..string.char(95))
+        end
+        if newUpperState == 3 then
+            keyboard.child[30].held = false
+        end
+        if keyboard.child[30] then keyboard.child[30].dirty = true end
+        if keyboard.child[39] then keyboard.child[39].dirty = true end
+    end
+
+    -- 3. Визначаємо спеціальні дії
+    local specialActions = {
+        backspace = function(self)
+            os.queueEvent("key", keys.backspace)
+        end,
+        left = function(self)
+            os.queueEvent("key", keys.left)
+        end,
+        space = function(self)
+            os.queueEvent("char", " ")
+        end,
+        right = function(self)
+            os.queueEvent("key", keys.right)
+        end,
+        enter = function(self)
+            os.queueEvent("key", keys.enter)
+        end,
+        up = function(self)
+            os.queueEvent("key", keys.up)
+        end,
+        down = function(self)
+            os.queueEvent("key", keys.down)
+        end,
+
+        -- (ОНОВЛЕНО) Посилається на локальні layout_* таблиці
+        shift = function(self)
+            local keyboard = self.parent
+            if keyboard.upper == 0 then
+                setKeyboardLayout(keyboard, layout_shift, 1) -- на Shift
+            elseif keyboard.upper == 1 then
+                setKeyboardLayout(keyboard, layout_shift, 2) -- на Caps
+            elseif keyboard.upper == 2 then
+                setKeyboardLayout(keyboard, layout_default, 0) -- на Default
+            elseif keyboard.upper == 3 then
+                self.held = false
+            end
+        end,
+
+        -- (ОНОВЛЕНО) Посилається на локальні layout_* таблиці
+        smile = function(self)
+            local keyboard = self.parent
+            if keyboard.upper == 3 then
+                setKeyboardLayout(keyboard, layout_default, 0) -- Повертаємось на Default
+            else
+                setKeyboardLayout(keyboard, layout_smile, 3) -- Переходимо на Smileys
             end
         end
-    end
-    for i = 4, 17, 2 do
-        btn = UI.New_Key_Button(root, EVENTS.KEYS[math.ceil(i/2)+29]) --zxcvbnm
-        instance:addChild(btn)
-        btn.reSize = function(self)
-            self.pos = {x=self.parent.pos.x + i, y=self.parent.pos.y + 4}
+    }
+
+    -- 4. Створюємо всі кнопки в одному циклі
+    for _, keyDef in ipairs(keyLayout) do
+        local keyIndex = keyDef[1]
+        local relX = keyDef[2]
+        local relY = keyDef[3]
+        local actionName = keyDef[4]
+
+        -- (ОНОВЛЕНО) Використовуємо 'layout_default' для початкового тексту
+        if layout_default[keyIndex] then
+            local btn = UI.New_Key_Button(root, layout_default[keyIndex])
+
+            btn.reSize = function(self)
+                self.pos = { x = self.parent.pos.x + relX, y = self.parent.pos.y + relY }
+            end
+
+            if actionName and specialActions[actionName] then
+                btn.pressed = specialActions[actionName]
+            end
+
+            if actionName == "shift" then
+                btn.onMouseUp = function(self, btn, x, y)
+                    if self:check(x, y) and self.held == true then self:pressed() end
+                    if self.parent.upper == 0 then self.held = false end
+                    self.dirty = true
+                    return true
+                end
+            end
+
+            instance:addChild(btn)
         end
     end
 
-    btn = UI.New_Key_Button(root, EVENTS.KEYS[38]) --backspace
-    instance:addChild(btn)
-    btn.reSize = function(self)
-        self.pos = {x=self.parent.pos.x + 18, y=self.parent.pos.y + 4}
-    end
-    btn.pressed = function(self)
-        os.queueEvent("key", keys.backspace)
-    end
-
-    btn = UI.New_Key_Button(root, EVENTS.KEYS[39]) --smile
-    instance:addChild(btn)
-    btn.reSize = function(self)
-        self.pos = {x=self.parent.pos.x + 1, y=self.parent.pos.y + 5}
-    end
-    btn = UI.New_Key_Button(root, EVENTS.KEYS[40]) --,
-    instance:addChild(btn)
-    btn.reSize = function(self)
-        self.pos = {x=self.parent.pos.x + 1+3, y=self.parent.pos.y + 5}
-    end
-    btn = UI.New_Key_Button(root, EVENTS.KEYS[41]) --left_arrow
-    instance:addChild(btn)
-    btn.reSize = function(self)
-        self.pos = {x=self.parent.pos.x + 5, y=self.parent.pos.y + 5}
-    end
-    btn.pressed = function(self)
-        os.queueEvent("key", keys.left)
-    end
-    btn = UI.New_Key_Button(root, EVENTS.KEYS[42]) --space
-    instance:addChild(btn)
-    btn.reSize = function(self)
-        self.pos = {x=self.parent.pos.x + 6, y=self.parent.pos.y + 5}
-    end
-    btn.pressed = function(self)
-        os.queueEvent("char", " ")
-    end
-    btn = UI.New_Key_Button(root, EVENTS.KEYS[43]) --right_arrow
-    instance:addChild(btn)
-    btn.reSize = function(self)
-        self.pos = {x=self.parent.pos.x + 15, y=self.parent.pos.y + 5}
-    end
-    function btn:pressed()
-        os.queueEvent("key", keys.right)
-    end
-    btn = UI.New_Key_Button(root, EVENTS.KEYS[44]) --.
-    instance:addChild(btn)
-    btn.reSize = function(self)
-        self.pos = {x=self.parent.pos.x + 16, y=self.parent.pos.y + 5}
-    end
-
-    btn = UI.New_Key_Button(root, EVENTS.KEYS[45]) --enter
-    instance:addChild(btn)
-    btn.reSize = function(self)
-        self.pos = {x=self.parent.pos.x + 18, y=self.parent.pos.y + 5}
-    end
-    btn.pressed = function(self)
-        os.queueEvent("key", keys.enter)
-    end
+    -- Решта функцій (draw, reSize, onLayout, onEvent) без змін
     instance.draw = function(self)
         for i = 1, self.size.h-2 do
             c.write(string.char(149), self.size.w+self.pos.x-1, self.pos.y+i,self.txtcol, self.bg)
@@ -1693,9 +1741,13 @@ function UI.New_ScrollBox(root,bg)
 
     instance.draw = function(self)
         c.drawFilledBox(1, 1, self.pos.x+self.size.w-1, self.pos.y+self.size.h-1, self.bg)
+        self.win.redraw()
     end
     instance.redraw = function(self)
-        local CP = {term.getCursorPos()}
+        local OldCurPos = {term.getCursorPos()}
+        local OldTxtCol = term.getTextColor()
+        local OldBgCol = term.getBackgroundColor()
+        local OldCurBlink = term.getCursorBlink()
         term.redirect(self.win)
         if self.dirty then self:draw() self.dirty = false end
         for _,child in pairs(self.visibleChild) do
@@ -1707,7 +1759,10 @@ function UI.New_ScrollBox(root,bg)
             child.pos.y = tempY
         end
         term.redirect(self.term)
-        term.setCursorPos(CP[1], CP[2])
+        term.setCursorPos(OldCurPos[1], OldCurPos[2])
+        term.setTextColor(OldTxtCol)
+        term.setBackgroundColor(OldBgCol)
+        term.setCursorBlink(OldCurBlink)
     end
     local temp_onLayout = instance.onLayout
     instance.onLayout = function(self)
