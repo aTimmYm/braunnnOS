@@ -37,7 +37,6 @@ local def = 1
 for i, v in pairs(volumes) do
     if conf["volume"] == v then def = i break end
 end
-
 -----------------------------------------------------
 ----------| СЕКЦИЯ ИНИЦИАЛИЗАЦИИ ОБЪЕКТОВ |----------
 local surface = UI.New_Box(root, colors.white)
@@ -55,7 +54,7 @@ surface:addChild(btnAlbum)
 local label = UI.New_Label(root, "MPlayer", colors.white, colors.black)
 label.reSize = function(self)
     self.size.w = #self.text
-    self.pos.x = math.floor((self.parent.size.w-self.size.w)/2)
+    self.pos.x = math.floor((self.parent.size.w-self.size.w)/2)+1
 end
 surface:addChild(label)
 
@@ -142,8 +141,7 @@ scrollboxAlbum:addChild(numCompose)
 local box2 = UI.New_Box(root, colors.gray)
 box2.draw = function(self)
     c.drawFilledBox(self.pos.x, self.pos.y, self.size.w + self.pos.x - 1, self.size.h + self.pos.y - 1, self.bg)
-    blittle.draw(blittle.load("sbin/MPlayer_Data/MusicAlbum.ico"), self.pos.x+1, self.pos.y)
-    blittle.draw(blittle.load("sbin/MPlayer_Data/volume.ico"), self.size.w-13, self.pos.y+1)
+    if self.root.size.w > 41 then blittle.draw(blittle.load("sbin/MPlayer_Data/MusicAlbum.ico"), self.pos.x+1, self.pos.y) end
 end
 box2.reSize = function(self)
     self.pos = {x = 1, y = self.parent.size.h - 4}
@@ -169,30 +167,6 @@ btnVolume.draw = function(self)
 end
 box2:addChild(btnVolume)
 
-local ArtistName = UI.New_Running_Label(root, "Unknown", colors.gray, colors.lightGray, "top left")
-ArtistName.reSize = function(self)
-    self.pos.x = self.parent.pos.x + 9
-    self.pos.y = self.parent.pos.y + 1
-    self.size.w = math.floor(self.parent.size.w*0.23)
-end
-box2:addChild(ArtistName)
-
-local trackName = UI.New_Running_Label(root, "Unknown", colors.gray, colors.lightGray, "top left", _, "   ")
-trackName.reSize = function(self)
-    self.pos.x = ArtistName.pos.x
-    self.pos.y = ArtistName.pos.y + 1
-    self.size.w = ArtistName.size.w
-    self.size.h = 1
-end
-box2:addChild(trackName)
-
-local btnNext = UI.New_Button(root, string.char(16).."|", colors.gray, colors.white)
-btnNext.reSize = function(self)
-    self.pos.x = math.floor((self.parent.size.w + self.size.w) / 2) - 1 + self.size.w + 1
-    self.pos.y = self.parent.pos.y + 1
-end
-box2:addChild(btnNext)
-
 local pause = UI.New_Button(root, "|"..string.char(16), colors.gray, colors.white)
 pause.play = false
 pause.draw = function(self)
@@ -205,7 +179,7 @@ pause.draw = function(self)
     end
 end
 pause.reSize = function(self)
-    self.pos.x = math.floor((self.parent.size.w + self.size.w) / 2) - 1
+    self.pos.x = math.floor((self.parent.size.w - self.size.w) / 2) + 1
     self.pos.y = self.parent.pos.y + 1
 end
 local temp_onEvent = pause.onEvent
@@ -220,12 +194,43 @@ pause.onEvent = function(self,evt)
 end
 box2:addChild(pause)
 
+local btnNext = UI.New_Button(root, string.char(16).."|", colors.gray, colors.white)
+btnNext.reSize = function(self)
+    self.pos.x = pause.pos.x + pause.size.w + 1
+    self.pos.y = pause.pos.y
+end
+box2:addChild(btnNext)
+
 local btnPrev = UI.New_Button(root, "|"..string.char(17), colors.gray, colors.white)
 btnPrev.reSize = function(self)
     self.pos.x = pause.pos.x - self.size.w - 1
     self.pos.y = pause.pos.y
 end
 box2:addChild(btnPrev)
+
+local btnOptionAutoNext = UI.New_Button(root, " ", colors.gray, colors.white)
+btnOptionAutoNext.reSize = function(self)
+    self.pos.x = btnNext.pos.x + btnNext.size.w + 1
+    self.pos.y = btnNext.pos.y
+end
+box2:addChild(btnOptionAutoNext)
+
+local ArtistName = UI.New_Running_Label(root, "Unknown", colors.gray, colors.lightGray, "top left")
+ArtistName.reSize = function(self)
+    self.pos.x = self.root.size.w > 41 and 10 or 2
+    self.pos.y = self.parent.pos.y + 1
+    self.size.w = btnPrev.pos.x-self.pos.x-1
+end
+box2:addChild(ArtistName)
+
+local trackName = UI.New_Running_Label(root, "Unknown", colors.gray, colors.lightGray, "top left", _, "   ")
+trackName.reSize = function(self)
+    self.pos.x = ArtistName.pos.x
+    self.pos.y = ArtistName.pos.y + 1
+    self.size.w = ArtistName.size.w
+    self.size.h = 1
+end
+box2:addChild(trackName)
 
 local volumeSlider = UI.New_Slider(root, volumes, colors.gray, colors.white, def, colors.lightGray)
 volumeSlider.reSize = function(self)
@@ -237,36 +242,63 @@ box2:addChild(volumeSlider)
 
 root.timeLine = UI.New_Slider(root, {}, colors.gray, colors.white, 1, colors.lightGray)
 root.timeLine.reSize = function(self)
-    self.pos.x = self.parent.pos.x + 15
+    self.pos.x = self.root.size.w > 41 and 16 or 8
     self.pos.y = self.parent.size.h + self.parent.pos.y - 2
     self.size.w = self.parent.size.w - self.pos.x - 2 - 10
+    self.size.w = self.root.size.w > 41 and self.parent.size.w - self.pos.x - 12 or self.parent.size.w- self.pos.x - 6
 end
 box2:addChild(root.timeLine)
 
 local currentTimeLabel = UI.New_Label(root, "00:00", colors.gray, colors.lightGray, "right")
 currentTimeLabel.reSize = function(self)
     self.size.w = 5
-    self.pos.x = root.timeLine.pos.x - self.size.w - 1
+    self.pos.x = self.root.size.w > 41 and 10 or 2
     self.pos.y = root.timeLine.pos.y
 end
 box2:addChild(currentTimeLabel)
 
 local totalTimeLabel = UI.New_Label(root, "00:00", colors.gray, colors.lightGray, "left")
 totalTimeLabel.reSize = function(self)
-    self.pos.x = root.timeLine.pos.x + root.timeLine.size.w + 1
-    self.pos.y = root.timeLine.pos.y
     self.size.w = 5
+    self.pos.x = self.root.size.w > 41 and self.parent.size.w - self.size.w-6 or self.parent.size.w - self.size.w
+    self.pos.y = root.timeLine.pos.y
 end
 box2:addChild(totalTimeLabel)
 
-local btnOptionAutoNext = UI.New_Button(root, " ", colors.gray, colors.white)
-btnOptionAutoNext.reSize = function(self)
-    self.pos.x = math.floor((self.parent.size.w + self.size.w) / 2) + self.size.w + 4
-    self.pos.y = self.parent.pos.y + 1
+local btnVolumeUp = UI.New_Button(root,string.char(30),colors.gray,colors.white)
+btnVolumeUp.reSize = function (self)
+    self.pos = {x=self.parent.size.w-1,y=self.parent.pos.y}
 end
-box2:addChild(btnOptionAutoNext)
+
+local volumeLabel = UI.New_Label(root,tostring(def),colors.gray,_,"right")
+volumeLabel.reSize = function (self)
+    self.pos = {x=self.parent.size.w-2,y=self.parent.pos.y+1}
+    self.size.w = 2
+end
+
+local btnVolumeDown = UI.New_Button(root,string.char(31),colors.gray,colors.white)
+btnVolumeDown.reSize = function (self)
+    self.pos = {x=self.parent.size.w-1,y=self.parent.pos.y+2}
+end
 -----------------------------------------------------
 ------| СЕКЦИЯ ОБЪЯВЛЕНИЯ ФУНКЦИЙ ПРОГРАММЫ |--------
+local function adaptive()
+    if root.size.w <= 41 then
+        box2:removeChild(btnVolume)
+        box2:removeChild(volumeSlider)
+        box2:addChild(btnVolumeUp)
+        box2:addChild(btnVolumeDown)
+        box2:addChild(volumeLabel)
+    elseif root.size.w > 41 then
+        box2:addChild(btnVolume)
+        box2:addChild(volumeSlider)
+        box2:removeChild(btnVolumeUp)
+        box2:removeChild(btnVolumeDown)
+        box2:removeChild(volumeLabel)
+    end
+end
+adaptive()
+
 local function getConf()
     local val = ""
     if conf["play_next"] then
@@ -436,7 +468,7 @@ local function checkSpeaker()
         return true
     end
     local speakerWin = UI.New_MsgWin(root,"INFO")
-    speakerWin:callWin(" INFO ","Speaker not found. Please, put speaker near computer or monitor.")
+    speakerWin:callWin(" INFO ","Speaker not found. Please, put speaker near computer.")
     return false
 end
 
@@ -667,6 +699,7 @@ volumeSlider.pressed = function(self,btn, x, y)
     conf["volume"] = volume
     c.saveConf(confPath, conf)
     btnVolume.dirty = true
+    volumeLabel:setText(tostring(self.slidePosition))
 end
 
 btnVolume.pressed = function(self)
@@ -701,6 +734,24 @@ btnOptionAutoNext.pressed = function(self)
     c.saveConf(confPath, conf)
 end
 
+btnVolumeUp.pressed = function (self)
+    local temp = math.min(tonumber(volumeLabel.text)+1,10)
+    volume = volumes[temp]
+    conf["volume"] = volume
+    c.saveConf(confPath, conf)
+    volumeLabel:setText(tostring(temp))
+    volumeSlider.slidePosition = temp
+end
+
+btnVolumeDown.pressed = function (self)
+    local temp = math.max(tonumber(volumeLabel.text)-1,1)
+    volume = volumes[temp]
+    conf["volume"] = volume
+    c.saveConf(confPath, conf)
+    volumeLabel:setText(tostring(temp))
+    volumeSlider.slidePosition = temp
+end
+
 root.timeLine.pressed = function(self,btn, x, y)
     if btn == 1 and played[1] then
         local new_pos = math.max(1, math.min(#self.arr, math.floor((x - self.pos.x) / self.size.w * #self.arr) + 1))
@@ -721,6 +772,12 @@ local function resume_coroutine(co, ...)
         return true, nil
     end
     return success, result
+end
+root.tResize = function (self)
+    c.termClear(self.bg)
+    self.size.w, self.size.h = term.getSize()
+    adaptive()
+    self:onLayout()
 end
 
 root.mainloop = function(self)

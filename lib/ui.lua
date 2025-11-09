@@ -1812,7 +1812,6 @@ function UI.New_Root(bg)
     instance.tResize = function(self)
         c.termClear(self.bg)
         self.size.w, self.size.h = term.getSize()
-        --dM.tResize()
         self:onLayout()
     end
     local tempOnEvent = instance.onEvent
