@@ -8,7 +8,7 @@ a65296abd8f0d4b19bf3f0c331045603   home/Games/Chess/Chess_Data/obj_classes
 ca6a0a27c9e2032daebb53d238ff5511   lib/cfunc.lua
 aa8aeb8ffad596f8c8bd24ea171387ed   lib/deskManager.lua
 40725790a99ad7ae70309fc8fb3a811e   lib/events
-fc4c240a8fd4630205e122b616ca2625   lib/ui.lua
+549ee0a4847a6d8ede6054209e69bbed   lib/ui.lua
 d41d8cd98f00b204e9800998ecf8427e   new_manifest.txt
 f3121209937ba8f4f87a3029047eeb3e   sbin/MPlayer.lua
 7e554e61628f2c4328fbffc85cd20e8f   sbin/MPlayer_Data/MusicAlbum.ico
