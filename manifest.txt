@@ -27,7 +27,7 @@ bbbb8a0f7aab18dc6179ff64a6dae421   sbin/ico/settings.ico
 6bacd99cdcd6a49fdbd4efab032efee4   sbin/ico/shell.ico
 f91660ba7da67e45a776b04e1dfa55f6   sbin/messenger.lua
 cd74cd09a3ecda67efd8ebf63d37cdd4   sbin/polygon.lua
-7396d1bfc1be3a745f16ba9dd027c756   sbin/settings.lua
+fdd7f1703e606c4b63a89fb352cb45c9   sbin/settings.lua
 f7aa91f944f697fc04defbb5f68dbf29   sbin/shell.lua
 cfd23e331fb9243cdfedec91f75dfc6e   startup.lua
 5c2106b1caad872939726802e795eb62   updater.lua
