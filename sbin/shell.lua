@@ -7,14 +7,12 @@ local EVENTS = require("events")
 if bOS.shell then return end
 bOS.shell = true
 
-root.coroutine = {}
 local args = {...}
 
 local shellWindow = window.create(term.current(),1,2,root.size.w,root.size.h-1,true)
 local shellFunc = loadfile("rom/programs/shell.lua", _ENV)
 local prev_term = term.redirect(shellWindow)
-local coroutineShell = coroutine.create(shellFunc)
-root.coroutine[1] = coroutineShell
+root.coroutine = coroutine.create(shellFunc)
 term.redirect(prev_term)
 -----------------------------------------------------
 ----------| СЕКЦИЯ ИНИЦИАЛИЗАЦИИ ОБЪЕКТОВ |----------
@@ -38,8 +36,19 @@ surface:addChild(buttonClose)
 local buttonKeyboard = UI.New_Button(root,"K",colors.white,colors.black)
 surface:addChild(buttonKeyboard)
 -----------------------------------------------------
+--table.unpack(shell_evt)
 ------| СЕКЦИЯ ОБЪЯВЛЕНИЯ ФУНКЦИЙ ПРОГРАММЫ |--------
-
+local function coroutine_resume(co,...)
+    term.redirect(shellWindow)
+    local success, err = coroutine.resume(co,...)
+    if not success then
+        error("Coroutine error: "..tostring(err))
+    elseif coroutine.status(co) == "dead" then
+        root.coroutine = nil
+        root.running_program = false
+    end
+    term.redirect(prev_term)
+end
 -----------------------------------------------------
 --| СЕКЦИЯ ПЕРЕОПРЕДЕЛЕНИЯ ФУНКЦИОНАЛЬНЫХ МЕТОДОВ |--
 buttonClose.pressed = function(self)
@@ -62,26 +71,18 @@ end
 
 root.mainloop = function(self)
     self:show()
-    if root.coroutine[1] then
-        term.redirect(shellWindow)
-        local success, err = coroutine.resume(root.coroutine[1],table.unpack(args))
-        term.redirect(prev_term)
-    end
+    coroutine_resume(self.coroutine,table.unpack(args))
     while self.running_program do
         local evt = {os.pullEventRaw()}
         --dbg.print(textutils.serialise(evt))
         local shell_evt = {table.unpack(evt)}
-        if EVENTS.TOP[shell_evt[1]] then shell_evt[4] = shell_evt[4]-1 end
-        if self.coroutine[1] and evt then
-            term.redirect(shellWindow)
-            local success, err = coroutine.resume(self.coroutine[1],table.unpack(shell_evt))
-            if not success then
-                error("Coroutine error: "..tostring(err))
-            elseif coroutine.status(self.coroutine[1]) == "dead" then
-                self.coroutine = {}
-                self.running_program = false
-            end
-            term.redirect(prev_term)
+        if EVENTS.TOP[shell_evt[1]] then
+            shell_evt[4] = shell_evt[4]-1
+        end
+        if self.keyboard:onEvent(evt) then
+            coroutine_resume(self.coroutine)
+        else
+            coroutine_resume(self.coroutine,table.unpack(shell_evt))
         end
         if evt[1] == "terminate" then
             c.termClear(self.bg)
