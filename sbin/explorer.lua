@@ -211,7 +211,7 @@ buttonDelete.pressed = function (self)
         list:updateArr(fslist)
         label:setText("Explorer")
         mode = ""
-    else
+    elseif mode == "" then
         mode = "delete"
         label:setText("DELETE MODE")
         for i,_ in pairs(list.array) do
@@ -250,7 +250,7 @@ buttonMove.pressed = function (self)
         list:updateArr(fslist)
         label:setText("Explorer")
         mode = ""
-    else
+    elseif mode == "" then
         mode = "move"
         label:setText("MOVE MODE")
         for i,_ in pairs(list.array) do
