@@ -11,12 +11,12 @@ aa8aeb8ffad596f8c8bd24ea171387ed   lib/deskManager.lua
 0e8430925597fb135103b506fe2c669f   lib/palette
 4280d094ee37f49c71bb395d4691eb1e   lib/ui.lua
 d41d8cd98f00b204e9800998ecf8427e   new_manifest.txt
-66e0e9934ac1eb94ff227f56536bf314   sbin/MPlayer.lua
+ad557fbbc7e0995c640799f19de238e7   sbin/MPlayer.lua
 7e554e61628f2c4328fbffc85cd20e8f   sbin/MPlayer_Data/MusicAlbum.ico
 4461760019647e8a2ddf428b038b5fa8   sbin/MPlayer_Data/volume.ico
 216bdfa82ddd757ec8d45c51f6e0a9f4   sbin/Messenger_Data/register.lua
 294b5a4ac416dbfc3d3ead33b299a7d9   sbin/calculator.lua
-71417fba9a1f04c95dfb39de6156fd32   sbin/explorer.lua
+0915597eafcc80e12ce7dc8c02e2398c   sbin/explorer.lua
 6d73676cc347e3afa96d4a9c8296ca4c   sbin/ico/Chess.ico
 89b0b700ec66f8f1128e5783e1d32e86   sbin/ico/calculator.ico
 d85ee7513ea6d48e84ddb2323ef64052   sbin/ico/default.ico
@@ -26,7 +26,7 @@ f420705bb6aeced24f1e2dcdbc818ff0   sbin/ico/explorer.ico
 bbbb8a0f7aab18dc6179ff64a6dae421   sbin/ico/settings.ico
 6bacd99cdcd6a49fdbd4efab032efee4   sbin/ico/shell.ico
 f91660ba7da67e45a776b04e1dfa55f6   sbin/messenger.lua
-cd74cd09a3ecda67efd8ebf63d37cdd4   sbin/polygon.lua
+4281215588588016ceefe8dfe0b2fa02   sbin/polygon.lua
 fdd7f1703e606c4b63a89fb352cb45c9   sbin/settings.lua
 f7aa91f944f697fc04defbb5f68dbf29   sbin/shell.lua
 cfd23e331fb9243cdfedec91f75dfc6e   startup.lua
