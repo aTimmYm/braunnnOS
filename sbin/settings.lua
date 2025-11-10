@@ -217,6 +217,11 @@ page4:addChild(versionLabel)
 
 local buttonCheckUpdate = UI.New_Button(root, "(CHECK FOR UPDATES)", colors.black, colors.white)
 buttonCheckUpdate.reSize = function (self)
+    if self.root.size.w <= 30 then
+        self.pos.x = self.parent.pos.x
+        self.pos.y = versionLabel.pos.y + 1
+        return
+    end
     self.pos = {x=versionLabel.pos.x+versionLabel.size.w+1,y=versionLabel.pos.y}
 end
 page4:addChild(buttonCheckUpdate)
