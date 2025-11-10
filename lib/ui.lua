@@ -11,6 +11,7 @@ local string_rep = string.rep
 local string_sub = string.sub
 local string_find = string.find
 local string_char = string.char
+local table_insert = table.insert
 
 ---Basic *class*. Using automatically to create all another *classes*.
 ---@param root table
@@ -286,11 +287,11 @@ function UI.New_Label(root,text,bg,txtcol,align)
         txtcol_override = txtcol_override or self.txtcol
         local lines = {}
         if #self.text <= self.size.w then
-            table.insert(lines, self.text)
+            table_insert(lines, self.text)
         else
             local mass = {}
             for w in self.text:gmatch("%S+") do
-                table.insert(mass, w)
+                table_insert(mass, w)
             end
             local row_txt = ""
             local i = 1
@@ -299,7 +300,7 @@ function UI.New_Label(root,text,bg,txtcol,align)
                 if #word > self.size.w then
                     local remainder = string_sub(word, self.size.w + 1)
                     if remainder ~= "" then
-                        table.insert(mass, i + 1, remainder)
+                        table_insert(mass, i + 1, remainder)
                     end
                     mass[i] = string_sub(word, 1, self.size.w)
                     word = mass[i]
@@ -310,14 +311,14 @@ function UI.New_Label(root,text,bg,txtcol,align)
                     i = i + 1
                 else
                     if row_txt ~= "" then
-                        table.insert(lines, row_txt)
+                        table_insert(lines, row_txt)
                         row_txt = ""
                     end
                 end
                 if #lines >= self.size.h then break end
             end
             if row_txt ~= "" and #lines < self.size.h then
-                table.insert(lines, row_txt)
+                table_insert(lines, row_txt)
             end
         end
 
@@ -1262,7 +1263,7 @@ function UI.New_Container(root)
                 return false
             end
         end
-        table.insert(self.child,child)
+        table_insert(self.child,child)
         child.parent = self
         return true
     end
@@ -1766,7 +1767,7 @@ function UI.New_ScrollBox(root,bg)
         for _,child in pairs(self.child) do
             self.scrollmax = math.max(math.max(self.scrollmax, child.pos.y + child.size.h-1+self.scrollpos)-self.size.h,1)
             if child.pos.y+child.size.h > self.pos.y and child.pos.y <= self.pos.y+self.size.h-1 then
-                table.insert(self.visibleChild,child)
+                table_insert(self.visibleChild,child)
             end
         end
         self.len = self.scrollmax + self.size.h - 1
