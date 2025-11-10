@@ -236,8 +236,8 @@ end
 
 local function write_file(path,data)
     local file = fs.open(path,"w")
-    fs.write(data)
-    fs.close()
+    file.write(data)
+    file.close()
 end
 
 local function getServerManifest()
