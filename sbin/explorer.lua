@@ -3,7 +3,6 @@ local root = UI.New_Root()
 -----------------------------------------------------
 -----| СЕКЦИЯ ОБЪЯВЛЕНИЯ ПЕРЕМЕННЫХ ПРОГРАММЫ |------
 local fslist = fs.list("")
-
 local mode = ""
 -----------------------------------------------------
 ----------| СЕКЦИЯ ИНИЦИАЛИЗАЦИИ ОБЪЕКТОВ |----------
@@ -11,14 +10,14 @@ local surface = UI.New_Box(root,colors.white)
 root:addChild(surface)
 
 local label = UI.New_Label(root,"Explorer",colors.white,colors.black)
-label.reSize = function(self)
-    self.pos = { x = 3, y = 1 }
-    self.size.w = self.parent.size.w-self.pos.x-1
+label.reSize = function (self)
+    self.pos = { x = 4, y = 1 }
+    self.size.w = self.parent.size.w-self.pos.x-2
 end
 surface:addChild(label)
 
 local buttonClose = UI.New_Button(root,"x",colors.white,colors.black)
-buttonClose.reSize = function(self)
+buttonClose.reSize = function (self)
     self.pos.x = self.parent.size.w
 end
 surface:addChild(buttonClose)
@@ -27,31 +26,37 @@ local buttonAdd = UI.New_Button(root,"+",colors.white,colors.black)
 surface:addChild(buttonAdd)
 
 local buttonRet = UI.New_Button(root,"...",_,_,"left")
-buttonRet.reSize = function(self)
+buttonRet.reSize = function (self)
     self.pos.y = label.pos.y+1
     self.size.w = self.parent.size.w-1
 end
 surface:addChild(buttonRet)
 
 local list = UI.New_List(root,{},colors.white,colors.black)
-list.reSize = function(self)
+list.reSize = function (self)
     self.pos.y = buttonRet.pos.y+1
     self.size = {w=self.parent.size.w-1,h=self.parent.size.h-self.pos.y+1}
 end
 surface:addChild(list)
 
 local scrollbar = UI.New_Scrollbar(list)
-scrollbar.reSize = function(self)
+scrollbar.reSize = function (self)
     self.pos = {x=list.size.w+1,y=buttonRet.pos.y}
     self.size.h = list.size.h+1
 end
 surface:addChild(scrollbar)
 
 local buttonDelete = UI.New_Button(root, "-", colors.white, colors.black)
-buttonDelete.reSize = function(self)
+buttonDelete.reSize = function (self)
     self.pos.x = buttonAdd.pos.x+1
 end
 surface:addChild(buttonDelete)
+
+local buttonMove = UI.New_Button(root, string.char(187), colors.white, colors.black)
+buttonMove.reSize = function (self)
+    self.pos.x = buttonDelete.pos.x+1
+end
+surface:addChild(buttonMove)
 -----------------------------------------------------
 ------| СЕКЦИЯ ОБЪЯВЛЕНИЯ ФУНКЦИЙ ПРОГРАММЫ |--------
 local extensions = {
@@ -63,7 +68,7 @@ local extensions = {
         local protected_dirs = {"sbin", "lib"--[[, "usr"]]}
         local is_protected = false
         for _, dir in pairs(protected_dirs) do
-            if string.find(fullPath, "^" .. dir) then
+            if fullPath:find("^" .. dir) then
                 is_protected = true
                 break
             end
@@ -91,14 +96,14 @@ local extensions = {
         end
     end
     fslist = {}
-    table.sort(dirs,function(a, b)
+    table.sort(dirs,function (a, b)
     -- Используем string.lower для регистронезависимой сортировки
-    return string.lower(a) < string.lower(b)
-end)
-    table.sort(files,function(a, b)
+        return a:lower() < b:lower()
+    end)
+    table.sort(files,function (a, b)
     -- Используем string.lower для регистронезависимой сортировки
-    return string.lower(a) < string.lower(b)
-end)
+        return a:lower() < b:lower()
+    end)
     for _,v in pairs(dirs) do
         table.insert(fslist,v)
     end
@@ -110,16 +115,16 @@ end)
  list:updateArr(fslist)
 -----------------------------------------------------
 --| СЕКЦИЯ ПЕРЕОПРЕДЕЛЕНИЯ ФУНКЦИОНАЛЬНЫХ МЕТОДОВ |--
-buttonClose.pressed = function(self)
+buttonClose.pressed = function (self)
     shell.setDir("")
     self.root.running_program = false
 end
 
-buttonAdd.pressed = function(self)
+buttonAdd.pressed = function (self)
     if mode == "delete" then return end
     local dialWin = UI.New_DialWin(root)
     dialWin:callWin(" Creating directory ","Enter the directory name")
-    dialWin.btnOK.pressed = function(self)
+    dialWin.btnOK.pressed = function (self)
         if dialWin.child[2].text == "" then
             local infoWin = UI.New_MsgWin(root,"INFO")
             infoWin:callWin(" ERROR ","Invalid directory name")
@@ -133,12 +138,12 @@ buttonAdd.pressed = function(self)
     end
 end
 
-list.pressed = function(self)
-    if mode == "delete" then
-        if string.find(self.item,string.char(4)) then
-            self.item = " "..string.sub(self.item,2,#self.item)
+list.pressed = function (self)
+    if mode == "delete" or mode == "move" then
+        if self.item:find(string.char(4)) then
+            self.item = " "..self.item:sub(2,#self.item)
         else
-            self.item = string.char(4)..string.sub(self.item,2,#self.item)
+            self.item = string.char(4)..self.item:sub(2,#self.item)
         end
         self.array[self.item_index] = self.item
         return
@@ -163,7 +168,7 @@ list.pressed = function(self)
     end
 end
 
-buttonRet.pressed = function(self)
+buttonRet.pressed = function (self)
     if shell.dir() ~= "" then
         shell.setDir(fs.getDir(shell.dir()))
         fslist = fs.list(shell.dir())
@@ -178,17 +183,17 @@ buttonRet.pressed = function(self)
     end
 end
 
-buttonDelete.pressed = function(self)
+buttonDelete.pressed = function (self)
     local toDel = {}
 
     if mode == "delete" then
         for _,v in pairs(list.array) do
-            if string.find(v,string.char(4)) then table.insert(toDel, string.sub(v,2,#v)) end
+            if v:find(string.char(4)) then table.insert(toDel, v:sub(2,#v)) end
         end
         if toDel and #toDel > 0 then
             local questionWin = UI.New_MsgWin(root,"YES,NO")
             questionWin:callWin(" DELETE ","Are you sure?")
-            function questionWin.btnYES:pressed()
+            questionWin.btnYES.pressed = function (self)
                 for _,v in pairs(toDel) do
                     fs.delete(shell.resolve(v))
                 end
@@ -208,7 +213,46 @@ buttonDelete.pressed = function(self)
         mode = ""
     else
         mode = "delete"
-        label:setText("DELETE MODE: ON")
+        label:setText("DELETE MODE")
+        for i,_ in pairs(list.array) do
+            list.array[i] = " "..list.array[i]
+        end
+        list.dirty = true
+    end
+    ::finish::
+end
+
+buttonMove.pressed = function (self)
+    local moveBuffer = {}
+
+    if mode == "move" then
+        for _,v in pairs(list.array) do
+            if v:find(string.char(4)) then table.insert(moveBuffer, v:sub(2,#v)) end
+        end
+        if moveBuffer and #moveBuffer > 0 then
+            local dialWin = UI.New_DialWin(root)
+            dialWin:callWin(" MOVE ","Write a path to move")
+            dialWin.btnOK.pressed = function (self)
+                for _,v in pairs(moveBuffer) do
+                    fs.move(shell.resolve(v),dialWin.child[2].text.."/"..v)
+                end
+                fslist = fs.list(shell.dir())
+                sort()
+                list:updateArr(fslist)
+                dialWin:removeWin()
+                label:setText("Explorer")
+                mode = ""
+            end
+            goto finish
+        end
+        fslist = fs.list(shell.dir())
+        sort()
+        list:updateArr(fslist)
+        label:setText("Explorer")
+        mode = ""
+    else
+        mode = "move"
+        label:setText("MOVE MODE")
         for i,_ in pairs(list.array) do
             list.array[i] = " "..list.array[i]
         end

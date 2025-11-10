@@ -8,6 +8,9 @@ root.coroutine = {}
 root.seek_to = nil
 root.expected_event = nil
 
+if periphemu then periphemu.create("right", "speaker") end
+bOS.speaker = peripheral.find("speaker")
+
 local CHUNK_SIZE = 512
 local SAMPLE_RATE = 48000  -- Новый: фиксированный sample rate для speaker в CC:Tweaked
 local SAMPLES_PER_BYTE = 8  -- Новый: для DFPWM
