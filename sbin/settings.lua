@@ -6,7 +6,7 @@ local pageBuffer
 local settingsPath = "usr/settings.conf"
 local conf = c.readConf(settingsPath)
 local PALETTE = require("palette")
-local version = "1.1"
+local version = "0.1"
 local files_to_update = {}
 
 local dropdownChooseArr = {}
@@ -240,45 +240,32 @@ local function write_file(path,data)
     file.close()
 end
 
-local function getServerManifest()
-    local response, err = http.get("https://raw.githubusercontent.com/aTimmYm/braunnnOS/refs/heads/main/manifest.txt")
-    if response then
-        local arr = {}
-        local temp = response.readAll()
-        response.close()
-        for line in temp:gmatch("([^\n]+)\n?") do
-            local key = line:sub(1,32)
-            local value = line:sub(36)
-            arr[key] = value
-        end
-        return arr
-    else
-        return false, err
+local function translateServerManifest(manifest)
+    local arr = {}
+    for line in manifest:gmatch("([^\n]+)\n?") do
+        local key = line:sub(1,32)
+        local value = line:sub(36)
+        arr[key] = value
     end
+    return arr
 end
 
-local function checkUpdates()
-    local server_manifest, err = getServerManifest()
+local function checkUpdates(manifest)
+    local server_manifest, err = translateServerManifest(manifest)
     if server_manifest then
-        local files = {}
-        local manifest = {}
+        local manifest_old = {}
         for line in io.lines("manifest.txt") do
             local key = line:sub(1,32)
             local value = line:sub(36)
-            manifest[key] = value
+            manifest_old[key] = value
         end
         for i,v in pairs(server_manifest) do
-            if not manifest[i] then
-                table.insert(files,v)
+            if not manifest_old[i] then
+                table.insert(files_to_update,v)
             end
         end
-        if files[1] then
-            buttonCheckUpdate:setText("(INSTALLING UPDATES)")
-            buttonCheckUpdate.size.w = #buttonCheckUpdate.text
-            return true
-        elseif not files[1] then
-            buttonCheckUpdate:setText("(NO UPDATES)")
-            return false
+        if files_to_update[1] then return true
+        elseif not files_to_update[1] then return false
         end
     end
 end
@@ -340,15 +327,25 @@ end
 
 buttonCheckUpdate.pressed = function (self)
     self:setText("(CHECKING)")
-    if checkUpdates() then
-        for _,v in pairs(files_to_update) do
-            local response = http.get("https://raw.githubusercontent.com/aTimmYm/braunnnOS/refs/heads/main/"..v)
-            if request then
-                write_file(v,response.readAll())
-                request.close()
+    local response, err = http.get("https://raw.githubusercontent.com/aTimmYm/braunnnOS/refs/heads/main/manifest.txt")
+    local manifest = response.readAll()
+    response.close()
+    if response then
+        if checkUpdates(manifest) then
+            for _,v in pairs(files_to_update) do
+                local request = http.get("https://raw.githubusercontent.com/aTimmYm/braunnnOS/refs/heads/main/"..v)
+                if request then
+                    write_file(v,response.readAll())
+                    request.close()
+                end
             end
+            local file = fs.open("manifest.txt","w")
+            file.write(manifest)
+            file.close()
+            self:setText("(SUCCESS INSTALLED)")
+        else
+            self:setText("(NO UPDATES)")
         end
-        self:setText("SUCCESS INSTALLED")
     end
 end
 -----------------------------------------------------
