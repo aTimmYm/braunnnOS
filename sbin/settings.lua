@@ -348,6 +348,7 @@ buttonCheckUpdate.pressed = function (self)
                 request.close()
             end
         end
+        self:setText("SUCCESS INSTALLED")
     end
 end
 -----------------------------------------------------
