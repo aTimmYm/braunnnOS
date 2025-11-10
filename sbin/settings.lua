@@ -273,7 +273,6 @@ local function checkUpdates()
             end
         end
         if files[1] then
-            c.printTable(files) os.sleep(2)
             buttonCheckUpdate:setText("(INSTALLING UPDATES)")
             buttonCheckUpdate.size.w = #buttonCheckUpdate.text
             return true
