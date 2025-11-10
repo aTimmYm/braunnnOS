@@ -1,3 +1,5 @@
+if fs.exists("updater.lua") then fs.delete("updater.lua") end
+
 if bOS then error("System is already running!") end
 _G.bOS = {}
 bOS.start = bOS

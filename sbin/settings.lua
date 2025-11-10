@@ -7,6 +7,7 @@ local settingsPath = "usr/settings.conf"
 local conf = c.readConf(settingsPath)
 local PALETTE = require("palette")
 local version = "1.1"
+local files_to_update = {}
 
 local dropdownChooseArr = {}
 for k, _ in pairs(PALETTE) do
@@ -207,12 +208,18 @@ braunnnOS.reSize = function (self)
 end
 page4:addChild(braunnnOS)
 
-local versionLabel = UI.New_Label(root,"version "..version,_,colors.lightGray)
+local versionLabel = UI.New_Label(root,"Version "..version,_,colors.lightGray)
 versionLabel.reSize = function (self)
     self.pos = {x = braunnnOS.pos.x, y = braunnnOS.pos.y + 1}
     self.size.w = #self.text
 end
 page4:addChild(versionLabel)
+
+local buttonCheckUpdate = UI.New_Button(root, "(CHECK FOR UPDATES)", colors.black, colors.white)
+buttonCheckUpdate.reSize = function (self)
+    self.pos = {x=versionLabel.pos.x+versionLabel.size.w+1,y=versionLabel.pos.y}
+end
+page4:addChild(buttonCheckUpdate)
 -----------------------------------------------------
 ------| СЕКЦИЯ ОБЪЯВЛЕНИЯ ФУНКЦИЙ ПРОГРАММЫ |--------
 local function setPage(page)
@@ -220,6 +227,56 @@ local function setPage(page)
     surface:addChild(page)
     pageBuffer = page
     surface:onLayout()
+end
+
+local function write_file(path,data)
+    local file = fs.open(path,"w")
+    fs.write(data)
+    fs.close()
+end
+
+local function getServerManifest()
+    local response, err = http.get("https://raw.githubusercontent.com/aTimmYm/braunnnOS/refs/heads/main/manifest.txt")
+    if response then
+        local arr = {}
+        local temp = response.readAll()
+        response.close()
+        for line in temp:gmatch("([^\n]+)\n?") do
+            local key = line:sub(1,32)
+            local value = line:sub(36)
+            arr[key] = value
+        end
+        return arr
+    else
+        return false, err
+    end
+end
+
+local function checkUpdates()
+    local server_manifest, err = getServerManifest()
+    if server_manifest then
+        local files = {}
+        local manifest = {}
+        for line in io.lines("manifest.txt") do
+            local key = line:sub(1,32)
+            local value = line:sub(36)
+            manifest[key] = value
+        end
+        for i,v in pairs(server_manifest) do
+            if not manifest[i] then
+                table.insert(files,v)
+            end
+        end
+        if files[1] then
+            c.printTable(files) os.sleep(2)
+            buttonCheckUpdate:setText("(INSTALLING UPDATES)")
+            buttonCheckUpdate.size.w = #buttonCheckUpdate.text
+            return true
+        elseif not files[1] then
+            buttonCheckUpdate:setText("(NO UPDATES)")
+            return false
+        end
+    end
 end
 -----------------------------------------------------
 --| СЕКЦИЯ ПЕРЕОПРЕДЕЛЕНИЯ ФУНКЦИОНАЛЬНЫХ МЕТОДОВ |--
@@ -274,6 +331,19 @@ dropdownChoose.pressed = function (self)
         PALETTE[self.array[self.item_index]]()
         conf["palette"] = self.array[self.item_index]
         c.saveConf(settingsPath, conf)
+    end
+end
+
+buttonCheckUpdate.pressed = function (self)
+    self:setText("(CHECKING)")
+    if checkUpdates() then
+        for _,v in pairs(files_to_update) do
+            local response = http.get("https://raw.githubusercontent.com/aTimmYm/braunnnOS/refs/heads/main/"..v)
+            if request then
+                write_file(v,response.readAll())
+                request.close()
+            end
+        end
     end
 end
 -----------------------------------------------------
