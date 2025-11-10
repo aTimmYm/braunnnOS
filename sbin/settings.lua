@@ -335,7 +335,7 @@ buttonCheckUpdate.pressed = function (self)
             for _,v in pairs(files_to_update) do
                 local request = http.get("https://raw.githubusercontent.com/aTimmYm/braunnnOS/refs/heads/main/"..v)
                 if request then
-                    write_file(v,response.readAll())
+                    write_file(v,manifest)
                     request.close()
                 end
             end
