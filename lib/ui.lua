@@ -7,6 +7,11 @@ local expect = require("cc.expect")
 local dM = require("deskManager")
 local EVENTS = require("events")
 
+local string_rep = string.rep
+local string_sub = string.sub
+local string_find = string.find
+local string_char = string.char
+
 ---Basic *class*. Using automatically to create all another *classes*.
 ---@param root table
 ---@param bg color|number|nil
@@ -88,20 +93,20 @@ function UI.New_Tumbler(root, bg_off, bg_on, switch_color, on)
     instance.animating = false
     instance.animation_frames = {
         off = {
-            {char = string.char(149), txtcol = instance.switch_color, bgcol = instance.bg_off},
+            {char = string_char(149), txtcol = instance.switch_color, bgcol = instance.bg_off},
             {char = " ", txtcol = instance.bg_off, bgcol = instance.bg_off}
         },
         anim1 = {
-            {char = string.char(149), txtcol = instance.bg_on, bgcol = instance.switch_color},
+            {char = string_char(149), txtcol = instance.bg_on, bgcol = instance.switch_color},
             {char = " ", txtcol = instance.bg_off, bgcol = instance.bg_off}
         },
         anim2 = {
             {char = " ", txtcol = instance.bg_on, bgcol = instance.bg_on},
-            {char = string.char(149), txtcol = instance.switch_color, bgcol = instance.bg_off}
+            {char = string_char(149), txtcol = instance.switch_color, bgcol = instance.bg_off}
         },
         on = {
             {char = " ", txtcol = instance.bg_on, bgcol = instance.bg_on},
-            {char = string.char(149), txtcol = instance.bg_on, bgcol = instance.switch_color}
+            {char = string_char(149), txtcol = instance.bg_on, bgcol = instance.switch_color}
         }
     }
     instance.current_frame = instance.on and "on" or "off"
@@ -185,9 +190,9 @@ function UI.New_RadioButton_horizontal(root,count,bg,txtcol)
     instance.draw = function(self)
         for i = 1, self.count do
             if self.item == i then
-                c.write(string.char(7),self.pos.x+i-1,self.pos.y,self.bg,self.txtcol)
+                c.write(string_char(7),self.pos.x+i-1,self.pos.y,self.bg,self.txtcol)
             else
-                c.write(string.char(7),self.pos.x+i-1,self.pos.y,self.bg,colors.gray)
+                c.write(string_char(7),self.pos.x+i-1,self.pos.y,self.bg,colors.gray)
             end
         end
     end
@@ -238,11 +243,11 @@ function UI.New_RadioButton(root,count,text,bg,txtcol)
     instance.draw = function(self)
         for i,_ in pairs(self.text) do
             if self.item == i then
-                c.write(string.char(7),self.pos.x,self.pos.y+i-1,self.bg,self.txtcol)
-                c.write(string.rep(" ",math.min(#self.text[i],1))..self.text[i],self.pos.x+1,self.pos.y+i-1,self.bg,self.txtcol)
+                c.write(string_char(7),self.pos.x,self.pos.y+i-1,self.bg,self.txtcol)
+                c.write(string_rep(" ",math.min(#self.text[i],1))..self.text[i],self.pos.x+1,self.pos.y+i-1,self.bg,self.txtcol)
             else
-                c.write(string.char(7),self.pos.x,self.pos.y+i-1,self.bg,colors.gray)
-                c.write(string.rep(" ",math.min(#self.text[i],1))..self.text[i],self.pos.x+1,self.pos.y+i-1,self.bg,self.txtcol)
+                c.write(string_char(7),self.pos.x,self.pos.y+i-1,self.bg,colors.gray)
+                c.write(string_rep(" ",math.min(#self.text[i],1))..self.text[i],self.pos.x+1,self.pos.y+i-1,self.bg,self.txtcol)
             end
         end
     end
@@ -284,7 +289,7 @@ function UI.New_Label(root,text,bg,txtcol,align)
             table.insert(lines, self.text)
         else
             local mass = {}
-            for w in string.gmatch(self.text, "%S+") do
+            for w in self.text:gmatch("%S+") do
                 table.insert(mass, w)
             end
             local row_txt = ""
@@ -292,11 +297,11 @@ function UI.New_Label(root,text,bg,txtcol,align)
             while i <= #mass do
                 local word = mass[i]
                 if #word > self.size.w then
-                    local remainder = word:sub(self.size.w + 1)
+                    local remainder = string_sub(word, self.size.w + 1)
                     if remainder ~= "" then
                         table.insert(mass, i + 1, remainder)
                     end
-                    mass[i] = word:sub(1, self.size.w)
+                    mass[i] = string_sub(word, 1, self.size.w)
                     word = mass[i]
                 end
                 local space_len = (row_txt == "" and 0 or 1)
@@ -317,17 +322,17 @@ function UI.New_Label(root,text,bg,txtcol,align)
         end
 
         local horiz_align = "center"
-        if string.find(self.align, "left") then
+        if string_find(self.align, "left") then
             horiz_align = "left"
-        elseif string.find(self.align, "right") then
+        elseif string_find(self.align, "right") then
             horiz_align = "right"
         end
 
         local num_lines = #lines
         local vert_align = "center"
-        if string.find(self.align, "top") then
+        if string_find(self.align, "top") then
             vert_align = "top"
-        elseif string.find(self.align, "bottom") then
+        elseif string_find(self.align, "bottom") then
             vert_align = "bottom"
         end
 
@@ -342,7 +347,7 @@ function UI.New_Label(root,text,bg,txtcol,align)
         start_y = math.max(start_y, self.pos.y)
 
         for i = self.pos.y, start_y - 1 do
-            c.write(string.rep(" ", self.size.w), self.pos.x, i, bg_override, txtcol_override)
+            c.write(string_rep(" ", self.size.w), self.pos.x, i, bg_override, txtcol_override)
         end
 
         for j = 1, num_lines do
@@ -356,15 +361,15 @@ function UI.New_Label(root,text,bg,txtcol,align)
             else  -- center
                 x_pos = self.pos.x + math.floor((self.size.w - line_len) / 2)
             end
-            local left_pad = string.rep(" ", x_pos - self.pos.x)
-            local right_pad = string.rep(" ", self.size.w - (x_pos - self.pos.x + line_len))
+            local left_pad = string_rep(" ", x_pos - self.pos.x)
+            local right_pad = string_rep(" ", self.size.w - (x_pos - self.pos.x + line_len))
             local full_line = left_pad .. line .. right_pad
             c.write(full_line, self.pos.x, start_y + j - 1, bg_override, txtcol_override)
         end
 
         local end_y = start_y + num_lines - 1
         for i = end_y + 1, self.pos.y + self.size.h - 1 do
-            c.write(string.rep(" ", self.size.w), self.pos.x, i, bg_override, txtcol_override)
+            c.write(string_rep(" ", self.size.w), self.pos.x, i, bg_override, txtcol_override)
         end
     end
     instance.setText = function (self, text)
@@ -452,11 +457,11 @@ function UI.New_Shortcut(root, text, filepath, icopath,bg,txtcol)
         blittle.draw(self.blittle_img, dX, dY)
         local txtcol = self.held and colors.lightGray or self.txtcol
         if #self.text >= self.size.w then
-            c.write(self.text:sub(1, self.size.w-2).."..",
+            c.write(string_sub(self.text, 1, self.size.w-2).."..",
             self.pos.x, dY + self.blittle_img.height,self.bg,txtcol)
         else
-            c.write(string.rep(" ",math.floor((self.size.w-#self.text)/2))..self.text..
-            string.rep(" ", self.size.w - (math.floor((self.size.w-#self.text)/2)+self.pos.x + #self.text)),
+            c.write(string_rep(" ",math.floor((self.size.w-#self.text)/2))..self.text..
+            string_rep(" ", self.size.w - (math.floor((self.size.w-#self.text)/2)+self.pos.x + #self.text)),
             self.pos.x, dY + self.blittle_img.height,self.bg,txtcol)
         end
     end
@@ -542,7 +547,7 @@ function UI.New_Running_Label(root, text, bg, txtcol, align, scroll_speed, gap)
         local segment = (self.text or "") .. (self.scroll_gap)
         local cycle_len = #segment
         if cycle_len == 0 then
-            local visible_text = string.rep(" ", self.size.w)
+            local visible_text = string_rep(" ", self.size.w)
             c.write(visible_text, self.pos.x, self.pos.y, bg_override, txtcol_override)
             return
         end
@@ -554,15 +559,15 @@ function UI.New_Running_Label(root, text, bg, txtcol, align, scroll_speed, gap)
         local visible_chars = {}
         for i = 0, self.size.w - 1 do
             local idx = ((pos - 1 + i) % cycle_len) + 1
-            visible_chars[#visible_chars + 1] = segment:sub(idx, idx)
+            visible_chars[#visible_chars + 1] = string_sub(segment, idx, idx)
         end
         local visible_text = table.concat(visible_chars)
 
         -- Обрабатываем выравнивание (только горизонтальное, вертикальное игнорируем для простоты, так как h=1 предположительно)
         local horiz_align = "center"
-        if string.find(self.align, "left") then
+        if string_find(self.align, "left") then
             horiz_align = "left"
-        elseif string.find(self.align, "right") then
+        elseif string_find(self.align, "right") then
             horiz_align = "right"
         end
 
@@ -575,15 +580,15 @@ function UI.New_Running_Label(root, text, bg, txtcol, align, scroll_speed, gap)
             x_pos = self.pos.x + math.floor((self.size.w - #visible_text) / 2)
         end
 
-        local left_pad = string.rep(" ", x_pos - self.pos.x)
-        local right_pad = string.rep(" ", self.size.w - (x_pos - self.pos.x + #visible_text))
+        local left_pad = string_rep(" ", x_pos - self.pos.x)
+        local right_pad = string_rep(" ", self.size.w - (x_pos - self.pos.x + #visible_text))
         local full_line = left_pad .. visible_text .. right_pad
 
         c.write(full_line, self.pos.x, self.pos.y, bg_override, txtcol_override)
 
         -- Очистка остальных строк, если h > 1 (хотя для бегущей строки обычно h=1)
         for i = self.pos.y + 1, self.pos.y + self.size.h - 1 do
-            c.write(string.rep(" ", self.size.w), self.pos.x, i, bg_override, txtcol_override)
+            c.write(string_rep(" ", self.size.w), self.pos.x, i, bg_override, txtcol_override)
         end
     end
     local temp_onEvent = instance.onEvent
@@ -642,11 +647,11 @@ function UI.New_Scrollbar(obj)
 
         -- Стрелка вверх
         local up_bg, up_fg = (self.held == 1 and self.txtcol or self.bg), (self.held == 1 and self.bg or self.txtcol)
-        c.write(string.char(30), self.pos.x, self.pos.y, up_bg, up_fg)
+        c.write(string_char(30), self.pos.x, self.pos.y, up_bg, up_fg)
 
         -- Стрелка вниз
         local down_bg, down_fg = (self.held == 3 and self.txtcol or self.bg), (self.held == 3 and self.bg or self.txtcol)
-        c.write(string.char(31), self.pos.x, self.pos.y + self.size.h - 1, down_bg, down_fg)
+        c.write(string_char(31), self.pos.x, self.pos.y + self.size.h - 1, down_bg, down_fg)
 
         -- Ползунок
         for y = slider_y_start, math.min(slider_y_start + slider_height - 1, self.pos.y + self.size.h - 2) do
@@ -773,16 +778,16 @@ function UI.New_List(root,array,txtcol,bg)
         self.scrollmax = math.max(1, #self.array - self.size.h + 1)
         self.scrollpos = math.max(1, math.min(self.scrollpos, self.scrollmax))
         for i = self.scrollpos, math.min(self.size.h + self.scrollpos - 1, #self.array) do
-            c.write(string.sub(self.array[i]..string.rep(" ",self.size.w-#self.array[i]), 1, self.size.w), self.pos.x, (i-self.scrollpos)+self.pos.y, self.bg, self.txtcol)
+            c.write(string_sub(self.array[i]..string_rep(" ",self.size.w-#self.array[i]), 1, self.size.w), self.pos.x, (i-self.scrollpos)+self.pos.y, self.bg, self.txtcol)
         end
         if self.item and self.item_index then
             if (self.pos.y + self.item_index - self.scrollpos) >= self.pos.y and (self.pos.y + self.item_index - self.scrollpos) <= (self.size.h + self.pos.y - 1) then
-                c.write(string.sub(self.item..string.rep(" ",self.size.w-#self.item), 1, self.size.w), self.pos.x, self.pos.y + self.item_index - self.scrollpos, self.txtcol, self.bg)
+                c.write(string_sub(self.item..string_rep(" ",self.size.w-#self.item), 1, self.size.w), self.pos.x, self.pos.y + self.item_index - self.scrollpos, self.txtcol, self.bg)
             end
         end
             if self.size.h > #self.array then
             for i = #self.array, self.size.h-1 do
-                c.write(string.sub(string.rep(" ",self.size.w), 1, self.size.w), self.pos.x, i + self.pos.y, self.bg, self.txtcol)
+                c.write(string_sub(string_rep(" ",self.size.w), 1, self.size.w), self.pos.x, i + self.pos.y, self.bg, self.txtcol)
             end
         end
     end
@@ -883,14 +888,14 @@ function UI.New_Textfield(root,bg,txtcol,hint,hidden)
         term.setTextColor(colors.blue)
         local text = self.text
         if self.hidden == true then
-            text = string.rep("*", #self.text)
+            text = string_rep("*", #self.text)
         end
         local bX = self.pos.x+self.offset-self.writePos-1
         if self.root.focus ~= self and #self.text == 0 and #self.hint <= self.size.w then
-            c.write(self.hint..string.rep(" ",self.size.w-#self.hint),self.pos.x,self.pos.y,self.bg,colors.lightGray)
+            c.write(self.hint..string_rep(" ",self.size.w-#self.hint),self.pos.x,self.pos.y,self.bg,colors.lightGray)
         else
             term.setCursorPos(bX,self.pos.y)
-            c.write(text:sub(self.writePos+1,math.min(#self.text,self.writePos+self.size.w))..string.rep(" ",self.size.w-#self.text+self.writePos),self.pos.x,self.pos.y,self.bg,self.txtcol)
+            c.write(string_sub(text, self.writePos + 1, math.min(#self.text,self.writePos+self.size.w))..string_rep(" ",self.size.w-#self.text+self.writePos),self.pos.x,self.pos.y,self.bg,self.txtcol)
         end
         if bX < self.pos.x or bX > self.pos.x+self.size.w-1 then term.setCursorBlink(false)
         elseif self.root.focus == self then
@@ -935,24 +940,24 @@ function UI.New_Textfield(root,bg,txtcol,hint,hidden)
         return true
     end
     instance.onCharTyped = function(self,chr)
-        self.text = self.text:sub(1,self.offset-1) .. chr .. self.text:sub(self.offset,#self.text)
+        self.text = string_sub(self.text, 1, self.offset - 1)..chr..string_sub(self.text, self.offset, #self.text)
         self:moveCursorPos(self.offset + 1)
         self.dirty = true
         return true
     end
     instance.onPaste = function(self,text)
-        self.text = self.text:sub(1,self.offset-1) .. text .. self.text:sub(self.offset,#self.text)
+        self.text = string_sub(self.text, 1, self.offset - 1)..text..string_sub(self.text, self.offset, #self.text)
         self:moveCursorPos(self.offset + #text)
         self.dirty = true
         return true
     end
     instance.onKeyDown = function(self,key,held)
         if key == keys.backspace then
-            self.text = self.text:sub(1,math.max(self.offset-2,0)) .. self.text:sub(self.offset,#self.text)
+            self.text = string_sub(self.text, 1, math.max(self.offset - 2, 0))..string_sub(self.text, self.offset, #self.text)
             self.writePos = math.max(self.writePos - 1,0)
             self:moveCursorPos(self.offset-1)
         elseif key == keys.delete then
-            self.text = self.text:sub(1,self.offset-1) .. self.text:sub(self.offset+1,#self.text)
+            self.text = string_sub(self.text, 1, self.offset - 1) .. string_sub(self.text, self.offset + 1, #self.text)
         elseif key == keys.left then
             self:moveCursorPos(self.offset-1)
         elseif key == keys.right then
@@ -1126,23 +1131,23 @@ function UI.New_Dropdown(root, array, bg, txtcol, defaultValue, maxSizeW, orient
 
     instance.draw = function(self)
         if self.orientation == "left" then
-            c.write(string.sub((self.array[self.item_index]), 1,self.size.w-1)..string.rep(" ", self.size.w-1-#self.array[self.item_index])..string.char(31), self.pos.x, self.pos.y, self.bg, self.txtcol)
+            c.write(string_sub((self.array[self.item_index]), 1,self.size.w-1)..string_rep(" ", self.size.w-1-#self.array[self.item_index])..string_char(31), self.pos.x, self.pos.y, self.bg, self.txtcol)
             if self.expanded then
                 for i, v in pairs(self.array) do
-                    c.write(string.sub((v..string.rep(" ", self.size.w - #v)),1,self.size.w), self.pos.x, self.pos.y + i, self.bg, self.txtcol)
+                    c.write(string_sub((v..string_rep(" ", self.size.w - #v)),1,self.size.w), self.pos.x, self.pos.y + i, self.bg, self.txtcol)
                 end
-                c.write(string.sub((self.array[self.item_index]), 1,self.size.w-1)..string.rep(" ", self.size.w-1-#self.array[self.item_index])..string.char(30), self.pos.x, self.pos.y, self.bg, self.txtcol)
+                c.write(string_sub((self.array[self.item_index]), 1,self.size.w-1)..string_rep(" ", self.size.w-1-#self.array[self.item_index])..string_char(30), self.pos.x, self.pos.y, self.bg, self.txtcol)
                 self.size.h = #self.array + 1
             else
                 self.size.h = 1
             end
         elseif self.orientation == "right" then
-            c.write(string.sub(self.array[self.item_index]..string.rep(" ", self.size.w-1-#self.array[self.item_index])..string.char(30),1,self.size.w), self.pos.x, self.pos.y, self.bg, self.txtcol)
+            c.write(string_sub(self.array[self.item_index]..string_rep(" ", self.size.w-1-#self.array[self.item_index])..string_char(30),1,self.size.w), self.pos.x, self.pos.y, self.bg, self.txtcol)
             if self.expanded then
                 for i, v in pairs(self.array) do
-                    c.write(string.sub(string.rep(" ", self.size.w - #v)..v,1,self.size.w), self.pos.x, self.pos.y + i, self.bg, self.txtcol)
+                    c.write(string_sub(string_rep(" ", self.size.w - #v)..v,1,self.size.w), self.pos.x, self.pos.y + i, self.bg, self.txtcol)
                 end
-                c.write(string.sub(self.array[self.item_index],1,self.size.w-1)..string.rep(" ", self.size.w-1-#self.array[self.item_index])..string.char(31), self.pos.x, self.pos.y, self.bg, self.txtcol)
+                c.write(string_sub(self.array[self.item_index],1,self.size.w-1)..string_rep(" ", self.size.w-1-#self.array[self.item_index])..string_char(31), self.pos.x, self.pos.y, self.bg, self.txtcol)
                 self.size.h = #self.array + 1
             else
                 self.size.h = 1
@@ -1202,10 +1207,10 @@ function UI.New_Slider(root, arr, bg, txtcol, defaultPosition, txtcol2)
             local thumb_x = self.pos.x + offset
             -- Overlay thumb (use a different char, e.g., █ or slider thumb equivalent)
             c.write(" ", thumb_x, self.pos.y, self.txtcol, self.bg)
-            c.write(string.rep(string.char(140), offset), self.pos.x, self.pos.y, self.bg, self.txtcol2)
-            c.write(string.rep(string.char(140), self.size.w - offset - 1), thumb_x + 1, self.pos.y, self.bg, self.txtcol)
+            c.write(string_rep(string_char(140), offset), self.pos.x, self.pos.y, self.bg, self.txtcol2)
+            c.write(string_rep(string_char(140), self.size.w - offset - 1), thumb_x + 1, self.pos.y, self.bg, self.txtcol)
         else
-            c.write(string.rep(string.char(140), W), self.pos.x, self.pos.y, self.bg, self.txtcol)
+            c.write(string_rep(string_char(140), W), self.pos.x, self.pos.y, self.bg, self.txtcol)
         end
     end
     instance.pressed = function(self) end
@@ -1344,12 +1349,12 @@ function UI.New_MsgWin(root,string)
 
     instance.draw = function(self)
         for i = 1, self.size.h-2 do
-            c.write(string.rep(" ",self.size.w-2)..string.char(149), self.pos.x+1, self.pos.y+i, self.bg, self.txtcol)
-            c.write(string.char(149), self.pos.x, self.pos.y+i, self.txtcol, self.bg)
+            c.write(string_rep(" ",self.size.w-2)..string_char(149), self.pos.x+1, self.pos.y+i, self.bg, self.txtcol)
+            c.write(string_char(149), self.pos.x, self.pos.y+i, self.txtcol, self.bg)
         end
-        c.write(string.rep(string.char(140), self.size.w-2)..string.char(148), self.pos.x+1, self.pos.y,self.bg, self.txtcol)
-        c.write(string.char(151), self.pos.x, self.pos.y, self.txtcol, self.bg)
-        c.write(string.char(138)..string.rep(string.char(140), self.size.w-2)..string.char(133), self.pos.x, self.size.h+self.pos.y-1,self.bg, self.txtcol)
+        c.write(string_rep(string_char(140), self.size.w-2)..string_char(148), self.pos.x+1, self.pos.y,self.bg, self.txtcol)
+        c.write(string_char(151), self.pos.x, self.pos.y, self.txtcol, self.bg)
+        c.write(string_char(138)..string_rep(string_char(140), self.size.w-2)..string_char(133), self.pos.x, self.size.h+self.pos.y-1,self.bg, self.txtcol)
         c.write(self.title, math.floor((self.size.w - #self.title)/2) + self.pos.x, self.pos.y, self.bg, self.txtcol)
     end
     instance.callWin = function(self,title,msg)
@@ -1420,12 +1425,12 @@ function UI.New_DialWin(root)
 
     instance.draw = function(self)
         for i = 1, self.size.h-2 do
-            c.write(string.rep(" ",self.size.w-2)..string.char(149), self.pos.x+1, self.pos.y+i, self.bg, self.txtcol)
-            c.write(string.char(149), self.pos.x, self.pos.y+i, self.txtcol, self.bg)
+            c.write(string_rep(" ",self.size.w-2)..string_char(149), self.pos.x+1, self.pos.y+i, self.bg, self.txtcol)
+            c.write(string_char(149), self.pos.x, self.pos.y+i, self.txtcol, self.bg)
         end
-        c.write(string.rep(string.char(140), self.size.w-2)..string.char(148), self.pos.x+1, self.pos.y,self.bg, self.txtcol)
-        c.write(string.char(151), self.pos.x, self.pos.y, self.txtcol, self.bg)
-        c.write(string.char(138)..string.rep(string.char(140), self.size.w-2)..string.char(133), self.pos.x, self.size.h+self.pos.y-1,self.bg, self.txtcol)
+        c.write(string_rep(string_char(140), self.size.w-2)..string_char(148), self.pos.x+1, self.pos.y,self.bg, self.txtcol)
+        c.write(string_char(151), self.pos.x, self.pos.y, self.txtcol, self.bg)
+        c.write(string_char(138)..string_rep(string_char(140), self.size.w-2)..string_char(133), self.pos.x, self.size.h+self.pos.y-1,self.bg, self.txtcol)
         c.write(self.title, math.floor((self.size.w - #self.title)/2) + self.pos.x, self.pos.y, self.bg, self.txtcol)
     end
     instance.callWin = function(self,title,msg)
@@ -1503,28 +1508,28 @@ function UI.New_Keyboard(root)
         "1","2","3","4","5","6","7","8","9","0", --10
         "q","w","e","r","t","y","u","i","o","p", --20
         "a","s","d","f","g","h","j","k","l", --29
-        string.char(24)..string.char(95),"z","x","c","v","b","n","m", string.char(27).."-", --38
-        " "..string.char(2).." ", ",", ".", "  SPACE",string.char(27), string.char(24), string.char(25), string.char(26), string.char(17)..string.char(172)
+        string_char(24)..string_char(95),"z","x","c","v","b","n","m", string_char(27).."-", --38
+        " "..string_char(2).." ", ",", ".", "  SPACE",string_char(27), string_char(24), string_char(25), string_char(26), string_char(17)..string_char(172)
     }
 
     local layout_shift = {
-        "1","2","3","4","5","6","7","8","9","0", --10 string.char(27)
+        "1","2","3","4","5","6","7","8","9","0", --10 string_char(27)
         "Q","W","E","R","T","Y","U","I","O","P", --20
         "A","S","D","F","G","H","J","K","L", --29
-        string.char(24)..string.char(95),"Z","X","C","V","B","N","M", string.char(27).."-", --38
-        " "..string.char(2).." ", ",", ".", "  SPACE", string.char(27), string.char(24), string.char(25), string.char(26), string.char(17)..string.char(172)
+        string_char(24)..string_char(95),"Z","X","C","V","B","N","M", string_char(27).."-", --38
+        " "..string_char(2).." ", ",", ".", "  SPACE", string_char(27), string_char(24), string_char(25), string_char(26), string_char(17)..string_char(172)
     }
 
     local layout_smile = {
         -- Ряд 1 (індекси 1-10)
         "!", "\"", "#", ";", "%", ":", "?", "*", "(", ")",
         -- Ряд 2 (індекси 11-20)
-        "~", "@", "T", "$", string.char(19), "^", "&", "=", "+", "-",
+        "~", "@", "T", "$", string_char(19), "^", "&", "=", "+", "-",
         -- Ряд 3 (індекси 21-29)
-        "_", "`", "'", string.char(171), string.char(187), "{", "}", "[", "]",
+        "_", "`", "'", string_char(171), string_char(187), "{", "}", "[", "]",
         -- Ряд 4 (індекси 30-38)
         layout_default[30], -- 30: Shift (Спеціальна, залишаємо)
-        string.char(177), string.char(191), "|", "/", "\\", "<", ">", -- 31-37 (z,x,c,v,b,n,m)
+        string_char(177), string_char(191), "|", "/", "\\", "<", ">", -- 31-37 (z,x,c,v,b,n,m)
         layout_default[38], -- 38: Backspace (Спеціальна, залишаємо)
         -- Ряд 5 (індекси 39-45)
         "ABC",         -- 39: "Smile" button, тепер це "ABC"
@@ -1569,7 +1574,7 @@ function UI.New_Keyboard(root)
             end
         end
         if newUpperState == 2 then
-            keyboard.child[30]:setText(string.char(23)..string.char(95))
+            keyboard.child[30]:setText(string_char(23)..string_char(95))
         end
         if newUpperState == 3 then
             keyboard.child[30].held = false
@@ -1657,12 +1662,12 @@ function UI.New_Keyboard(root)
 
     instance.draw = function(self)
         for i = 1, self.size.h-2 do
-            c.write(string.char(149), self.size.w+self.pos.x-1, self.pos.y+i,self.txtcol, self.bg)
-            c.write(string.char(149)..string.rep(" ",self.size.w-2), self.pos.x, self.pos.y+i, self.bg, self.txtcol)
+            c.write(string_char(149), self.size.w+self.pos.x-1, self.pos.y+i,self.txtcol, self.bg)
+            c.write(string_char(149)..string_rep(" ",self.size.w-2), self.pos.x, self.pos.y+i, self.bg, self.txtcol)
         end
-        c.write(string.char(151)..string.rep(string.char(131), self.size.w-2), self.pos.x, self.pos.y,self.bg, self.txtcol)
-        c.write(string.char(148), self.size.w+self.pos.x-1, self.pos.y, self.txtcol,self.bg)
-        c.write(string.char(138)..string.rep(string.char(143), self.size.w-2)..string.char(133), self.pos.x, self.size.h+self.pos.y-1, self.txtcol, self.bg)
+        c.write(string_char(151)..string_rep(string_char(131), self.size.w-2), self.pos.x, self.pos.y,self.bg, self.txtcol)
+        c.write(string_char(148), self.size.w+self.pos.x-1, self.pos.y, self.txtcol,self.bg)
+        c.write(string_char(138)..string_rep(string_char(143), self.size.w-2)..string_char(133), self.pos.x, self.size.h+self.pos.y-1, self.txtcol, self.bg)
     end
     instance.reSize = function(self)
         self.size = {w=21,h=7}
