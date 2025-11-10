@@ -29,7 +29,7 @@ function dM.readShortcuts()
     for line in io.lines("usr/sys.conf") do
         j = j + 1
         local oneLine = {}
-        for lines in string.gmatch(line, "%S+") do
+        for lines in line:gmatch("%S+") do
             oneLine[i] = tostring(lines)
             i = i + 1
         end

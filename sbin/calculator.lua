@@ -44,7 +44,7 @@ local function setDisplay(text)
 	text = tostring(text or "0")
 	-- Truncate if too long
 	if #text > display.size.w then
-		text = string.sub(text, #text - display.size.w + 1)
+		text = text:sub(#text - display.size.w + 1)
 	end
 	display:setText(text)
 end
@@ -53,7 +53,7 @@ setDisplay(0)
 local function is_valid_expr(s)
 	-- allow only digits, operators, dot and parentheses
 	if not s or s == "" then return false end
-	if string.find(s, "[^%d%+%-%*/%.%(%)]") then return false end
+	if s:find("[^%d%+%-%*/%.%(%)]") then return false end
 	return true
 end
 
@@ -91,7 +91,7 @@ for row = 1, #btnTexts do
 				setDisplay(0)
 				return
 			elseif txt == string.char(27) then
-				expr = string.sub(expr, 1, -2)
+				expr = expr:sub(1, -2)
 				if expr == "" then setDisplay(0) else setDisplay(expr) end
 				return
 			elseif txt == "=" then

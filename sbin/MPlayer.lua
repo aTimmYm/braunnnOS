@@ -388,11 +388,11 @@ local function cacheUpdate()
             local meta_start, meta_end = nil, nil
             if tail and #tail > 0 then
                 local marker = "--METADATA--"
-                local s = string.find(tail, marker, 1, true)
+                local s = tail:find(marker, 1, true)
                 if s then
                     meta_start = (fileSize - #tail) + s
                     local e_marker = "--ENDMETADATA--"
-                    local e = string.find(tail, e_marker, s + #marker, true)
+                    local e = tail:find(e_marker, s + #marker, true)
                     if e then
                         meta_end = (fileSize - #tail) + e + #e_marker - 1
                     end
