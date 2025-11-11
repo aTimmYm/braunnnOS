@@ -1,3 +1,8 @@
+------------| СЕКЦИЯ ЛОКАЛИЗАЦИИ ФУНКЦИЙ |-----------
+local string_rep = string.rep
+local string_match = string.match
+local table_insert = table.insert
+-----------------------------------------------------
 local M = {}
 
 function M.DEBUG()
@@ -22,7 +27,7 @@ end
 
 function M.drawFilledBox(sX,sY,eX,eY,color)
     for i=sY,eY do
-        M.write(string.rep(" ",eX-sX+1),sX,i,color)
+        M.write(string_rep(" ",eX-sX+1),sX,i,color)
     end
 end
 
@@ -82,7 +87,7 @@ end
 function M.readFile(filePath)
     local lines = {}
     for line in io.lines(filePath) do
-        table.insert(lines,line)
+        table_insert(lines,line)
     end
     if #lines == 1 or #lines == 0 then return lines[1] end
     return lines
@@ -91,10 +96,10 @@ end
 function M.readConf(filePath)
     local lines = {}
     for line in io.lines(filePath) do
-        if line:match("^%s*$") or line:match("^%s*#") then
+        if string_match(line, "^%s*$") or string_match(line, "^%s*#") then
             goto continue
         end
-        local key, value = line:match("^%s*([^=]+)%s*=%s*(.+)%s*$")
+        local key, value = string_match(line, "^%s*([^=]+)%s*=%s*(.+)%s*$")
         if value == "true" then
             lines[key] = true
         elseif value == "false" then

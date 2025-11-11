@@ -1,4 +1,15 @@
+------------| СЕКЦИЯ ЛОКАЛИЗАЦИИ ФУНКЦИЙ |-----------
+local string_sub = string.sub
+local string_find = string.find
+local string_char = string.char
+local string_lower = string.lower
+local string_byte = string.byte
+local table_insert = table.insert
+local table_sort = table.sort
+-----------------------------------------------------
 -------| СЕКЦИЯ ПОДКЛЮЧЕНИЯ БИБЛИОТЕК И ROOT |-------
+local c = require("cfunc")
+local UI = require("ui")
 local root = UI.New_Root()
 -----------------------------------------------------
 -----| СЕКЦИЯ ОБЪЯВЛЕНИЯ ПЕРЕМЕННЫХ ПРОГРАММЫ |------
@@ -52,7 +63,7 @@ buttonDelete.reSize = function (self)
 end
 surface:addChild(buttonDelete)
 
-local buttonMove = UI.New_Button(root, string.char(187), colors.white, colors.black)
+local buttonMove = UI.New_Button(root, string_char(187), colors.white, colors.black)
 buttonMove.reSize = function (self)
     self.pos.x = buttonDelete.pos.x+1
 end
@@ -68,7 +79,7 @@ local extensions = {
         local protected_dirs = {"sbin", "lib"--[[, "usr"]]}
         local is_protected = false
         for _, dir in pairs(protected_dirs) do
-            if fullPath:find("^" .. dir) then
+            if string_find(fullPath, "^"..dir) then
                 is_protected = true
                 break
             end
@@ -85,32 +96,48 @@ local extensions = {
         return true
     end
 }
- local function sort(arr)
+
+local function strCmpIgnoreCase(a, b)
+    -- Регистронезависимое лексикографическое сравнение (работает в Lua 5.1+ и 5.2+)
+    a = string_lower(a or "")
+    b = string_lower(b or "")
+    local minlen = math.min(#a, #b)
+    for i = 1, minlen do
+        local ba = string_byte(a, i)
+        local bb = string_byte(b, i)
+        if ba ~= bb then
+            return ba < bb
+        end
+    end
+    return #a < #b
+end
+
+local function sort(arr)
     local dirs = {}
     local files = {}
     for _,v in pairs(fslist) do
         if fs.isDir(shell.resolve(v)) then
-            table.insert(dirs,v)
+            table_insert(dirs, v)
         else
-            table.insert(files,v)
+            table_insert(files, v)
         end
     end
     fslist = {}
-    table.sort(dirs,function (a, b)
-    -- Используем string.lower для регистронезависимой сортировки
-        return a:lower() < b:lower()
+    -- Сортируем папки регистронезависимо
+    table_sort(dirs, function(a, b)
+        return strCmpIgnoreCase(a, b)
     end)
-    table.sort(files,function (a, b)
-    -- Используем string.lower для регистронезависимой сортировки
-        return a:lower() < b:lower()
+    -- Сортируем файлы регистронезависимо
+    table_sort(files, function(a, b)
+        return strCmpIgnoreCase(a, b)
     end)
     for _,v in pairs(dirs) do
-        table.insert(fslist,v)
+        table_insert(fslist, v)
     end
     for _,v in pairs(files) do
-        table.insert(fslist,v)
+        table_insert(fslist, v)
     end
- end
+end
  sort()
  list:updateArr(fslist)
 -----------------------------------------------------
@@ -140,10 +167,10 @@ end
 
 list.pressed = function (self)
     if mode == "delete" or mode == "move" then
-        if self.item:find(string.char(4)) then
-            self.item = " "..self.item:sub(2,#self.item)
+        if string_find(self.item, string_char(4)) then
+            self.item = " "..string_sub(self.item, 2, #self.item)
         else
-            self.item = string.char(4)..self.item:sub(2,#self.item)
+            self.item = string_char(4)..string_sub(self.item, 2, #self.item)
         end
         self.array[self.item_index] = self.item
         return
@@ -188,7 +215,7 @@ buttonDelete.pressed = function (self)
 
     if mode == "delete" then
         for _,v in pairs(list.array) do
-            if v:find(string.char(4)) then table.insert(toDel, v:sub(2,#v)) end
+            if string_find(v, string_char(4)) then table_insert(toDel, string_sub(v, 2, #v)) end
         end
         if toDel and #toDel > 0 then
             local questionWin = UI.New_MsgWin(root,"YES,NO")
@@ -227,7 +254,7 @@ buttonMove.pressed = function (self)
 
     if mode == "move" then
         for _,v in pairs(list.array) do
-            if v:find(string.char(4)) then table.insert(moveBuffer, v:sub(2,#v)) end
+            if string_find(v, string_char(4)) then table_insert(moveBuffer, string_sub(v, 2, #v)) end
         end
         if moveBuffer and #moveBuffer > 0 then
             local dialWin = UI.New_DialWin(root)

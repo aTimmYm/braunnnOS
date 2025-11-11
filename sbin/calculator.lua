@@ -1,6 +1,5 @@
--- Simple calculator app using the project's UI library (lib/ui.lua)
--- Layout: top display label + grid of buttons
 -------| СЕКЦИЯ ПОДКЛЮЧЕНИЯ БИБЛИОТЕК И ROOT |-------
+local UI = require("ui")
 local root = UI.New_Root(colors.black)
 -----------------------------------------------------
 -----| СЕКЦИЯ ОБЪЯВЛЕНИЯ ПЕРЕМЕННЫХ ПРОГРАММЫ |------

@@ -1,5 +1,16 @@
+------------| СЕКЦИЯ ЛОКАЛИЗАЦИИ ФУНКЦИЙ |-----------
+local string_rep = string.rep
+local string_gmatch = string.gmatch
+local table_insert = table.insert
+local math_max = math.max
+local math_min = math.min
+local math_floor = math.floor
+local math_ceil = math.ceil
+-----------------------------------------------------
 local dM = {} --deskManager
 
+local UI = require("ui")
+local c = require("cfunc")
 local shortcut_width = 15
 local shortcut_height = 8
 local spacing_x = 1  -- Отступ по X между ярлыками (можно увеличить для большего пространства)
@@ -29,11 +40,11 @@ function dM.readShortcuts()
     for line in io.lines("usr/sys.conf") do
         j = j + 1
         local oneLine = {}
-        for lines in line:gmatch("%S+") do
+        for lines in string_gmatch(line, "%S+") do
             oneLine[i] = tostring(lines)
             i = i + 1
         end
-        table.insert(allLines, j, oneLine)
+        table_insert(allLines, j, oneLine)
         i = 1
     end
 end
@@ -41,10 +52,10 @@ end
 function dM.updateNumDesks()
     num_shortcuts = #allLines
 
-    maxCols = math.floor(desk_width/(shortcut_width + spacing_x - 1))
-    maxRows = math.floor(desk_height/(shortcut_height + spacing_y - 1))
+    maxCols = math_floor(desk_width/(shortcut_width + spacing_x - 1))
+    maxRows = math_floor(desk_height/(shortcut_height + spacing_y - 1))
 
-    num_desks = math.max(math.ceil(num_shortcuts/(maxRows*maxCols)),1)
+    num_desks = math_max(math_ceil(num_shortcuts/(maxRows*maxCols)),1)
     return num_desks
 end
 
@@ -81,14 +92,14 @@ function dM.makeDesktops(parent)
 
         desk.reSize = function (self)
             self.size = {w = desk_width,h = desk_height}
-            self.pos = {x = math.floor((self.parent.size.w-self.size.w)/2)+1,
-            y = math.floor((self.parent.size.h-self.size.h)/2)+1}
+            self.pos = {x = math_floor((self.parent.size.w-self.size.w)/2)+1,
+            y = math_floor((self.parent.size.h-self.size.h)/2)+1}
         end
 
         desk.draw = function (self)
-            local temp = string.rep("-", shortcut_width)
+            local temp = string_rep("-", shortcut_width)
             for a = 1, maxCols-1 do
-                temp = temp.."+"..string.rep("-", shortcut_width)
+                temp = temp.."+"..string_rep("-", shortcut_width)
             end
             for i = 1, maxRows-1 do
                 c.write(temp, self.pos.x, shortcut_height * i + spacing_y * (i-1) + self.pos.y, self.bg, colors.lightGray)
@@ -106,10 +117,10 @@ function dM.makeDesktops(parent)
             end
         end
 
-        table.insert(desktops, desk)
+        table_insert(desktops, desk)
     end
 
-    currdesk = math.min(currdesk, num_desks)
+    currdesk = math_min(currdesk, num_desks)
     Parent:addChild(desktops[currdesk])
 end
 

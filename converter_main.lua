@@ -1,5 +1,9 @@
--- Таблица транслитерации кириллицы в латиницу (по кодпоинтам Unicode)
+------------| СЕКЦИЯ ЛОКАЛИЗАЦИИ ФУНКЦИЙ |-----------
+local string_sub = string.sub
+local string_byte = string.byte
 local table_insert = table.insert
+-----------------------------------------------------
+-- Таблица транслитерации кириллицы в латиницу (по кодпоинтам Unicode)
 local translit_table = {
     [0x0410] = 'A', [0x0411] = 'B', [0x0412] = 'V', [0x0413] = 'G', [0x0414] = 'D',
     [0x0415] = 'E', [0x0401] = 'Yo', [0x0416] = 'Zh', [0x0417] = 'Z', [0x0418] = 'I',
@@ -32,7 +36,7 @@ local function decode_and_translit(encoding, text)
     if encoding == 0 then  -- ISO-8859-1 или Windows-1251
         local has_cyrillic = false
         for i = 1, #text do
-            local b = text:byte(i)
+            local b = string_byte(text, i)
             if b >= 0xC0 then  -- Вероятно, Windows-1251
                 has_cyrillic = true
                 break
@@ -59,7 +63,7 @@ local function decode_and_translit(encoding, text)
                 win1251_to_uni[b] = 0x0430 + (b - 0xE0)  -- а-я
             end
             for i = 1, #text do
-                local b = text:byte(i)
+                local b = string_byte(text, i)
                 local cp = (b >= 128 and win1251_to_uni[b]) or b
                 if cp then
                     table_insert(codepoints, cp)
@@ -68,24 +72,24 @@ local function decode_and_translit(encoding, text)
         else
             -- Чистый ISO-8859-1
             for i = 1, #text do
-                table_insert(codepoints, text:byte(i))
+                table_insert(codepoints, string_byte(text, i))
             end
         end
     elseif encoding == 3 then  -- UTF-8
         local i = 1
         while i <= #text do
-            local b1 = text:byte(i) or 0
+            local b1 = string_byte(text, i) or 0
             local cp
             if b1 < 0x80 then
                 cp = b1
                 i = i + 1
             elseif b1 < 0xE0 then
-                local b2 = text:byte(i + 1) or 0
+                local b2 = string_byte(text, i + 1) or 0
                 cp = ((b1 % 0x20) * 0x40) + (b2 % 0x40)
                 i = i + 2
             elseif b1 < 0xF0 then
-                local b2 = text:byte(i + 1) or 0
-                local b3 = text:byte(i + 2) or 0
+                local b2 = string_byte(text, i + 1) or 0
+                local b3 = string_byte(text, i + 2) or 0
                 cp = ((b1 % 0x10) * 0x1000) + ((b2 % 0x40) * 0x40) + (b3 % 0x40)
                 i = i + 3
             else
@@ -99,19 +103,19 @@ local function decode_and_translit(encoding, text)
         local big_endian = (encoding == 2)
         if encoding == 1 then  -- Проверить BOM
             if #text >= 2 then
-                local b1, b2 = text:byte(1), text:byte(2)
+                local b1, b2 = string_byte(text, 1), string_byte(text, 2)
                 if b1 == 0xFE and b2 == 0xFF then
                     big_endian = true
-                    text = text:sub(3)
+                    text = string_sub(text, 3)
                 elseif b1 == 0xFF and b2 == 0xFE then
                     big_endian = false
-                    text = text:sub(3)
+                    text = string_sub(text, 3)
                 end
             end
         end
         for j = 1, #text, 2 do
-            local high = text:byte(j) or 0
-            local low = text:byte(j + 1) or 0
+            local high = string_byte(text, j) or 0
+            local low = string_byte(text, j + 1) or 0
             local cp = big_endian and (high * 256 + low) or (low * 256 + high)
             if cp ~= 0 then
                 table_insert(codepoints, cp)
@@ -134,44 +138,44 @@ end
 -- Функции для чтения ID3 тегов
 local function readID3v1(data)
     if #data < 128 then return nil end
-    local tag = data:sub(-128)
-    if tag:sub(1, 3) ~= "TAG" then return nil end
+    local tag = string_sub(data, -128)
+    if string_sub(tag, 1, 3) ~= "TAG" then return nil end
     -- Для ID3v1 предполагаем encoding 0 (часто Windows-1251)
     return {
-        title = decode_and_translit(0, tag:sub(4, 33)),
-        artist = decode_and_translit(0, tag:sub(34, 63)),
-        album = decode_and_translit(0, tag:sub(64, 93)),
-        year = decode_and_translit(0, tag:sub(94, 97)),
-        comment = decode_and_translit(0, tag:sub(98, 125)),
-        genre = tag:byte(128)
+        title = decode_and_translit(0, string_sub(tag, 4, 33)),
+        artist = decode_and_translit(0, string_sub(tag, 34, 63)),
+        album = decode_and_translit(0, string_sub(tag, 64, 93)),
+        year = decode_and_translit(0, string_sub(tag, 94, 97)),
+        comment = decode_and_translit(0, string_sub(tag, 98, 125)),
+        genre = string_byte(tag, 128)
     }
 end
 
 local function readID3v2(data)
-    if data:sub(1, 3) ~= "ID3" then return nil end
-    local version = data:byte(4)
-    local revision = data:byte(5)
-    local flags = data:byte(6)
+    if string_sub(data, 1, 3) ~= "ID3" then return nil end
+    local version = string_byte(data, 4)
+    local revision = string_byte(data, 5)
+    local flags = string_byte(data, 6)
     local function decodeSyncSafe(b1, b2, b3, b4)
         return (b1 * 2097152) + (b2 * 16384) + (b3 * 128) + b4
     end
-    local size = decodeSyncSafe(data:byte(7), data:byte(8), data:byte(9), data:byte(10))
+    local size = decodeSyncSafe(string_byte(data, 7), string_byte(data, 8), string_byte(data, 9), string_byte(data, 10))
     local result = { version = version, revision = revision, title = "", artist = "", album = "" }
     local pos = 11
     while pos < size + 10 do
-        local frameID = data:sub( pos, pos + 3)
+        local frameID = string_sub(data, pos, pos + 3)
         if frameID == "" or frameID:match("^%z+$") then break end
         local frameSize
         if version == 4 then
-            frameSize = decodeSyncSafe(data:byte(pos + 4), data:byte(pos + 5), data:byte(pos + 6), data:byte(pos + 7))
+            frameSize = decodeSyncSafe(string_byte(data, pos + 4), string_byte(data, pos + 5), string_byte(data, pos + 6), string_byte(data, pos + 7))
         else
-            frameSize = data:byte(pos + 4) * 16777216 + data:byte(pos + 5) * 65536 + data:byte(pos + 6) * 256 + data:byte(pos + 7)
+            frameSize = string_byte(data, pos + 4) * 16777216 + string_byte(data, pos + 5) * 65536 + string_byte(data, pos + 6) * 256 + string_byte(data, pos + 7)
         end
-        local frameFlags = data:byte(pos + 8) * 256 + data:byte(pos + 9)
-        local frameData = data:sub(pos + 10, pos + 9 + frameSize)
+        local frameFlags = string_byte(data, pos + 8) * 256 + string_byte(data, pos + 9)
+        local frameData = string_sub(data, pos + 10, pos + 9 + frameSize)
         local function decodeText(data)
-            local encoding = data:byte(1) or 0
-            local text = data:sub(2)
+            local encoding = string_byte(data, 1) or 0
+            local text = string_sub(data, 2)
             return decode_and_translit(encoding, text)
         end
         if frameID == "TIT2" then result.title = decodeText(frameData)
@@ -189,9 +193,9 @@ local function readMP4Metadata(data)
         if pos > #data - 8 then
             return 0, "", pos
         end
-        local b = function(p) return data:byte(p) or 0 end
+        local b = function(p) return string_byte(data, p) or 0 end
         local size = b(pos) * 16777216 + b(pos+1) * 65536 + b(pos+2) * 256 + b(pos+3)
-        local atype = data:sub(pos+4, pos+7)
+        local atype = string_sub(data, pos+4, pos+7)
 
         -- extended size
         if size == 1 and pos + 16 <= #data then
@@ -203,7 +207,7 @@ local function readMP4Metadata(data)
     end
 
     local function safeReadUInt32(p)
-        local b = function(q) return data:byte(q) or 0 end
+        local b = function(q) return string_byte(data, q) or 0 end
         return b(p) * 16777216 + b(p+1) * 65536 + b(p+2) * 256 + b(p+3)
     end
 
@@ -225,7 +229,7 @@ local function readMP4Metadata(data)
 
                     -- читаємо внутрішній data-атом, який повинен починатися в itemPayload
                     local dataAtomSize = safeReadUInt32(itemPayload)
-                    local dataAtomType = data:sub(itemPayload+4, itemPayload+7)
+                    local dataAtomType = string_sub(data, itemPayload+4, itemPayload+7)
 
                     if dataAtomType == "data" then
                         -- payload of 'data' atom starts at itemPayload + 8
@@ -233,10 +237,10 @@ local function readMP4Metadata(data)
                         local valueStart = itemPayload + 8 + 8  -- -> itemPayload + 16
                         local valueEnd = itemPayload + dataAtomSize - 1
                         if valueStart <= valueEnd and valueEnd <= #data then
-                            local raw = data:sub(valueStart, valueEnd)
+                            local raw = string_sub(data, valueStart, valueEnd)
 
                             -- визначимо кодування: якщо починається з BOM utf16 -> використаємо encoding=1, інакше utf8
-                            local b1, b2 = raw:byte(1) or 0, raw:byte(2) or 0
+                            local b1, b2 = string_byte(raw,1) or 0, string_byte(raw,2) or 0
                             local encoding = 3 -- utf-8 за замовчуванням
                             if b1 == 0xFE and b2 == 0xFF or (b1 == 0xFF and b2 == 0xFE) then
                                 encoding = 1 -- UTF-16 (BOM)
@@ -380,7 +384,8 @@ term.setTextColor(colors.yellow)
 print("\nExample: folder/file")
 term.setTextColor(termTxtcol)
 
-os.queueEvent("paste", "home/Music/")
+local DefaultFolder = "home/Music/"
+os.queueEvent("paste", DefaultFolder)
 local fileSave = read()
 if checkExit(fileSave) then return end
 fileSave = fileSave .. ".dfpwm"
@@ -393,7 +398,7 @@ local function MAIN2()
     local success, response = pcall(http.post, "https://remote.craftos-pc.cc/music/upload", data, {["Content-Type"] = "application/octet-stream"})
     if not success then
         term.setTextColor(colors.red)
-        print("http.post error: " .. response)
+        print("http.post error: " .. response .. ", try again.")
         term.setTextColor(termTxtcol)
         return
     end
@@ -416,13 +421,13 @@ local function MAIN2()
     local dataPos = wavData:find("data", 1, true)
     local dfpwmRaw = wavData  -- По умолчанию весь файл
     if dataPos then
-        local b1 = wavData:byte(dataPos + 4) or 0
-        local b2 = wavData:byte(dataPos + 5) or 0
-        local b3 = wavData:byte(dataPos + 6) or 0
-        local b4 = wavData:byte(dataPos + 7) or 0
+        local b1 = string_byte(wavData, dataPos + 4) or 0
+        local b2 = string_byte(wavData, dataPos + 5) or 0
+        local b3 = string_byte(wavData, dataPos + 6) or 0
+        local b4 = string_byte(wavData, dataPos + 7) or 0
         local chunkSize = b1 + (b2 * 256) + (b3 * 65536) + (b4 * 16777216)
 
-        dfpwmRaw = wavData:sub(dataPos + 8, dataPos + 7 + chunkSize)
+        dfpwmRaw = string_sub(wavData, dataPos + 8, dataPos + 7 + chunkSize)
     else
         term.setTextColor(colors.red)
         print("Chunck 'data' not found! Saving file...")
@@ -445,4 +450,8 @@ local function MAIN2()
 end
 
 parallel.waitForAny(do_loading, MAIN2)
-os.sleep(1)
+
+term.setTextColor(colors.green)
+print("\nPress any key to exit.")
+term.setTextColor(termTxtcol)
+read()

@@ -1,17 +1,21 @@
+------------| СЕКЦИЯ ЛОКАЛИЗАЦИИ ФУНКЦИЙ |-----------
+local string_rep = string.rep
+local string_sub = string.sub
+local string_find = string.find
+local string_char = string.char
+local string_gmatch = string.gmatch
+local table_insert = table.insert
+local math_max = math.max
+local math_min = math.min
+local math_floor = math.floor
+-----------------------------------------------------
 --CC:Tweaked Lua Minecraft CraftOS bOS™
 --lib/ui.lua V3.1.2
 local UI = {}
 
 local c = require("cfunc")
 local expect = require("cc.expect")
-local dM = require("deskManager")
 local EVENTS = require("events")
-
-local string_rep = string.rep
-local string_sub = string.sub
-local string_find = string.find
-local string_char = string.char
-local table_insert = table.insert
 
 ---Basic *class*. Using automatically to create all another *classes*.
 ---@param root table
@@ -245,10 +249,10 @@ function UI.New_RadioButton(root,count,text,bg,txtcol)
         for i,_ in pairs(self.text) do
             if self.item == i then
                 c.write(string_char(7),self.pos.x,self.pos.y+i-1,self.bg,self.txtcol)
-                c.write(string_rep(" ",math.min(#self.text[i],1))..self.text[i],self.pos.x+1,self.pos.y+i-1,self.bg,self.txtcol)
+                c.write(string_rep(" ",math_min(#self.text[i],1))..self.text[i],self.pos.x+1,self.pos.y+i-1,self.bg,self.txtcol)
             else
                 c.write(string_char(7),self.pos.x,self.pos.y+i-1,self.bg,colors.gray)
-                c.write(string_rep(" ",math.min(#self.text[i],1))..self.text[i],self.pos.x+1,self.pos.y+i-1,self.bg,self.txtcol)
+                c.write(string_rep(" ",math_min(#self.text[i],1))..self.text[i],self.pos.x+1,self.pos.y+i-1,self.bg,self.txtcol)
             end
         end
     end
@@ -290,7 +294,7 @@ function UI.New_Label(root,text,bg,txtcol,align)
             table_insert(lines, self.text)
         else
             local mass = {}
-            for w in self.text:gmatch("%S+") do
+            for w in string_gmatch(self.text, "%S+") do
                 table_insert(mass, w)
             end
             local row_txt = ""
@@ -343,9 +347,9 @@ function UI.New_Label(root,text,bg,txtcol,align)
         elseif vert_align == "bottom" then
             start_y = self.pos.y + self.size.h - num_lines
         else  -- center
-            start_y = self.pos.y + math.floor((self.size.h - num_lines) / 2)
+            start_y = self.pos.y + math_floor((self.size.h - num_lines) / 2)
         end
-        start_y = math.max(start_y, self.pos.y)
+        start_y = math_max(start_y, self.pos.y)
 
         for i = self.pos.y, start_y - 1 do
             c.write(string_rep(" ", self.size.w), self.pos.x, i, bg_override, txtcol_override)
@@ -360,7 +364,7 @@ function UI.New_Label(root,text,bg,txtcol,align)
             elseif horiz_align == "right" then
                 x_pos = self.pos.x + self.size.w - line_len
             else  -- center
-                x_pos = self.pos.x + math.floor((self.size.w - line_len) / 2)
+                x_pos = self.pos.x + math_floor((self.size.w - line_len) / 2)
             end
             local left_pad = string_rep(" ", x_pos - self.pos.x)
             local right_pad = string_rep(" ", self.size.w - (x_pos - self.pos.x + line_len))
@@ -453,16 +457,16 @@ function UI.New_Shortcut(root, text, filepath, icopath,bg,txtcol)
     instance.draw = function(self)
         c.drawFilledBox(self.pos.x, self.pos.y, self.size.w + self.pos.x - 1, self.size.h + self.pos.y - 1, self.bg)
 
-        local dX = math.floor((self.size.w-self.blittle_img.width)/2) + self.pos.x
-        local dY = math.floor((self.size.h-1-self.blittle_img.height)/2) + self.pos.y
+        local dX = math_floor((self.size.w-self.blittle_img.width)/2) + self.pos.x
+        local dY = math_floor((self.size.h-1-self.blittle_img.height)/2) + self.pos.y
         blittle.draw(self.blittle_img, dX, dY)
         local txtcol = self.held and colors.lightGray or self.txtcol
         if #self.text >= self.size.w then
             c.write(string_sub(self.text, 1, self.size.w-2).."..",
             self.pos.x, dY + self.blittle_img.height,self.bg,txtcol)
         else
-            c.write(string_rep(" ",math.floor((self.size.w-#self.text)/2))..self.text..
-            string_rep(" ", self.size.w - (math.floor((self.size.w-#self.text)/2)+self.pos.x + #self.text)),
+            c.write(string_rep(" ",math_floor((self.size.w-#self.text)/2))..self.text..
+            string_rep(" ", self.size.w - (math_floor((self.size.w-#self.text)/2)+self.pos.x + #self.text)),
             self.pos.x, dY + self.blittle_img.height,self.bg,txtcol)
         end
     end
@@ -578,7 +582,7 @@ function UI.New_Running_Label(root, text, bg, txtcol, align, scroll_speed, gap)
         elseif horiz_align == "right" then
             x_pos = self.pos.x + self.size.w - #visible_text
         else  -- center
-            x_pos = self.pos.x + math.floor((self.size.w - #visible_text) / 2)
+            x_pos = self.pos.x + math_floor((self.size.w - #visible_text) / 2)
         end
 
         local left_pad = string_rep(" ", x_pos - self.pos.x)
@@ -655,7 +659,7 @@ function UI.New_Scrollbar(obj)
         c.write(string_char(31), self.pos.x, self.pos.y + self.size.h - 1, down_bg, down_fg)
 
         -- Ползунок
-        for y = slider_y_start, math.min(slider_y_start + slider_height - 1, self.pos.y + self.size.h - 2) do
+        for y = slider_y_start, math_min(slider_y_start + slider_height - 1, self.pos.y + self.size.h - 2) do
             c.write(" ", self.pos.x, y, self.txtcol, self.txtcol)  -- Filled pixel
         end
     end
@@ -672,14 +676,14 @@ function UI.New_Scrollbar(obj)
         local track_height = self:getTrackHeight()
         local total_items = self.obj.len or #self.obj.array
         local visible_items = self.obj.size.h
-        return math.max(1, c.round(track_height * (visible_items / total_items)))
+        return math_max(1, c.round(track_height * (visible_items / total_items)))
     end
     instance.getMaxSliderOffset = function(self)
-        return math.max(0, self:getTrackHeight() - self:getSliderHeight())
+        return math_max(0, self:getTrackHeight() - self:getSliderHeight())
     end
     instance.getSliderOffset = function(self)
         local max_offset = self:getMaxSliderOffset()
-        local scroll_fraction = (self.obj.scrollpos - 1) / math.max(1, self.obj.scrollmax - 1)
+        local scroll_fraction = (self.obj.scrollpos - 1) / math_max(1, self.obj.scrollmax - 1)
         return c.round(scroll_fraction * max_offset)
     end
     instance.checkIn = function(self,btn, x, y)
@@ -713,8 +717,8 @@ function UI.New_Scrollbar(obj)
             local track_height = self:getTrackHeight()
             local adj_denominator = track_height > 0 and (track_height - 1) or 1
             local scroll_fraction = track_y / adj_denominator
-            local new_scrollpos = math.floor(scroll_fraction * (self.obj.scrollmax - 1)) + 1
-            self.obj.scrollpos = math.max(1, math.min(new_scrollpos, self.obj.scrollmax))
+            local new_scrollpos = math_floor(scroll_fraction * (self.obj.scrollmax - 1)) + 1
+            self.obj.scrollpos = math_max(1, math_min(new_scrollpos, self.obj.scrollmax))
             self.obj.dirty = true
         end
         self.dirty = true
@@ -728,8 +732,8 @@ function UI.New_Scrollbar(obj)
         local adj_denominator = track_height > 0 and (track_height - 1) or 1
         local relative_y = y - (self.pos.y + 1) - self.drag_offset
         local scroll_fraction = relative_y / adj_denominator
-        local new_scrollpos = math.floor(scroll_fraction * (self.obj.scrollmax - 1)) + 1
-        self.obj.scrollpos = math.max(1, math.min(new_scrollpos, self.obj.scrollmax))
+        local new_scrollpos = math_floor(scroll_fraction * (self.obj.scrollmax - 1)) + 1
+        self.obj.scrollpos = math_max(1, math_min(new_scrollpos, self.obj.scrollmax))
         self.obj:onLayout()
         self.dirty = true
         return true
@@ -776,9 +780,9 @@ function UI.New_List(root,array,txtcol,bg)
     instance.scrollmax = 0
 
     instance.draw = function(self)
-        self.scrollmax = math.max(1, #self.array - self.size.h + 1)
-        self.scrollpos = math.max(1, math.min(self.scrollpos, self.scrollmax))
-        for i = self.scrollpos, math.min(self.size.h + self.scrollpos - 1, #self.array) do
+        self.scrollmax = math_max(1, #self.array - self.size.h + 1)
+        self.scrollpos = math_max(1, math_min(self.scrollpos, self.scrollmax))
+        for i = self.scrollpos, math_min(self.size.h + self.scrollpos - 1, #self.array) do
             c.write(string_sub(self.array[i]..string_rep(" ",self.size.w-#self.array[i]), 1, self.size.w), self.pos.x, (i-self.scrollpos)+self.pos.y, self.bg, self.txtcol)
         end
         if self.item and self.item_index then
@@ -800,7 +804,7 @@ function UI.New_List(root,array,txtcol,bg)
     end
     instance.pressed = function(self) end
     instance.onMouseScroll = function(self,dir,x,y)
-        local MinMax = math.min(math.max(self.scrollpos+dir,1),self.scrollmax)
+        local MinMax = math_min(math_max(self.scrollpos+dir,1),self.scrollmax)
         if self.scrollpos ~= MinMax then
             self.scrollpos = MinMax
             self:updateDirty()
@@ -831,15 +835,15 @@ function UI.New_List(root,array,txtcol,bg)
     instance.onKeyDown = function(self,key, held)
         if self.item then
             if key == keys.up then
-                self.item_index = math.max(self.item_index-1,1)
+                self.item_index = math_max(self.item_index-1,1)
                 self.item = self.array[self.item_index]
             if self.item_index < self.scrollpos then
                 self:onMouseScroll(1)
             end
             elseif key == keys.down then
-                self.item_index = math.min(self.item_index+1,#self.array)
+                self.item_index = math_min(self.item_index+1,#self.array)
                 self.item = self.array[self.item_index]
-            if self.item_index > math.min(self.size.h + self.scrollpos - 1, #self.array) then
+            if self.item_index > math_min(self.size.h + self.scrollpos - 1, #self.array) then
                 self:onMouseScroll(-1)
             end
             elseif key == keys.home then
@@ -896,7 +900,7 @@ function UI.New_Textfield(root,bg,txtcol,hint,hidden)
             c.write(self.hint..string_rep(" ",self.size.w-#self.hint),self.pos.x,self.pos.y,self.bg,colors.lightGray)
         else
             term.setCursorPos(bX,self.pos.y)
-            c.write(string_sub(text, self.writePos + 1, math.min(#self.text,self.writePos+self.size.w))..string_rep(" ",self.size.w-#self.text+self.writePos),self.pos.x,self.pos.y,self.bg,self.txtcol)
+            c.write(string_sub(text, self.writePos + 1, math_min(#self.text,self.writePos+self.size.w))..string_rep(" ",self.size.w-#self.text+self.writePos),self.pos.x,self.pos.y,self.bg,self.txtcol)
         end
         if bX < self.pos.x or bX > self.pos.x+self.size.w-1 then term.setCursorBlink(false)
         elseif self.root.focus == self then
@@ -904,7 +908,7 @@ function UI.New_Textfield(root,bg,txtcol,hint,hidden)
         end
     end
     instance.moveCursorPos = function(self,pos)
-        self.offset = math.min(math.max(pos,1),#self.text+1)
+        self.offset = math_min(math_max(pos,1),#self.text+1)
         if self.offset - self.writePos > self.size.w then
             self.writePos = self.offset - self.size.w
         elseif self.offset - self.writePos < 1 then
@@ -912,7 +916,7 @@ function UI.New_Textfield(root,bg,txtcol,hint,hidden)
         end
     end
     instance.onMouseScroll = function(self,btn,x,y)
-        self.writePos = math.min(math.max(self.writePos - btn,0), #self.text-self.size.w+1)
+        self.writePos = math_min(math_max(self.writePos - btn,0), #self.text-self.size.w+1)
         self.dirty = true
         return true
     end
@@ -954,8 +958,8 @@ function UI.New_Textfield(root,bg,txtcol,hint,hidden)
     end
     instance.onKeyDown = function(self,key,held)
         if key == keys.backspace then
-            self.text = string_sub(self.text, 1, math.max(self.offset - 2, 0))..string_sub(self.text, self.offset, #self.text)
-            self.writePos = math.max(self.writePos - 1,0)
+            self.text = string_sub(self.text, 1, math_max(self.offset - 2, 0))..string_sub(self.text, self.offset, #self.text)
+            self.writePos = math_max(self.writePos - 1,0)
             self:moveCursorPos(self.offset-1)
         elseif key == keys.delete then
             self.text = string_sub(self.text, 1, self.offset - 1) .. string_sub(self.text, self.offset + 1, #self.text)
@@ -1167,7 +1171,7 @@ function UI.New_Dropdown(root, array, bg, txtcol, defaultValue, maxSizeW, orient
     end
     instance.pressed = function(self) end
     instance.onMouseDown = function(self,btn, x, y)
-        if (y - self.pos.y) > 0 then self.item_index = math.min(math.max(y - self.pos.y, 1), #self.array) end
+        if (y - self.pos.y) > 0 then self.item_index = math_min(math_max(y - self.pos.y, 1), #self.array) end
         self.expanded = not self.expanded
         if self.expanded == false then self.parent:onLayout() else self.dirty = true end
         self:pressed()
@@ -1204,7 +1208,7 @@ function UI.New_Slider(root, arr, bg, txtcol, defaultPosition, txtcol2)
         -- Calculate thumb position if N > 0
         if N > 0 then
             local i = self.slidePosition
-            local offset = (N == 1) and 0 or math.floor((i - 1) / (N - 1) * (W - 1))
+            local offset = (N == 1) and 0 or math_floor((i - 1) / (N - 1) * (W - 1))
             local thumb_x = self.pos.x + offset
             -- Overlay thumb (use a different char, e.g., █ or slider thumb equivalent)
             c.write(" ", thumb_x, self.pos.y, self.txtcol, self.bg)
@@ -1220,8 +1224,8 @@ function UI.New_Slider(root, arr, bg, txtcol, defaultPosition, txtcol2)
 
         if N > 0 and self.size.w > 1 then  -- Avoid div by zero
             local offset = x - self.pos.x
-            local raw_index = math.floor((offset / (self.size.w - 1) * (N - 1)) + 0.5) + 1
-            self.slidePosition = math.max(1, math.min(N, raw_index))
+            local raw_index = math_floor((offset / (self.size.w - 1) * (N - 1)) + 0.5) + 1
+            self.slidePosition = math_max(1, math_min(N, raw_index))
         end
         self.dirty = true
     end
@@ -1328,18 +1332,18 @@ function UI.New_MsgWin(root,string)
     if string == "INFO" then
         btnOK = UI.New_Button(root," OK ")
         btnOK.reSize = function(self)
-            self.pos = {x=math.floor((self.parent.size.w-self.size.w)/2)+self.parent.pos.x,y=self.parent.size.h+self.parent.pos.y-1}
+            self.pos = {x=math_floor((self.parent.size.w-self.size.w)/2)+self.parent.pos.x,y=self.parent.size.h+self.parent.pos.y-1}
         end
         instance:addChild(btnOK)
     elseif string == "YES,NO" then
         instance.btnYES = UI.New_Button(root," YES ")
         instance.btnYES.reSize = function(self)
-            self.pos = {x=math.floor((self.parent.size.w)/2)-self.size.w+self.parent.pos.x,y=self.parent.size.h+self.parent.pos.y-1}
+            self.pos = {x=math_floor((self.parent.size.w)/2)-self.size.w+self.parent.pos.x,y=self.parent.size.h+self.parent.pos.y-1}
         end
         instance:addChild(instance.btnYES)
         btnOK = UI.New_Button(root," NO ")
         btnOK.reSize = function(self)
-            self.pos = {x=math.floor((self.parent.size.w)/2)+1+self.parent.pos.x,y=self.parent.size.h+self.parent.pos.y-1}
+            self.pos = {x=math_floor((self.parent.size.w)/2)+1+self.parent.pos.x,y=self.parent.size.h+self.parent.pos.y-1}
         end
         instance:addChild(btnOK)
     end
@@ -1356,7 +1360,7 @@ function UI.New_MsgWin(root,string)
         c.write(string_rep(string_char(140), self.size.w-2)..string_char(148), self.pos.x+1, self.pos.y,self.bg, self.txtcol)
         c.write(string_char(151), self.pos.x, self.pos.y, self.txtcol, self.bg)
         c.write(string_char(138)..string_rep(string_char(140), self.size.w-2)..string_char(133), self.pos.x, self.size.h+self.pos.y-1,self.bg, self.txtcol)
-        c.write(self.title, math.floor((self.size.w - #self.title)/2) + self.pos.x, self.pos.y, self.bg, self.txtcol)
+        c.write(self.title, math_floor((self.size.w - #self.title)/2) + self.pos.x, self.pos.y, self.bg, self.txtcol)
     end
     instance.callWin = function(self,title,msg)
         self.root.modal = self
@@ -1410,13 +1414,13 @@ function UI.New_DialWin(root)
 
     instance.btnOK = UI.New_Button(root," OK ")
     instance.btnOK.reSize = function(self)
-        self.pos = {x=math.floor((self.parent.size.w)/2-#self.text-1)+self.parent.pos.x,y=self.parent.size.h+self.parent.pos.y-1}
+        self.pos = {x=math_floor((self.parent.size.w)/2-#self.text-1)+self.parent.pos.x,y=self.parent.size.h+self.parent.pos.y-1}
     end
     instance:addChild(instance.btnOK)
 
     local btnCANCEL = UI.New_Button(root," CANCEL ")
     btnCANCEL.reSize = function(self)
-        self.pos = {x=math.floor(self.parent.size.w/2)+self.parent.pos.x,y=self.parent.size.h+self.parent.pos.y-1}
+        self.pos = {x=math_floor(self.parent.size.w/2)+self.parent.pos.x,y=self.parent.size.h+self.parent.pos.y-1}
     end
     instance:addChild(btnCANCEL)
 
@@ -1432,7 +1436,7 @@ function UI.New_DialWin(root)
         c.write(string_rep(string_char(140), self.size.w-2)..string_char(148), self.pos.x+1, self.pos.y,self.bg, self.txtcol)
         c.write(string_char(151), self.pos.x, self.pos.y, self.txtcol, self.bg)
         c.write(string_char(138)..string_rep(string_char(140), self.size.w-2)..string_char(133), self.pos.x, self.size.h+self.pos.y-1,self.bg, self.txtcol)
-        c.write(self.title, math.floor((self.size.w - #self.title)/2) + self.pos.x, self.pos.y, self.bg, self.txtcol)
+        c.write(self.title, math_floor((self.size.w - #self.title)/2) + self.pos.x, self.pos.y, self.bg, self.txtcol)
     end
     instance.callWin = function(self,title,msg)
         self.root.modal = self
@@ -1450,7 +1454,7 @@ function UI.New_DialWin(root)
     end
     instance.reSize = function(self)
         self.size = {w=24,h=4}
-        self.pos = {x=math.floor((self.root.size.w-self.size.w)/2),y=math.floor((self.root.size.h-self.size.h)/2)}
+        self.pos = {x=math_floor((self.root.size.w-self.size.w)/2),y=math_floor((self.root.size.h-self.size.h)/2)}
     end
     local temp_onLayout = instance.onLayout
     instance.onLayout = function(self)
@@ -1672,7 +1676,7 @@ function UI.New_Keyboard(root)
     end
     instance.reSize = function(self)
         self.size = {w=21,h=7}
-        self.pos = {x=math.floor((self.root.size.w-self.size.w)/2)+1,y=self.root.size.h-self.size.h+1}
+        self.pos = {x=math_floor((self.root.size.w-self.size.w)/2)+1,y=self.root.size.h-self.size.h+1}
     end
     local temp_onLayout = instance.onLayout
     instance.onLayout = function (self)
@@ -1765,7 +1769,7 @@ function UI.New_ScrollBox(root,bg)
         self.dirty = true
         temp_onLayout(self)
         for _,child in pairs(self.child) do
-            self.scrollmax = math.max(math.max(self.scrollmax, child.pos.y + child.size.h-1+self.scrollpos)-self.size.h,1)
+            self.scrollmax = math_max(math_max(self.scrollmax, child.pos.y + child.size.h-1+self.scrollpos)-self.size.h,1)
             if child.pos.y+child.size.h > self.pos.y and child.pos.y <= self.pos.y+self.size.h-1 then
                 table_insert(self.visibleChild,child)
             end
@@ -1773,7 +1777,7 @@ function UI.New_ScrollBox(root,bg)
         self.len = self.scrollmax + self.size.h - 1
     end
     instance.onMouseScroll = function(self,dir,x,y)
-        local MinMax = math.min(math.max(self.scrollpos+dir,1),self.scrollmax)
+        local MinMax = math_min(math_max(self.scrollpos+dir,1),self.scrollmax)
         if self.scrollpos ~= MinMax then
             self.scrollpos = MinMax
             self:updateDirty()

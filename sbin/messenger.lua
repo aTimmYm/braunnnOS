@@ -1,5 +1,12 @@
+------------| СЕКЦИЯ ЛОКАЛИЗАЦИИ ФУНКЦИЙ |-----------
+local table_insert = table.insert
+local table_sort = table.sort
+local table_unpack = table.unpack
+-----------------------------------------------------
 -------| СЕКЦИЯ ПОДКЛЮЧЕНИЯ БИБЛИОТЕК И ROOT |-------
-package.path = package.path .. ";/sbin/Messenger_data/?" .. ";/sbin/Messenger_data/?.lua"
+--package.path = package.path .. ";/sbin/Messenger_data/?" .. ";/sbin/Messenger_data/?.lua"
+local c = require("cfunc")
+local UI = require("ui")
 local root = UI.New_Root()
 -----------------------------------------------------
 -----| СЕКЦИЯ ОБЪЯВЛЕНИЯ ПЕРЕМЕННЫХ ПРОГРАММЫ |------
@@ -92,7 +99,7 @@ local function drawMessage(msg,direction)
         self.size.w = self.parent.size.w
     end
 
-    table.insert(texts, label)
+    table_insert(texts, label)
     msgScrollBox:addChild(label)
     msgScrollBox:onLayout()
 
@@ -105,9 +112,9 @@ end
 local function drawFriendsButtons()
     friendsSort = {}
     for k,_ in pairs(friends) do
-        table.insert(friendsSort, k)
+        table_insert(friendsSort, k)
     end
-    table.sort(friendsSort)
+    table_sort(friendsSort)
     usersList.child = {}
     for i,v in pairs(friendsSort) do
         local userButton = UI.New_Button(root," "..tostring(v),colors.black,colors.white,"left")
@@ -179,7 +186,7 @@ local client_type = {
         local friendsFile = fs.open("sbin/Messenger_Data/friends","w")
         friendsFile.write("return "..textutils.serialize(response.friends))
         friendsFile.close()
-        friends = {table.unpack(response.friends)}
+        friends = {table_unpack(response.friends)}
         drawFriendsButtons()
     end,
     ["send"] = function (response)

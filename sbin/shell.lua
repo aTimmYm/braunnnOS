@@ -1,7 +1,14 @@
+------------| СЕКЦИЯ ЛОКАЛИЗАЦИИ ФУНКЦИЙ |-----------
+local table_unpack = table.unpack
+local coroutine_resume = coroutine.resume
+local coroutine_create = coroutine.create
+local coroutine_status = coroutine.status
+-----------------------------------------------------
 -------| СЕКЦИЯ ПОДКЛЮЧЕНИЯ БИБЛИОТЕК И ROOT |-------
-
-local root = UI.New_Root()
+local UI = require("ui")
+local c = require("cfunc")
 local EVENTS = require("events")
+local root = UI.New_Root()
 -----------------------------------------------------
 -----| СЕКЦИЯ ОБЪЯВЛЕНИЯ ПЕРЕМЕННЫХ ПРОГРАММЫ |------
 if bOS.shell then return end
@@ -12,7 +19,7 @@ local args = {...}
 local shellWindow = window.create(term.current(),1,2,root.size.w,root.size.h-1,true)
 local shellFunc = loadfile("rom/programs/shell.lua", _ENV)
 local prev_term = term.redirect(shellWindow)
-root.coroutine = coroutine.create(shellFunc)
+root.coroutine = coroutine_create(shellFunc)
 term.redirect(prev_term)
 -----------------------------------------------------
 ----------| СЕКЦИЯ ИНИЦИАЛИЗАЦИИ ОБЪЕКТОВ |----------
@@ -36,14 +43,14 @@ surface:addChild(buttonClose)
 local buttonKeyboard = UI.New_Button(root,"K",colors.white,colors.black)
 surface:addChild(buttonKeyboard)
 -----------------------------------------------------
---table.unpack(shell_evt)
+--table_unpack(shell_evt)
 ------| СЕКЦИЯ ОБЪЯВЛЕНИЯ ФУНКЦИЙ ПРОГРАММЫ |--------
-local function coroutine_resume(co,...)
+local function resume_coroutine(co,...)
     term.redirect(shellWindow)
-    local success, err = coroutine.resume(co,...)
+    local success, err = coroutine_resume(co,...)
     if not success then
         error("Coroutine error: "..tostring(err))
-    elseif coroutine.status(co) == "dead" then
+    elseif coroutine_status(co) == "dead" then
         root.coroutine = nil
         root.running_program = false
     end
@@ -71,18 +78,18 @@ end
 
 root.mainloop = function(self)
     self:show()
-    coroutine_resume(self.coroutine,table.unpack(args))
+    resume_coroutine(self.coroutine,table_unpack(args))
     while self.running_program do
         local evt = {os.pullEventRaw()}
         --dbg.print(textutils.serialise(evt))
-        local shell_evt = {table.unpack(evt)}
+        local shell_evt = {table_unpack(evt)}
         if EVENTS.TOP[shell_evt[1]] then
             shell_evt[4] = shell_evt[4]-1
         end
         if self.keyboard:onEvent(evt) then
-            coroutine_resume(self.coroutine)
+            resume_coroutine(self.coroutine)
         else
-            coroutine_resume(self.coroutine,table.unpack(shell_evt))
+            resume_coroutine(self.coroutine,table_unpack(shell_evt))
         end
         if evt[1] == "terminate" then
             c.termClear(self.bg)

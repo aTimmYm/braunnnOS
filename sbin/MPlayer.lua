@@ -1,5 +1,23 @@
+------------| СЕКЦИЯ ЛОКАЛИЗАЦИИ ФУНКЦИЙ |-----------
+local string_char = string.char
+local string_find = string.find
+local string_lower = string.lower
+local string_gmatch = string.gmatch
+local table_insert = table.insert
+local table_sort = table.sort
+local table_unpack = table.unpack
+local coroutine_resume = coroutine.resume
+local coroutine_create = coroutine.create
+local coroutine_status = coroutine.status
+local coroutine_yield = coroutine.yield
+local math_max = math.max
+local math_min = math.min
+local math_floor = math.floor
+-----------------------------------------------------
 -------| СЕКЦИЯ ПОДКЛЮЧЕНИЯ БИБЛИОТЕК И ROOT |-------
 local dfpwm = require("cc.audio.dfpwm")
+local c = require("cfunc")
+local UI = require("ui")
 local root = UI.New_Root()
 -----------------------------------------------------
 -----| СЕКЦИЯ ОБЪЯВЛЕНИЯ ПЕРЕМЕННЫХ ПРОГРАММЫ |------
@@ -57,7 +75,7 @@ surface:addChild(btnAlbum)
 local label = UI.New_Label(root, "MPlayer", colors.white, colors.black)
 label.reSize = function(self)
     self.size.w = #self.text
-    self.pos.x = math.floor((self.parent.size.w-self.size.w)/2)+1
+    self.pos.x = math_floor((self.parent.size.w-self.size.w)/2)+1
 end
 surface:addChild(label)
 
@@ -160,20 +178,20 @@ btnVolume.reSize = function(self)
     self.size.w = 3
 end
 btnVolume.draw = function(self)
-    c.write(string.char(145), self.pos.x, self.pos.y, self.txtcol, self.parent.bg)
+    c.write(string_char(145), self.pos.x, self.pos.y, self.txtcol, self.parent.bg)
     if conf["volume"] ~= 0 then
-        c.write(string.char(157), self.pos.x+1, self.pos.y, self.txtcol, self.parent.bg)
-        c.write(string.char(132), self.pos.x+2, self.pos.y, self.parent.bg, self.txtcol)
+        c.write(string_char(157), self.pos.x+1, self.pos.y, self.txtcol, self.parent.bg)
+        c.write(string_char(132), self.pos.x+2, self.pos.y, self.parent.bg, self.txtcol)
     else
         c.write("x ",self.pos.x+1, self.pos.y, self.parent.bg, self.txtcol)
     end
 end
 box2:addChild(btnVolume)
 
-local pause = UI.New_Button(root, "|"..string.char(16), colors.gray, colors.white)
+local pause = UI.New_Button(root, "|"..string_char(16), colors.gray, colors.white)
 pause.play = false
 pause.draw = function(self)
-    local bg, txtcol, text = self.parent.bg, self.txtcol, "|"..string.char(16)
+    local bg, txtcol, text = self.parent.bg, self.txtcol, "|"..string_char(16)
     if self.play then text = "||" end
     if self.held then
         c.write(text, self.pos.x, self.pos.y, txtcol, bg)
@@ -182,7 +200,7 @@ pause.draw = function(self)
     end
 end
 pause.reSize = function(self)
-    self.pos.x = math.floor((self.parent.size.w - self.size.w) / 2) + 1
+    self.pos.x = math_floor((self.parent.size.w - self.size.w) / 2) + 1
     self.pos.y = self.parent.pos.y + 1
 end
 local temp_onEvent = pause.onEvent
@@ -190,21 +208,21 @@ pause.onEvent = function(self,evt)
     temp_onEvent(self,evt)
     if evt[1] == "pause_music" then
         self.play = false
-        self:setText("|"..string.char(16))
+        self:setText("|"..string_char(16))
     elseif evt[1] == "play_next" then
         btnNext:pressed()
     end
 end
 box2:addChild(pause)
 
-local btnNext = UI.New_Button(root, string.char(16).."|", colors.gray, colors.white)
+local btnNext = UI.New_Button(root, string_char(16).."|", colors.gray, colors.white)
 btnNext.reSize = function(self)
     self.pos.x = pause.pos.x + pause.size.w + 1
     self.pos.y = pause.pos.y
 end
 box2:addChild(btnNext)
 
-local btnPrev = UI.New_Button(root, "|"..string.char(17), colors.gray, colors.white)
+local btnPrev = UI.New_Button(root, "|"..string_char(17), colors.gray, colors.white)
 btnPrev.reSize = function(self)
     self.pos.x = pause.pos.x - self.size.w - 1
     self.pos.y = pause.pos.y
@@ -268,7 +286,7 @@ totalTimeLabel.reSize = function(self)
 end
 box2:addChild(totalTimeLabel)
 
-local btnVolumeUp = UI.New_Button(root,string.char(30),colors.gray,colors.white)
+local btnVolumeUp = UI.New_Button(root,string_char(30),colors.gray,colors.white)
 btnVolumeUp.reSize = function (self)
     self.pos = {x=self.parent.size.w-1,y=self.parent.pos.y}
 end
@@ -279,7 +297,7 @@ volumeLabel.reSize = function (self)
     self.size.w = 2
 end
 
-local btnVolumeDown = UI.New_Button(root,string.char(31),colors.gray,colors.white)
+local btnVolumeDown = UI.New_Button(root,string_char(31),colors.gray,colors.white)
 btnVolumeDown.reSize = function (self)
     self.pos = {x=self.parent.size.w-1,y=self.parent.pos.y+2}
 end
@@ -305,9 +323,9 @@ adaptive()
 local function getConf()
     local val = ""
     if conf["play_next"] then
-        val = string.char(167)
+        val = string_char(167)
     else
-        val = string.char(173)
+        val = string_char(173)
     end
     return val
 end
@@ -319,8 +337,8 @@ local function getTotalSeconds(path)
 end
 
 local function format_time(sec)
-    sec = math.floor(sec)
-    local min = math.floor(sec / 60)
+    sec = math_floor(sec)
+    local min = math_floor(sec / 60)
     local s = sec % 60
     return string.format("%02d:%02d", min, s)
 end
@@ -344,7 +362,7 @@ local function cacheUpdate()
     -- 1. Ищем новые файлы (есть на диске, нет в кеше)
     for _, v in pairs(arr) do
         if not cache[v] then
-            table.insert(newFiles, v)
+            table_insert(newFiles, v)
             cacheModified = true -- Нашли новый файл, кеш нужно обновить
         end
     end
@@ -353,7 +371,7 @@ local function cacheUpdate()
     local removedFiles = {}
     for filename, _ in pairs(cache) do
         if not onDiskFiles[filename] then
-            table.insert(removedFiles, filename)
+            table_insert(removedFiles, filename)
             cacheModified = true -- Нашли удаленный файл, кеш нужно обновить
         end
     end
@@ -377,22 +395,22 @@ local function cacheUpdate()
             local total_sec = getTotalSeconds(Path .. v)
             total_sec = format_time(total_sec)
 
-            local tailRead = math.min(8192, fileSize)
+            local tailRead = math_min(8192, fileSize)
             local tail = ""
             if tailRead > 0 then
                 -- Обернем в pcall на случай ошибки доступа
-                pcall(function() handle:seek("set", math.max(0, fileSize - tailRead)) end)
+                pcall(function() handle:seek("set", math_max(0, fileSize - tailRead)) end)
                 tail = handle:read(tailRead) or ""
             end
 
             local meta_start, meta_end = nil, nil
             if tail and #tail > 0 then
                 local marker = "--METADATA--"
-                local s = tail:find(marker, 1, true)
+                local s = string_find(tail, marker, 1, true)
                 if s then
                     meta_start = (fileSize - #tail) + s
                     local e_marker = "--ENDMETADATA--"
-                    local e = tail:find(e_marker, s + #marker, true)
+                    local e = string_find(tail, e_marker, s + #marker, true)
                     if e then
                         meta_end = (fileSize - #tail) + e + #e_marker - 1
                     end
@@ -408,10 +426,10 @@ local function cacheUpdate()
                     if not s then return "" end
                     return (s:gsub("^%s+", ""):gsub("%s+$", ""))
                 end
-                for ln in meta_block:gmatch("([^\r\n]+)") do
+                for ln in string_gmatch(meta_block, "([^\r\n]+)") do
                     local k, v = ln:match("^%s*(%a+):%s*(.*)")
                     if k and v then
-                        k = k:lower()
+                        k = string_lower(k)
                         if k == "title" or k == "artist" or k == "album" then
                             metadata[k] = trim(v)
                         end
@@ -453,11 +471,11 @@ cacheUpdate()
 sortedCache = {}
 artistS = {}
 for k,v in pairs(cache) do
-    table.insert(sortedCache, k)
-    table.insert(artistS, v.artist)
+    table_insert(sortedCache, k)
+    table_insert(artistS, v.artist)
 end
-table.sort(sortedCache)
-table.sort(artistS)
+table_sort(sortedCache)
+table_sort(artistS)
 
 local function getTotalChunks(path)
     local size = fs.getSize(path)
@@ -493,7 +511,7 @@ local function runMusic(path, start_chunk)
     end
 
     -- Prepare coroutine to stream only the audio bytes (exclude appended metadata)
-    root.coroutine[1] = coroutine.create(function()
+    root.coroutine[1] = coroutine_create(function()
         -- Re-open handle in coroutine scope to ensure proper position handling
         local h = io.open(path, "rb")
         if not h then error("Failed to open file: " .. path) end
@@ -526,7 +544,7 @@ local function runMusic(path, start_chunk)
         while true do
             local cur_pos = h:seek("cur") or 0
             if cur_pos >= data_end then break end
-            local to_read = math.min(CHUNK_SIZE, data_end - cur_pos)
+            local to_read = math_min(CHUNK_SIZE, data_end - cur_pos)
             if to_read <= 0 then break end
             local chunk = h:read(to_read)
             if not chunk then break end
@@ -534,7 +552,7 @@ local function runMusic(path, start_chunk)
             while not bOS.speaker.playAudio(buffer, volume) do
                 os.pullEvent("speaker_audio_empty")
             end
-            coroutine.yield(current_chunk)
+            coroutine_yield(current_chunk)
             current_chunk = current_chunk + 1
         end
         h:close()
@@ -581,11 +599,11 @@ local function startTrack(filename, isTogglePause)
 end
 
 for i,v in pairs(sortedCache) do
-    local trackPlay = UI.New_Button(root,string.char(16),colors.black,colors.white)
+    local trackPlay = UI.New_Button(root,string_char(16),colors.black,colors.white)
     trackPlay.play = false
     trackPlay.draw = function(self)
-        local bg, txtcol, text = self.parent.bg, self.txtcol, string.char(16)
-        if self.play then text = string.char(15) end
+        local bg, txtcol, text = self.parent.bg, self.txtcol, string_char(16)
+        if self.play then text = string_char(15) end
         if self.held then
             c.write(" "..text.." ", self.pos.x, self.pos.y, txtcol, bg)
         else
@@ -597,7 +615,7 @@ for i,v in pairs(sortedCache) do
         self.size.w = 3
     end
     boxAll:addChild(trackPlay)
-    table.insert(trackButtons, trackPlay)
+    table_insert(trackButtons, trackPlay)
     local trackLabel = UI.New_Label(root,v,colors.black,colors.white,"left")
     trackLabel.reSize = function(self)
         self.pos = {x = trackPlay.pos.x + trackPlay.size.w, y = trackPlay.pos.y}
@@ -729,16 +747,16 @@ end
 btnOptionAutoNext.pressed = function(self)
     if conf["play_next"] == true then
         conf["play_next"] = false
-        self:setText(string.char(173))
+        self:setText(string_char(173))
     else
         conf["play_next"] = true
-        self:setText(string.char(167))
+        self:setText(string_char(167))
     end
     c.saveConf(confPath, conf)
 end
 
 btnVolumeUp.pressed = function (self)
-    local temp = math.min(tonumber(volumeLabel.text)+1,10)
+    local temp = math_min(tonumber(volumeLabel.text)+1,10)
     volume = volumes[temp]
     conf["volume"] = volume
     c.saveConf(confPath, conf)
@@ -747,7 +765,7 @@ btnVolumeUp.pressed = function (self)
 end
 
 btnVolumeDown.pressed = function (self)
-    local temp = math.max(tonumber(volumeLabel.text)-1,1)
+    local temp = math_max(tonumber(volumeLabel.text)-1,1)
     volume = volumes[temp]
     conf["volume"] = volume
     c.saveConf(confPath, conf)
@@ -757,7 +775,7 @@ end
 
 root.timeLine.pressed = function(self,btn, x, y)
     if btn == 1 and played[1] then
-        local new_pos = math.max(1, math.min(#self.arr, math.floor((x - self.pos.x) / self.size.w * #self.arr) + 1))
+        local new_pos = math_max(1, math_min(#self.arr, math_floor((x - self.pos.x) / self.size.w * #self.arr) + 1))
         self.slidePosition = new_pos
         self.root.seek_to = new_pos
         self.dirty = true
@@ -769,7 +787,7 @@ root.timeLine.pressed = function(self,btn, x, y)
 end
 
 local function resume_coroutine(co, ...)
-    local success, result = coroutine.resume(co, ...)
+    local success, result = coroutine_resume(co, ...)
     if success and result and type(result) == "string" then
         root.expected_event = result
         return true, nil
@@ -801,7 +819,7 @@ root.mainloop = function(self)
             currentTimeLabel:setText(format_time(current_sec))
         end
 
-        if self.coroutine[1] and not self.coroutine[2] and coroutine.status(self.coroutine[1]) == "suspended" and not self.expected_event then
+        if self.coroutine[1] and not self.coroutine[2] and coroutine_status(self.coroutine[1]) == "suspended" and not self.expected_event then
             local success, current_chunk = resume_coroutine(self.coroutine[1])
             if success then
                 if current_chunk then
@@ -818,7 +836,7 @@ root.mainloop = function(self)
                 self.coroutine = {}
                 self.expected_event = nil
             end
-            if coroutine.status(self.coroutine[1]) == "dead" then
+            if coroutine_status(self.coroutine[1]) == "dead" then
                 self.coroutine = {}
                 self.expected_event = nil
                 if conf["play_next"] then
@@ -833,7 +851,7 @@ root.mainloop = function(self)
 
         local event_used = false
         if self.coroutine[1] and self.expected_event and evt[1] == self.expected_event then
-            local success, current_chunk = resume_coroutine(self.coroutine[1], table.unpack(evt))
+            local success, current_chunk = resume_coroutine(self.coroutine[1], table_unpack(evt))
             self.expected_event = nil
             event_used = true
             if success then
@@ -850,7 +868,7 @@ root.mainloop = function(self)
                 infoWin:callWin(" Coroutine error ", tostring(current_chunk))
                 self.coroutine = {}
             end
-            if coroutine.status(self.coroutine[1]) == "dead" then
+            if coroutine_status(self.coroutine[1]) == "dead" then
                 self.coroutine = {}
                 os.queueEvent("pause_music")
             end

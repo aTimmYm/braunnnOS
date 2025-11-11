@@ -1,4 +1,13 @@
+------------| СЕКЦИЯ ЛОКАЛИЗАЦИИ ФУНКЦИЙ |-----------
+local string_rep = string.rep
+local string_sub = string.sub
+local string_char = string.char
+local string_gmatch = string.gmatch
+local table_insert = table.insert
+-----------------------------------------------------
 -------| СЕКЦИЯ ПОДКЛЮЧЕНИЯ БИБЛИОТЕК И ROOT |-------
+local c = require("cfunc")
+local UI = require("ui")
 local root = UI.New_Root()
 -----------------------------------------------------
 -----| СЕКЦИЯ ОБЪЯВЛЕНИЯ ПЕРЕМЕННЫХ ПРОГРАММЫ |------
@@ -11,7 +20,7 @@ local files_to_update = {}
 
 local dropdownChooseArr = {}
 for k, _ in pairs(PALETTE) do
-    table.insert(dropdownChooseArr, k)
+    table_insert(dropdownChooseArr, k)
 end
 -----------------------------------------------------
 ----------| СЕКЦИЯ ИНИЦИАЛИЗАЦИИ ОБЪЕКТОВ |----------
@@ -174,14 +183,14 @@ currCols.draw = function (self)
     c.write(" ", self.pos.x+2, self.pos.y, colors.lightGray)
     c.write(" ", self.pos.x+3, self.pos.y, colors.gray)
 
-    c.write(string.char(149),self.pos.x-1,self.pos.y,colors.red,colors.black)
-    c.write(string.char(149),self.pos.x+4,self.pos.y,colors.black,colors.red)
-    c.write(string.char(144),self.pos.x+4,self.pos.y-1,colors.black,colors.red)
-    c.write(string.char(129),self.pos.x+4,self.pos.y+1,colors.black,colors.red)
-    c.write(string.char(159),self.pos.x-1,self.pos.y-1,colors.red,colors.black)
-    c.write(string.char(130),self.pos.x-1,self.pos.y+1,colors.black,colors.red)
-    c.write(string.rep(string.char(143),4),self.pos.x,self.pos.y-1,colors.red,colors.black)
-    c.write(string.rep(string.char(131),4),self.pos.x,self.pos.y+1,colors.black,colors.red)
+    c.write(string_char(149),self.pos.x-1,self.pos.y,colors.red,colors.black)
+    c.write(string_char(149),self.pos.x+4,self.pos.y,colors.black,colors.red)
+    c.write(string_char(144),self.pos.x+4,self.pos.y-1,colors.black,colors.red)
+    c.write(string_char(129),self.pos.x+4,self.pos.y+1,colors.black,colors.red)
+    c.write(string_char(159),self.pos.x-1,self.pos.y-1,colors.red,colors.black)
+    c.write(string_char(130),self.pos.x-1,self.pos.y+1,colors.black,colors.red)
+    c.write(string_rep(string_char(143),4),self.pos.x,self.pos.y-1,colors.red,colors.black)
+    c.write(string_rep(string_char(131),4),self.pos.x,self.pos.y+1,colors.black,colors.red)
 end
 page3:addChild(currCols)
 
@@ -201,7 +210,7 @@ page3:addChild(dropdownChoose)
 local page4 = UI.New_Box(root)
 reSizePages(page4)
 
-local braunnnOS = UI.New_Label(root,string.char(223).."raunnnOS")
+local braunnnOS = UI.New_Label(root,string_char(223).."raunnnOS")
 braunnnOS.reSize = function (self)
     self.pos = {x = self.parent.pos.x+1, y = self.parent.pos.y + 1}
     self.size.w = #self.text
@@ -242,9 +251,9 @@ end
 
 local function translateServerManifest(manifest)
     local arr = {}
-    for line in manifest:gmatch("([^\n]+)\n?") do
-        local key = line:sub(1,32)
-        local value = line:sub(36)
+    for line in string_gmatch(manifest, "([^\n]+)\n?") do
+        local key = string_sub(line, 1, 32)
+        local value = string_sub(line, 36)
         arr[key] = value
     end
     return arr
@@ -255,13 +264,13 @@ local function checkUpdates(manifest)
     if server_manifest then
         local manifest_old = {}
         for line in io.lines("manifest.txt") do
-            local key = line:sub(1,32)
-            local value = line:sub(36)
+            local key = string_sub(line, 1, 32)
+            local value = string_sub(line, 36)
             manifest_old[key] = value
         end
         for i,v in pairs(server_manifest) do
             if not manifest_old[i] then
-                table.insert(files_to_update,v)
+                table_insert(files_to_update,v)
             end
         end
         if files_to_update[1] then return true

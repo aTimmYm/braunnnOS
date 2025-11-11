@@ -2,8 +2,8 @@
 if bOS.init then error("bOS is already running!") end
 bOS.init = true
 package.path = package.path .. ";/lib/?" .. ";/lib/?.lua"
-c = require("cfunc")
-UI = require("ui")
+local c = require("cfunc")
+local UI = require("ui")
 local PALETTE = require("palette")
 local conf = c.readConf("usr/settings.conf")
 local dM = require("deskManager")

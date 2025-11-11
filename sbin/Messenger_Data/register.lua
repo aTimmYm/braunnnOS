@@ -1,4 +1,9 @@
+------------| СЕКЦИЯ ЛОКАЛИЗАЦИИ ФУНКЦИЙ |-----------
+local math_floor = math.floor
+-----------------------------------------------------
 -------| СЕКЦИЯ ПОДКЛЮЧЕНИЯ БИБЛИОТЕК И ROOT |-------
+local c = require("cfunc")
+local UI = require("ui")
 local root = UI.New_Root()
 -----------------------------------------------------
 -----| СЕКЦИЯ ОБЪЯВЛЕНИЯ ПЕРЕМЕННЫХ ПРОГРАММЫ |------
@@ -33,48 +38,48 @@ surface:addChild(buttonClose)
 local msgLabel = UI.New_Label(root, "", _, _, "center")
 msgLabel.reSize = function(self)
     self.size.w = self.parent.size.w
-    self.pos = {x = 1, y = math.floor(self.parent.size.h/2)-2}
+    self.pos = {x = 1, y = math_floor(self.parent.size.h/2)-2}
 end
 main_box:addChild(msgLabel)
 
 local textfieldLogin = UI.New_Textfield(root, colors.gray, _, "Login")
 textfieldLogin.reSize = function(self)
     self.size.w = 10
-    self.pos = {x=math.floor((self.parent.size.w-self.size.w)/2),y=math.floor(self.parent.size.h/2)}
+    self.pos = {x=math_floor((self.parent.size.w-self.size.w)/2),y=math_floor(self.parent.size.h/2)}
 end
 main_box:addChild(textfieldLogin)
 
 local textfieldPassword = UI.New_Textfield(root, colors.gray, _, "Password", true)
 textfieldPassword.reSize = function(self)
     self.size.w = 10
-    self.pos = {x=math.floor((self.parent.size.w-self.size.w)/2),y=math.floor(self.parent.size.h/2)+2}
+    self.pos = {x=math_floor((self.parent.size.w-self.size.w)/2),y=math_floor(self.parent.size.h/2)+2}
 end
 main_box:addChild(textfieldPassword)
 
 local buttonRegister = UI.New_Button(root, "Register", colors.lightGray)
 buttonRegister.reSize = function(self)
     self.size.w = 10
-    self.pos = {x=math.floor((self.parent.size.w-self.size.w)/2)-6,y=math.floor(self.parent.size.h/2)+4}
+    self.pos = {x=math_floor((self.parent.size.w-self.size.w)/2)-6,y=math_floor(self.parent.size.h/2)+4}
 end
 main_box:addChild(buttonRegister)
 
 local buttonLogin = UI.New_Button(root, "Login", colors.lightGray)
 buttonLogin.reSize = function(self)
     self.size.w = 10
-    self.pos = {x=math.floor((self.parent.size.w-self.size.w)/2)+5,y=math.floor(self.parent.size.h/2)+4}
+    self.pos = {x=math_floor((self.parent.size.w-self.size.w)/2)+5,y=math_floor(self.parent.size.h/2)+4}
 end
 main_box:addChild(buttonLogin)
 
 local rememberMeLablel = UI.New_Label(root, "Remember Me")
 rememberMeLablel.reSize = function(self)
     self.size.w = 11
-    self.pos = {x=math.floor((self.parent.size.w-self.size.w)/2)+1,y=math.floor(self.parent.size.h/2)+6}
+    self.pos = {x=math_floor((self.parent.size.w-self.size.w)/2)+1,y=math_floor(self.parent.size.h/2)+6}
 end
 main_box:addChild(rememberMeLablel)
 
 local rememberMeCheckbox = UI.New_Checkbox(root, colors.gray)
 rememberMeCheckbox.reSize = function(self)
-    self.pos = {x=rememberMeLablel.pos.x-2,y=math.floor(self.parent.size.h/2)+6}
+    self.pos = {x=rememberMeLablel.pos.x-2,y=math_floor(self.parent.size.h/2)+6}
 end
 main_box:addChild(rememberMeCheckbox)
 -----------------------------------------------------
