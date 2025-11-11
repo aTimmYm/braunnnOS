@@ -9,14 +9,14 @@ a65296abd8f0d4b19bf3f0c331045603   home/Games/Chess/Chess_Data/obj_classes
 2903687f05934f792116a26eccfce165   lib/deskManager.lua
 916edb95e57cc65c7090dcee6352b973   lib/events
 0e8430925597fb135103b506fe2c669f   lib/palette
-88ba9375f7472982fa10e2ffa8a42abd   lib/ui.lua
+4d645c45e55af1a567301d4a721f759b   lib/ui.lua
 d41d8cd98f00b204e9800998ecf8427e   new_manifest.txt
 4f5c0bcf6ceffdd9b22cee8f44ad4402   sbin/MPlayer.lua
 7e554e61628f2c4328fbffc85cd20e8f   sbin/MPlayer_Data/MusicAlbum.ico
 4461760019647e8a2ddf428b038b5fa8   sbin/MPlayer_Data/volume.ico
 1db4a3f4437bef794f553a8d148015de   sbin/Messenger_Data/register.lua
 ee8ad5afa31e6f4a4b42ece82a71261a   sbin/calculator.lua
-aa4362ee7797dd6a37fa158774558a4f   sbin/explorer.lua
+46f27bd87d3bf19ad615ed28ae914852   sbin/explorer.lua
 6d73676cc347e3afa96d4a9c8296ca4c   sbin/ico/Chess.ico
 89b0b700ec66f8f1128e5783e1d32e86   sbin/ico/calculator.ico
 d85ee7513ea6d48e84ddb2323ef64052   sbin/ico/default.ico
