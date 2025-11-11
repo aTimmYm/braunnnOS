@@ -5,7 +5,7 @@ d05119ae7307b31058fed885744757ee   home/Games/Chess/Chess_Data/interface_classes
 a65296abd8f0d4b19bf3f0c331045603   home/Games/Chess/Chess_Data/obj_classes
 7d85f25da668a6b6daa9812727ce7c9e   init.lua
 653aeeef4cb942e75783d78d5adfe846   lib/blittle
-c14734232a0f4047de69a8bfb5f7d2ff   lib/cfunc.lua
+56e620c1c3a5d158c06a77aa60c2c4c1   lib/cfunc.lua
 2903687f05934f792116a26eccfce165   lib/deskManager.lua
 916edb95e57cc65c7090dcee6352b973   lib/events
 0e8430925597fb135103b506fe2c669f   lib/palette
@@ -25,7 +25,7 @@ f420705bb6aeced24f1e2dcdbc818ff0   sbin/ico/explorer.ico
 22b8b48e5600d9073054d8f003e3c832   sbin/ico/player.ico
 bbbb8a0f7aab18dc6179ff64a6dae421   sbin/ico/settings.ico
 6bacd99cdcd6a49fdbd4efab032efee4   sbin/ico/shell.ico
-6cb3057b1920812711447f3c54f94fff   sbin/messenger.lua
+c06e3c2c05aae888fde1ae4ba55855c4   sbin/messenger.lua
 043e1d6d670a26b97daca2089f1e35c5   sbin/polygon.lua
 74a8c7925a14e7d8b4192286ff2d909d   sbin/settings.lua
 4be76586ea71b0c1268e49ac5f824aeb   sbin/shell.lua
