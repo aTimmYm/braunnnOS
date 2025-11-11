@@ -6,6 +6,7 @@ local string_lower = string.lower
 local string_byte = string.byte
 local table_insert = table.insert
 local table_sort = table.sort
+local fs = fs
 -----------------------------------------------------
 -------| СЕКЦИЯ ПОДКЛЮЧЕНИЯ БИБЛИОТЕК И ROOT |-------
 local c = require("cfunc")
