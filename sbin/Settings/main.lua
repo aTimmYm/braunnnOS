@@ -254,28 +254,34 @@ local function translateServerManifest(manifest)
     for line in string_gmatch(manifest, "([^\n]+)\n?") do
         local key = string_sub(line, 1, 32)
         local value = string_sub(line, 36)
-        arr[key] = value
+        arr[value] = key
     end
     return arr
 end
 
 local function checkUpdates(manifest)
+    local ret = false
     local server_manifest, err = translateServerManifest(manifest)
     if server_manifest then
         local manifest_old = {}
         for line in io.lines("manifest.txt") do
             local key = string_sub(line, 1, 32)
             local value = string_sub(line, 36)
-            manifest_old[key] = value
+            manifest_old[value] = key
         end
-        for i,v in pairs(server_manifest) do
-            if not manifest_old[i] then
-                table_insert(files_to_update,v)
+        for file,_ in pairs(manifest_old) do
+            if not server_manifest[file] then
+                fs.delete(file)
+                ret = true
             end
         end
-        if files_to_update[1] then return true
-        elseif not files_to_update[1] then return false
+        for file,hash in pairs(server_manifest) do
+            if not manifest_old[file] or manifest_old[file] ~= hash then
+                table_insert(files_to_update,file)
+                ret = true
+            end
         end
+        return ret
     end
 end
 -----------------------------------------------------
@@ -341,6 +347,7 @@ buttonCheckUpdate.pressed = function (self)
     response.close()
     if response then
         if checkUpdates(manifest) then
+            c.printTable(files_to_update)
             for _,v in pairs(files_to_update) do
                 local request = http.get("https://raw.githubusercontent.com/aTimmYm/braunnnOS/refs/heads/main/"..v)
                 if request then
