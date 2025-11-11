@@ -21,7 +21,7 @@ if not fs.exists("sbin/Messenger_Data/friends") then
     file.write("return {}")
     file.close()
 end
-local friends = require("friends")
+local friends = require("sbin.Messenger_Data.friends")
 local protocol = "messenger"
 local friendsSort = {}
 local selectedFriend = {}

@@ -68,6 +68,7 @@ function M.round(x)
 end
 
 function M.openFile(root,path,args)
+    local UI = require("ui")
     local func, load_err = loadfile(path, _ENV)
     if not func then
         local infoWin = UI.New_MsgWin(root,"INFO")
