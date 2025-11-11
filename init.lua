@@ -56,7 +56,7 @@ surface:addChild(btnModem)
 -----------------------------------------------------
 ------| СЕКЦИЯ ОБЪЯВЛЕНИЯ ФУНКЦИЙ ПРОГРАММЫ |--------
 root:layoutChild()
-dM.readShortcuts()
+--dM.readShortcuts()
 dM.makeDesktops(surface)
 dM.makeShortcuts()
 dM.setRadio(radioButton_horizontal)

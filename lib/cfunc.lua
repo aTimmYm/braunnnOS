@@ -68,15 +68,28 @@ function M.round(x)
 end
 
 function M.openFile(root,path,args)
-    local UI = require("ui")
-    local func, load_err = loadfile(path, _ENV)
+    local safe_env = {}
+    setmetatable(safe_env, { __index = _G })
+    safe_env.require = require
+    safe_env.shell = shell
+    safe_env.os.reboot = nil
+    safe_env.os.shutdown = nil
+    safe_env.os.loadAPI = function ()
+        return error("USE REQUIRE YOU LITTLE SHIT")
+    end
+
+    safe_env.bOS = nil
+    safe_env.root = nil
+    local func, load_err = loadfile(path, safe_env)
     if not func then
+        local UI = require("ui")
         local infoWin = UI.New_MsgWin(root,"INFO")
         infoWin:callWin(" Load error ",tostring(load_err))
     else
         M.termClear()
         local ret, exec_err = pcall(func,args)
         if not ret then
+            local UI = require("ui")
             local infoWin = UI.New_MsgWin(root,"INFO")
             infoWin:callWin(" ERROR ",tostring(exec_err))
         end

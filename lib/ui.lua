@@ -426,6 +426,7 @@ function UI.New_Button(root,text,bg,txtcol,align)
     return instance
 end
 
+
 ---Creating new *object* of *class*
 ---@param root table
 ---@param text string|nil
@@ -443,14 +444,13 @@ function UI.New_Shortcut(root, text, filepath, icopath,bg,txtcol)
     expect(6, txtcol, "number", "nil")
 
     local instance = UI.New_Button(root,text,bg,txtcol)
-    instance.icoPath = icopath or "sbin/ico/default.ico"
-    instance.needArgs = {}
-
-    if fs.exists(filepath) then
-       instance.filePath = filepath
+    if icopath and fs.exists(icopath) then
+        instance.icoPath = icopath
     else
-        return error("File doesn't exist")
+        instance.icoPath = "sbin/icon_default.ico"
     end
+    instance.needArgs = {}
+    instance.filePath = filepath
     instance.blittle_img = blittle.load(instance.icoPath)
     instance.size = {w=instance.blittle_img.width,h=instance.blittle_img.height + 1}
 
@@ -460,14 +460,14 @@ function UI.New_Shortcut(root, text, filepath, icopath,bg,txtcol)
         local dX = math_floor((self.size.w-self.blittle_img.width)/2) + self.pos.x
         local dY = math_floor((self.size.h-1-self.blittle_img.height)/2) + self.pos.y
         blittle.draw(self.blittle_img, dX, dY)
-        local txtcol = self.held and colors.lightGray or self.txtcol
+        local txtcol_override = self.held and colors.lightGray or self.txtcol
         if #self.text >= self.size.w then
             c.write(string_sub(self.text, 1, self.size.w-2).."..",
-            self.pos.x, dY + self.blittle_img.height,self.bg,txtcol)
+            self.pos.x, dY + self.blittle_img.height,self.bg,txtcol_override)
         else
             c.write(string_rep(" ",math_floor((self.size.w-#self.text)/2))..self.text..
             string_rep(" ", self.size.w - (math_floor((self.size.w-#self.text)/2)+self.pos.x + #self.text)),
-            self.pos.x, dY + self.blittle_img.height,self.bg,txtcol)
+            self.pos.x, dY + self.blittle_img.height,self.bg,txtcol_override)
         end
     end
 
@@ -540,6 +540,7 @@ function UI.New_Running_Label(root, text, bg, txtcol, align, scroll_speed, gap)
     end
     local temp_draw = instance.draw
     instance.draw = function (self,bg_override, txtcol_override)
+        if self.root.modal then return end
         bg_override = bg_override or self.bg
         txtcol_override = txtcol_override or self.txtcol
         self:checkScrolling()

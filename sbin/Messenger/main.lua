@@ -11,17 +11,17 @@ local root = UI.New_Root()
 -----------------------------------------------------
 -----| СЕКЦИЯ ОБЪЯВЛЕНИЯ ПЕРЕМЕННЫХ ПРОГРАММЫ |------
 local texts = {}
-if not fs.exists("sbin/Messenger_Data/account_key") then
-    local file = fs.open("sbin/Messenger_Data/account_key","w")
+if not fs.exists("sbin/Messenger/Data/account_key") then
+    local file = fs.open("sbin/Messenger/Data/account_key","w")
     file.close()
 end
-local account_key = c.readFile("sbin/Messenger_Data/account_key")
-if not fs.exists("sbin/Messenger_Data/friends") then
-    local file = fs.open("sbin/Messenger_Data/friends","w")
+local account_key = c.readFile("sbin/Messenger/Data/account_key")
+if not fs.exists("sbin/Messenger/Data/friends") then
+    local file = fs.open("sbin/Messenger/Data/friends","w")
     file.write("return {}")
     file.close()
 end
-local friends = require("sbin.Messenger_Data.friends")
+local friends = require("sbin.Messenger.Data.friends")
 local protocol = "messenger"
 local friendsSort = {}
 local selectedFriend = {}
@@ -29,7 +29,7 @@ local a = 1000
 local serverID = rednet.lookup(protocol, "messenger_main")
 -----------------------------------------------------
 if not account_key then
-    local func = loadfile("sbin/Messenger_Data/register.lua", _ENV)
+    local func = loadfile("sbin/Messenger/Data/register.lua", _ENV)
     local ret, exec_err = pcall(func)
 
     if not ret then

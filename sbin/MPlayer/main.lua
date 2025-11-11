@@ -37,13 +37,13 @@ local sortedCache = {}
 local trackButtons = {}
 local artistS = {}
 
-if not fs.exists("sbin/MPlayer_Data/cache") then
-    local file = fs.open("sbin/MPlayer_Data/cache","w")
+if not fs.exists("sbin/MPlayer/Data/cache") then
+    local file = fs.open("sbin/MPlayer/Data/cache","w")
     file.write("return {}")
     file.close()
 end
-local cache = require("sbin/MPlayer_Data/cache")
-local confPath = "sbin/MPlayer_Data/player.conf"
+local cache = require("sbin/MPlayer/Data/cache")
+local confPath = "sbin/MPlayer/Data/player.conf"
 if not fs.exists(confPath) then
     local file = fs.open(confPath,"w")
     file.write("play_next=true\nvolume=1")
@@ -162,7 +162,7 @@ scrollboxAlbum:addChild(numCompose)
 local box2 = UI.New_Box(root, colors.gray)
 box2.draw = function(self)
     c.drawFilledBox(self.pos.x, self.pos.y, self.size.w + self.pos.x - 1, self.size.h + self.pos.y - 1, self.bg)
-    if self.root.size.w > 41 then blittle.draw(blittle.load("sbin/MPlayer_Data/MusicAlbum.ico"), self.pos.x+1, self.pos.y) end
+    if self.root.size.w > 41 then blittle.draw(blittle.load("sbin/MPlayer/Data/MusicAlbum.ico"), self.pos.x+1, self.pos.y) end
 end
 box2.reSize = function(self)
     self.pos = {x = 1, y = self.parent.size.h - 4}

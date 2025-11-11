@@ -1,3 +1,16 @@
+if fs.exists("sbin/ico") then fs.delete("sbin/ico") end
+if fs.exists("sbin/MPlayer_Data") then fs.delete("sbin/MPlayer_Data") end
+if fs.exists("sbin/MPlayer.lua") then fs.delete("sbin/MPlayer.lua") end
+if fs.exists("sbin/Messenger_Data") then fs.delete("sbin/Messenger_Data") end
+if fs.exists("sbin/messenger.lua") then fs.delete("sbin/messenger.lua") end
+if fs.exists("sbin/shell.lua") then fs.delete("sbin/shell.lua") end
+if fs.exists("sbin/settings.lua") then fs.delete("sbin/settings.lua") end
+if fs.exists("sbin/polygon.lua") then fs.delete("sbin/polygon.lua") end
+if fs.exists("sbin/MPlayer.lua") then fs.delete("sbin/MPlayer.lua") end
+if fs.exists("sbin/messenger.lua") then fs.delete("sbin/messenger.lua") end
+if fs.exists("sbin/explorer.lua") then fs.delete("sbin/explorer.lua") end
+if fs.exists("sbin/calculator.lua") then fs.delete("sbin/calculator.lua") end
+
 if bOS then error("System is already running!") end
 _G.bOS = {}
 bOS.start = bOS

@@ -19,7 +19,9 @@ local spacing_y = 1  -- Отступ по Y между рядами (можно 
 local Parent
 local Radio
 
-local allLines = {}
+local system_apps = fs.list("sbin")
+--local user_apps = fs.list("/usr/bin")
+--local allLines = {}
 local desktops = {}
 
 local maxRows
@@ -35,7 +37,7 @@ local currdesk = 1
 
 local sum
 
-function dM.readShortcuts()
+--[[function dM.readShortcuts()
     local i, j = 1, 0
     for line in io.lines("usr/sys.conf") do
         j = j + 1
@@ -47,10 +49,11 @@ function dM.readShortcuts()
         table_insert(allLines, j, oneLine)
         i = 1
     end
-end
+end]]
 
 function dM.updateNumDesks()
-    num_shortcuts = #allLines
+    num_shortcuts = #system_apps--+#user_apps
+    --num_shortcuts = #allLines
 
     maxCols = math_floor(desk_width/(shortcut_width + spacing_x - 1))
     maxRows = math_floor(desk_height/(shortcut_height + spacing_y - 1))
@@ -126,11 +129,58 @@ end
 
 function dM.makeShortcuts()
 -- Автоматическое размещение ярлыков в сетке
-    num_shortcuts = #allLines
     local col = 1
     local row = 1
     local d = 1
-    for k = 1, num_shortcuts do
+    for _,v in pairs(system_apps) do
+        local shortcut = UI.New_Shortcut(Parent.root, v, "sbin/"..v.."/main.lua", "sbin/"..v.."/icon.ico")
+        if v == "Paint" then shortcut.needArgs[1] = true end
+        --if v == "converter" then shortcut.needArgs[1] = true shortcut.needArgs[2] = "converter_main.lua" end
+        shortcut.offset_X = (col - 1) * (shortcut_width + spacing_x)
+        shortcut.offset_Y = (row - 1) * (shortcut_height + spacing_y)
+        shortcut.reSize = function (self)
+            self.pos = {x = self.parent.pos.x + self.offset_X, y = self.parent.pos.y + self.offset_Y}
+            self.size = {w = shortcut_width, h = shortcut_height}
+        end
+        desktops[d]:addChild(shortcut)
+        -- Переход к следующему столбцу/ряду
+        col = col + 1
+        if col > maxCols then
+            col = 1
+            row = row + 1
+        end
+
+        if k == d*(maxRows*maxCols) then
+            d = d + 1
+            col = 1
+            row = 1
+        end
+    end
+    --[[for _,v in pairs(user_apps) do
+        local shortcut = UI.New_Shortcut(Parent.root, v, v.."/main.lua", v.."/icon.ico")
+        if v == "Paint" then shortcut.needArgs[1] = true end
+        --if v == "converter" then shortcut.needArgs[1] = true shortcut.needArgs[2] = "converter_main.lua" end
+        shortcut.offset_X = (col - 1) * (shortcut_width + spacing_x)
+        shortcut.offset_Y = (row - 1) * (shortcut_height + spacing_y)
+        shortcut.reSize = function (self)
+            self.pos = {x = self.parent.pos.x + self.offset_X, y = self.parent.pos.y + self.offset_Y}
+            self.size = {w = shortcut_width, h = shortcut_height}
+        end
+        desktops[d]:addChild(shortcut)
+        -- Переход к следующему столбцу/ряду
+        col = col + 1
+        if col > maxCols then
+            col = 1
+            row = row + 1
+        end
+
+        if k == d*(maxRows*maxCols) then
+            d = d + 1
+            col = 1
+            row = 1
+        end
+    end]]
+    --[[for k = 1, num_shortcuts do
         local line = allLines[k]
         if #line ~= 3 then
             -- Пропускаем некорректные строки (если в строке не ровно 3 элемента)
@@ -167,7 +217,7 @@ function dM.makeShortcuts()
             col = 1
             row = 1
         end
-    end
+    end]]
 end
 
 function dM.selectDesk(num)
@@ -188,4 +238,5 @@ function dM.tResize()
     Radio:changeCount(num_desks)
     Radio.item = currdesk
 end
+
 return dM
