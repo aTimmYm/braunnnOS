@@ -28,7 +28,7 @@ ce1141430c9c33e9a821463a68ab4d69   sbin/Messenger/Data/friends
 e800c8883926c2131e240ceb8358ecd8   sbin/Messenger/main.lua
 043e1d6d670a26b97daca2089f1e35c5   sbin/Polygon/main.lua
 bbbb8a0f7aab18dc6179ff64a6dae421   sbin/Settings/icon.ico
-74a8c7925a14e7d8b4192286ff2d909d   sbin/Settings/main.lua
+187cbba8de64b71fb6cab4108a8b95a5   sbin/Settings/main.lua
 6bacd99cdcd6a49fdbd4efab032efee4   sbin/Shell/icon.ico
 4be76586ea71b0c1268e49ac5f824aeb   sbin/Shell/main.lua
 d85ee7513ea6d48e84ddb2323ef64052   sbin/icon_default.ico
