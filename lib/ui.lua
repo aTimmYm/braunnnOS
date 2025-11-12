@@ -10,7 +10,7 @@ local math_min = math.min
 local math_floor = math.floor
 -----------------------------------------------------
 --CC:Tweaked Lua Minecraft CraftOS bOS™
---lib/ui.lua V3.1.2
+--lib/ui.lua v4.0
 local UI = {}
 
 local c = require("cfunc")

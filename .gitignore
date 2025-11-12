@@ -1,8 +1,8 @@
-/sbin/Messenger/Data/account_key
-/sbin/Messenger/Data/friends
-/home/Music/
-/NFP
-/usr/settings.conf
+sbin/Messenger/Data/account_key
+sbin/Messenger/Data/friends
+home/Music/
+NFP
+usr/settings.conf
 manifest.txt
 sbin/MPlayer/Data/player.conf
 sbin/MPlayer/Data/cache
