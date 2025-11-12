@@ -442,7 +442,7 @@ local function cacheUpdate()
 
     -- 4. Если были изменения (новые ИЛИ удаленные файлы), перезаписываем файл кеша
     if cacheModified then
-        local cacheFile, err = fs.open("sbin/MPlayer_Data/cache", "w")
+        local cacheFile, err = fs.open("sbin/MPlayer/Data/cache", "w")
         if not cacheFile then
             print(err)
             return
@@ -451,8 +451,8 @@ local function cacheUpdate()
         cacheFile.close()
 
         -- 5. Перезагружаем модуль кеша, чтобы программа использовала актуальные данные
-        package.loaded["sbin/MPlayer_Data/cache"] = nil
-        cache = require("sbin/MPlayer_Data/cache")
+        package.loaded["sbin/MPlayer/Data/cache"] = nil
+        cache = require("sbin/MPlayer/Data/cache")
     end
 end
 cacheUpdate()

@@ -104,7 +104,7 @@ end
 local client_type = {
     ["login"] = function (response)
         if response.login == "success" then
-            local account_key = fs.open("sbin/Messenger_Data/account_key","w")
+            local account_key = fs.open("sbin/Messenger/Data/account_key","w")
             account_key.write(response.key)
             account_key.close()
             os.queueEvent("terminate")

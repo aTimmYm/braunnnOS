@@ -4,7 +4,6 @@ local table_sort = table.sort
 local table_unpack = table.unpack
 -----------------------------------------------------
 -------| СЕКЦИЯ ПОДКЛЮЧЕНИЯ БИБЛИОТЕК И ROOT |-------
---package.path = package.path .. ";/sbin/Messenger_data/?" .. ";/sbin/Messenger_data/?.lua"
 local c = require("cfunc")
 local UI = require("ui")
 local root = UI.New_Root()
@@ -37,7 +36,7 @@ if not account_key then
         --read()
         return
     end
-    account_key = c.readFile("sbin/Messenger_Data/account_key")
+    account_key = c.readFile("sbin/Messenger/Data/account_key")
     rednet.send(serverID,{cType = "get_friends", user = account_key},protocol)
 end
 ----------| СЕКЦИЯ ИНИЦИАЛИЗАЦИИ ОБЪЕКТОВ |----------
@@ -166,7 +165,7 @@ local client_type = {
             print(response.error)
         elseif response.add == "success" then
             friends[response.username] = response.key
-            local friendsFile = fs.open("sbin/Messenger_Data/friends","w")
+            local friendsFile = fs.open("sbin/Messenger/Data/friends","w")
             friendsFile.write("return "..textutils.serialize(friends))
             friendsFile.close()
             drawFriendsButtons()
@@ -183,7 +182,7 @@ local client_type = {
         end
     end,
     ["get_friends"] = function (response)
-        local friendsFile = fs.open("sbin/Messenger_Data/friends","w")
+        local friendsFile = fs.open("sbin/Messenger/Data/friends","w")
         friendsFile.write("return "..textutils.serialize(response.friends))
         friendsFile.close()
         friends = {table_unpack(response.friends)}
