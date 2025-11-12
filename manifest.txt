@@ -19,8 +19,6 @@ f420705bb6aeced24f1e2dcdbc818ff0   sbin/Explorer/icon.ico
 4461760019647e8a2ddf428b038b5fa8   sbin/MPlayer/Data/volume.ico
 22b8b48e5600d9073054d8f003e3c832   sbin/MPlayer/icon.ico
 91512df4788f3b72ddb873f5c0b22da1   sbin/MPlayer/main.lua
-49220d51fd1ab4992c02efabc3fba53c   sbin/Messenger/Data/account_key
-ce1141430c9c33e9a821463a68ab4d69   sbin/Messenger/Data/friends
 1db4a3f4437bef794f553a8d148015de   sbin/Messenger/Data/register.lua
 117de29ab363f7522b3bbbd0d133235d   sbin/Messenger/icon.ico
 e800c8883926c2131e240ceb8358ecd8   sbin/Messenger/main.lua
