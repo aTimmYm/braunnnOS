@@ -85,11 +85,11 @@ local extensions = {
                 break
             end
         end
-        if not is_protected then c.openFile(root,"sbin/shell.lua",fullPath) end
+        if not is_protected then c.openFile(root,"sbin/Shell/main.lua",fullPath) end
         return true
     end,
     [".conf"] = function (item,fullPath)
-        c.openFile(root,"sbin/shell.lua","edit "..item)
+        c.openFile(root,"sbin/Shell/main.lua","edit "..item)
         return true
     end,
     [".nfp"] = function (item,fullPath)

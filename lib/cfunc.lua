@@ -69,34 +69,41 @@ end
 
 function M.openFile(root,path,args)
     local safe_env = {}
-    setmetatable(safe_env, { __index = _G })
+    setmetatable(safe_env, { __index = _G })  -- Доступ к _G, но осторожно с overrides
+
     safe_env.require = require
-    safe_env.shell = shell
+    safe_env.shell = shell  -- Если shell опасен, затени и его
+
+    -- Создаём прокси для os, чтобы безопасно overriding
+    safe_env.os = setmetatable({}, { __index = _G.os })
     safe_env.os.reboot = nil
     safe_env.os.shutdown = nil
-    safe_env.os.loadAPI = function ()
-        return error("USE REQUIRE YOU LITTLE SHIT")
+    safe_env.os.loadAPI = function()
+        return error("Use require instead os.loadAPI")
     end
 
     safe_env.bOS = nil
     safe_env.root = nil
-    local func, load_err = loadfile(path, safe_env)
+
+    -- Load с mode и env
+    local func, load_err = loadfile(path, "t", safe_env)  -- "t" для text, или "bt" если нужно
     if not func then
         local UI = require("ui")
-        local infoWin = UI.New_MsgWin(root,"INFO")
-        infoWin:callWin(" Load error ",tostring(load_err))
+        local infoWin = UI.New_MsgWin(root, "INFO")
+        infoWin:callWin(" Load error ", tostring(load_err))
     else
         M.termClear()
-        local ret, exec_err = pcall(func,args)
+        local ret, exec_err = pcall(func, args)
         if not ret then
             local UI = require("ui")
-            local infoWin = UI.New_MsgWin(root,"INFO")
-            infoWin:callWin(" ERROR ",tostring(exec_err))
+            local infoWin = UI.New_MsgWin(root, "INFO")
+            infoWin:callWin(" ERROR ", tostring(exec_err))
         end
     end
     term.setCursorBlink(false)
     os.queueEvent("term_resize")
 end
+
 
 function M.readFile(filePath)
     local lines = {}
