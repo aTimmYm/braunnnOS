@@ -169,6 +169,8 @@ end
 
 textfield.pressed = function (self)
     label:setText(textfield.text)
+    self:onFocus(false)
+    self.root.focus = nil
 end
 
 radioButton.pressed = function (self)

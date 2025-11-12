@@ -347,7 +347,6 @@ buttonCheckUpdate.pressed = function (self)
     response.close()
     if response then
         if checkUpdates(manifest) then
-            c.printTable(files_to_update)
             for _,v in pairs(files_to_update) do
                 local request = http.get("https://raw.githubusercontent.com/aTimmYm/braunnnOS/refs/heads/main/"..v)
                 if request then

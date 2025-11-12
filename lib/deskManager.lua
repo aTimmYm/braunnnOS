@@ -19,6 +19,10 @@ local spacing_y = 1  -- Отступ по Y между рядами (можно 
 local Parent
 local Radio
 
+local APP_ROOT_PATH = "sbin/"
+local APP_MAIN_SUFFIX = "/main.lua"
+local APP_ICON_SUFFIX = "/icon.ico"
+
 local system_apps = fs.list("sbin")
 --local user_apps = fs.list("/usr/bin")
 --local allLines = {}
@@ -37,23 +41,8 @@ local currdesk = 1
 
 local sum
 
---[[function dM.readShortcuts()
-    local i, j = 1, 0
-    for line in io.lines("usr/sys.conf") do
-        j = j + 1
-        local oneLine = {}
-        for lines in string_gmatch(line, "%S+") do
-            oneLine[i] = tostring(lines)
-            i = i + 1
-        end
-        table_insert(allLines, j, oneLine)
-        i = 1
-    end
-end]]
-
 function dM.updateNumDesks()
     num_shortcuts = #system_apps--+#user_apps
-    --num_shortcuts = #allLines
 
     maxCols = math_floor(desk_width/(shortcut_width + spacing_x - 1))
     maxRows = math_floor(desk_height/(shortcut_height + spacing_y - 1))
@@ -127,97 +116,61 @@ function dM.makeDesktops(parent)
     Parent:addChild(desktops[currdesk])
 end
 
+local function reSize(self)
+    self.pos = {
+        x = self.parent.pos.x + self.offset_X,
+        y = self.parent.pos.y + self.offset_Y
+    }
+    self.size = {
+        w = shortcut_width,
+        h = shortcut_height
+    }
+end
+
+local APP_CONFIG = {
+    Paint = {
+        needArgs = { true }
+    },
+    converter = {
+        needArgs = { true, "converter_main.lua" }
+    },
+}
+
 function dM.makeShortcuts()
--- Автоматическое размещение ярлыков в сетке
     local col = 1
     local row = 1
     local d = 1
-    for _,v in pairs(system_apps) do
-        local shortcut = UI.New_Shortcut(Parent.root, v, "sbin/"..v.."/main.lua", "sbin/"..v.."/icon.ico")
-        if v == "Paint" then shortcut.needArgs[1] = true end
-        --if v == "converter" then shortcut.needArgs[1] = true shortcut.needArgs[2] = "converter_main.lua" end
-        shortcut.offset_X = (col - 1) * (shortcut_width + spacing_x)
-        shortcut.offset_Y = (row - 1) * (shortcut_height + spacing_y)
-        shortcut.reSize = function (self)
-            self.pos = {x = self.parent.pos.x + self.offset_X, y = self.parent.pos.y + self.offset_Y}
-            self.size = {w = shortcut_width, h = shortcut_height}
-        end
-        desktops[d]:addChild(shortcut)
-        -- Переход к следующему столбцу/ряду
-        col = col + 1
-        if col > maxCols then
-            col = 1
-            row = row + 1
-        end
+    for _, appName in ipairs(system_apps) do
+        local appDir = APP_ROOT_PATH .. appName
+        local mainPath = appDir .. APP_MAIN_SUFFIX
+        if fs.exists(mainPath) then
+            local config = APP_CONFIG[appName] or {}
+            local iconPath = appDir .. APP_ICON_SUFFIX
+            local shortcut = UI.New_Shortcut(Parent.root, appName, mainPath, iconPath)
+            if config.needArgs then
+                shortcut.needArgs = config.needArgs
+            end
+            shortcut.offset_X = (col - 1) * (shortcut_width + spacing_x)
+            shortcut.offset_Y = (row - 1) * (shortcut_height + spacing_y)
+            shortcut.reSize = reSize
+            if desktops[d] then
+                desktops[d]:addChild(shortcut)
+            else
+                error("Ошибка: Попытка добавить ярлык на несуществующий рабочий стол: " .. d)
+            end
 
-        if k == d*(maxRows*maxCols) then
-            d = d + 1
-            col = 1
-            row = 1
+            col = col + 1
+            if col > maxCols then
+                col = 1
+                row = row + 1
+
+                if row > maxRows then
+                    row = 1
+                    d = d + 1
+                end
+            end
         end
     end
-    --[[for _,v in pairs(user_apps) do
-        local shortcut = UI.New_Shortcut(Parent.root, v, v.."/main.lua", v.."/icon.ico")
-        if v == "Paint" then shortcut.needArgs[1] = true end
-        --if v == "converter" then shortcut.needArgs[1] = true shortcut.needArgs[2] = "converter_main.lua" end
-        shortcut.offset_X = (col - 1) * (shortcut_width + spacing_x)
-        shortcut.offset_Y = (row - 1) * (shortcut_height + spacing_y)
-        shortcut.reSize = function (self)
-            self.pos = {x = self.parent.pos.x + self.offset_X, y = self.parent.pos.y + self.offset_Y}
-            self.size = {w = shortcut_width, h = shortcut_height}
-        end
-        desktops[d]:addChild(shortcut)
-        -- Переход к следующему столбцу/ряду
-        col = col + 1
-        if col > maxCols then
-            col = 1
-            row = row + 1
-        end
-
-        if k == d*(maxRows*maxCols) then
-            d = d + 1
-            col = 1
-            row = 1
-        end
-    end]]
-    --[[for k = 1, num_shortcuts do
-        local line = allLines[k]
-        if #line ~= 3 then
-            -- Пропускаем некорректные строки (если в строке не ровно 3 элемента)
-            error("Warning: Invalid line in sys.conf at index " .. k)
-        end
-
-        local text = line[1]      -- Имя ярлыка (Explorer, Polygon и т.д.)
-        local filepath = line[2]  -- Путь к файлу (sbin/explorer.lua и т.д.)
-        local icopath = line[3]   -- Путь к иконке (sbin/ico/explorer.ico и т.д.)
-
-        local shortcut = UI.New_Shortcut(Parent.root, text, filepath, icopath)
-        if text == "Paint" then shortcut.needArgs[1] = true end
-        if text == "converter" then shortcut.needArgs[1] = true shortcut.needArgs[2] = "converter_main.lua" end
-        -- Сохраняем offsets для позиционирования
-        shortcut.offset_X = (col - 1) * (shortcut_width + spacing_x)
-        shortcut.offset_Y = (row - 1) * (shortcut_height + spacing_y)
-
-        shortcut.reSize = function (self)
-            self.pos = {x = self.parent.pos.x + self.offset_X, y = self.parent.pos.y + self.offset_Y}
-            self.size = {w = shortcut_width, h = shortcut_height}
-        end
-
-        desktops[d]:addChild(shortcut)
-
-        -- Переход к следующему столбцу/ряду
-        col = col + 1
-        if col > maxCols then
-            col = 1
-            row = row + 1
-        end
-
-        if k == d*(maxRows*maxCols) then
-            d = d + 1
-            col = 1
-            row = 1
-        end
-    end]]
 end
 
 function dM.selectDesk(num)

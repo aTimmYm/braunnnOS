@@ -203,16 +203,6 @@ pause.reSize = function(self)
     self.pos.x = math_floor((self.parent.size.w - self.size.w) / 2) + 1
     self.pos.y = self.parent.pos.y + 1
 end
-local temp_onEvent = pause.onEvent
-pause.onEvent = function(self,evt)
-    temp_onEvent(self,evt)
-    if evt[1] == "pause_music" then
-        self.play = false
-        self:setText("|"..string_char(16))
-    elseif evt[1] == "play_next" then
-        btnNext:pressed()
-    end
-end
 box2:addChild(pause)
 
 local btnNext = UI.New_Button(root, string_char(16).."|", colors.gray, colors.white)
@@ -713,6 +703,19 @@ btnPrev.pressed = function(self)
         trackButtons[played[3]].dirty = true
         played[2] = trackButtons[played[3]]
     end
+end
+
+local temp_onEvent = pause.onEvent
+pause.onEvent = function(self,evt)
+    if evt[1] == "pause_music" then
+        self.play = false
+        self:setText("|"..string_char(16))
+        return true
+    elseif evt[1] == "play_next" then
+        btnNext:pressed()
+        return true
+    end
+    temp_onEvent(self,evt)
 end
 
 volumeSlider.pressed = function(self,btn, x, y)
