@@ -9,23 +9,42 @@ function _system.set_root(r)
 end
 
 function _system.dekstop_manager()
-    local desktop = UI.New_Box(1, 1, root.w, root.h, colors.green)
-    root:addChild(desktop)
+    local surface = UI.New_Box(1, 1, root.w, root.h, colors.green)
+    root:addChild(surface)
     local radioButton_horizontal = UI.New_RadioButton_horizontal(math.floor(root.w/2), root.h, 1, colors.black, colors.white)
-    desktop:addChild(radioButton_horizontal)
-    dM.setObjects(root, desktop, radioButton_horizontal)
+    surface:addChild(radioButton_horizontal)
+    local btnReboot = UI.New_Button(surface.w - 5, 1, 6, 1, "REBOOT", _, colors.black, colors.lightGray)
+    surface:addChild(btnReboot)
+    local btnExit = UI.New_Button(btnReboot.x - 9, 1, 8, 1, "SHUTDOWN", _, colors.black, colors.lightGray)
+    surface:addChild(btnExit)
+    local btnSpeaker = UI.New_Button(btnExit.x - 8, 1, 7, 1, "SPEAKER", _, colors.black, colors.lightGray)
+    surface:addChild(btnSpeaker)
+    local btnDebug = UI.New_Button(btnSpeaker.x - 9, 1, 8, 1, "DEBUGGER", _, colors.black, colors.lightGray)
+    surface:addChild(btnDebug)
+    local btnModem = UI.New_Button(btnDebug.x - 6, 1, 5, 1, "MODEM", _, colors.black, colors.lightGray)
+    surface:addChild(btnModem)
+    dM.setObjects(root, surface, radioButton_horizontal)
     --dM.readShortcuts()
     dM.makeDesktops()
     dM.makeShortcuts()
     radioButton_horizontal:changeCount(dM.updateNumDesks())
-    desktop.onResize = function (width, height)
-        desktop.w, desktop.h = width, height
+    radioButton_horizontal.pressed = function(self)
+        dM.selectDesk(self.item)
+        self.parent:onLayout()
+    end
+    surface.onResize = function (width, height)
+        surface.w, surface.h = width, height
         radioButton_horizontal.local_x, radioButton_horizontal.local_y = math.floor(root.w/2), root.h
+        btnReboot.local_x = surface.w - 5
+        btnExit.local_x = btnReboot.local_x - 9
+        btnSpeaker.local_x = btnExit.local_x - 8
+        btnDebug.local_x = btnSpeaker.local_x - 9
+        btnModem.local_x = btnDebug.local_x - 6
         dM.makeDesktops()
         dM.makeShortcuts()
         radioButton_horizontal:changeCount(dM.updateNumDesks())
         radioButton_horizontal.item = dM.getCurrdesk()
-        for _, child in ipairs(desktop.children) do
+        for _, child in ipairs(surface.children) do
             if child.onResize then
                 child.onResize(width, height)
             end
