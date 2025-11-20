@@ -3,6 +3,7 @@ if bOS.init then error("bOS is already running!") end
 bOS.init = true
 package.path = package.path .. ";/lib/?" .. ";/lib/?.lua"
 local c = require("cfunc")
+local system = require("braunnnsys")
 local UI = require("ui")
 local PALETTE = require("palette")
 local conf = c.readConf("usr/settings.conf")
@@ -10,14 +11,18 @@ local dM = require("deskManager")
 os.loadAPI("lib/blittle")
 dbg = c.DEBUG()
 local root = UI.New_Root()
+system.set_root(root)
 -----------------------------------------------------
 -----| СЕКЦИЯ ОБЪЯВЛЕНИЯ ПЕРЕМЕННЫХ ПРОГРАММЫ |------
 
 -----------------------------------------------------
 ----------| СЕКЦИЯ ИНИЦИАЛИЗАЦИИ ОБЪЕКТОВ |----------
-local surface = UI.New_Box(root)
+local surface = UI.New_Box(1, 1, root.w, root.h, colors.green)
 root:addChild(surface)
 
+local polyButton = UI.New_Button(2, 2, 7, 1, "POLYGON", _, colors.yellow, colors.black)
+surface:addChild(polyButton)
+--[[
 local radioButton_horizontal = UI.New_RadioButton_horizontal(root,1,colors.black,colors.white)
 radioButton_horizontal.reSize = function (self)
     self.pos = {x = math.floor((self.parent.size.w-self.size.w)/2)+1,y = self.parent.size.h}
@@ -52,21 +57,35 @@ local btnModem = UI.New_Button(root,"MODEM",colors.black,colors.lightGray)
 btnModem.reSize = function(self)
     self.pos = {x = btnDebug.pos.x - self.size.w - 1, y = btnDebug.size.h}
 end
-surface:addChild(btnModem)
+surface:addChild(btnModem)]]
 -----------------------------------------------------
 ------| СЕКЦИЯ ОБЪЯВЛЕНИЯ ФУНКЦИЙ ПРОГРАММЫ |--------
-root:layoutChild()
---dM.readShortcuts()
-dM.makeDesktops(surface)
-dM.makeShortcuts()
-dM.setRadio(radioButton_horizontal)
-radioButton_horizontal:changeCount(dM.updateNumDesks())
+-- root:layoutChild()
+-- dM.readShortcuts()
+-- dM.makeDesktops(surface)
+-- dM.makeShortcuts()
+-- dM.setRadio(radioButton_horizontal)
+-- radioButton_horizontal:changeCount(dM.updateNumDesks())
 
-if PALETTE[conf["palette"]] then
-    PALETTE[conf["palette"]]()
-end
+-- if PALETTE[conf["palette"]] then
+--     PALETTE[conf["palette"]]()
+-- end
 -----------------------------------------------------
 --| СЕКЦИЯ ПЕРЕОПРЕДЕЛЕНИЯ ФУНКЦИОНАЛЬНЫХ МЕТОДОВ |--
+polyButton.pressed = function (self)
+    local func, load_err = loadfile("sbin/Polygon/main.lua", _ENV)  -- "t" для text, или "bt" если нужно
+    if not func then
+        error(load_err)
+    else
+        -- M.termClear()
+        local ret, exec_err = pcall(func)
+        if not ret then
+            error(exec_err)
+        end
+    end
+    root:onLayout()
+end
+--[[
 radioButton_horizontal.pressed = function(self)
     dM.selectDesk(self.item,self)
     self.parent:onLayout()
@@ -102,7 +121,7 @@ root.tResize = function(self)
     self.size.w, self.size.h = term.getSize()
     dM.tResize()
     self:onLayout()
-end
+end]]
 -----------------------------------------------------
 ---------| MAINLOOP И ДЕЙСТВИЯ ПОСЛЕ НЕГО |----------
 root:mainloop()
