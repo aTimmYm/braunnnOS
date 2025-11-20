@@ -25,6 +25,11 @@ function _system.dekstop_manager()
         dM.makeShortcuts()
         radioButton_horizontal:changeCount(dM.updateNumDesks())
         radioButton_horizontal.item = dM.getCurrdesk()
+        for _, child in ipairs(desktop.children) do
+            if child.onResize then
+                child.onResize(width, height)
+            end
+        end
 
     end
 end

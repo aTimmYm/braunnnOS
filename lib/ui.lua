@@ -483,7 +483,7 @@ function UI.New_Button(x, y, w, h, text, align, color_bg, color_txt)
     local instance = UI.New_Label(x, y, w, h, text or "button", align, color_bg, color_txt)
     instance.text = text or "button"
     instance.held = false
-    instance.w = #instance.text
+    instance.w = w or #instance.text
 
     instance.draw = Button_draw
     instance.pressed = pressed

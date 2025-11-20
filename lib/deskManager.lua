@@ -86,12 +86,11 @@ function dM.makeDesktops()
     dM.updateNumDesks()
 
     for j = 1, num_desks do
-        local desk = UI.New_Box(1, 1, Root.w, Root.h - 1)
+        local desk = UI.New_Box(math_floor((Surface.w - desk_width)/2) + 1, math_floor((Surface.h - desk_height)/2) + 1, desk_width, desk_height - 1)
 
-        desk.reSize = function (self)
-            self.size = {w = desk_width,h = desk_height}
-            self.pos = {x = math_floor((self.parent.size.w-self.size.w)/2)+1,
-            y = math_floor((self.parent.size.h-self.size.h)/2)+1}
+        desk.onResize = function (width, height)
+            desk.w, desk.h = desk_width, desk_height
+            desk.x, desk.y = math_floor((width - desk_width)/2) + 1, math_floor((height - desk_height)/2) + 1
         end
 
         desk.draw = function (self)
@@ -154,7 +153,7 @@ function dM.makeShortcuts()
             local iconPath = appDir .. APP_ICON_SUFFIX
             local offset_X = (col - 1) * (shortcut_width + spacing_x)
             local offset_Y = (row - 1) * (shortcut_height + spacing_y)
-            local shortcut = UI.New_Shortcut(desktops[d].x + offset_X, desktops[d].y + offset_Y, shortcut_width, shortcut_height, appName, mainPath, iconPath, colors.black, colors.white)
+            local shortcut = UI.New_Shortcut(desktops[d].x + offset_X, desktops[d].y + offset_Y, shortcut_width, shortcut_height, appName, mainPath, iconPath, colors.blue, colors.white)
             if config.needArgs then
                 shortcut.needArgs = config.needArgs
             end
