@@ -4,7 +4,7 @@ on:
   push:
     paths-ignore: ['manifest.txt']
     branches:
-      - main
+      - '**' # Для любых веток
 
 permissions:
   contents: write
