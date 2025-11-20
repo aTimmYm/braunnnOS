@@ -16,6 +16,7 @@ local UI = {}
 local c = require("cfunc")
 local expect = require("cc.expect")
 local EVENTS = require("events")
+local blittle = require("blittle_extended")
 
 local function check(self,x,y)
     return (x >= self.x and x < self.w + self.x and
@@ -509,19 +510,31 @@ local function Shortcut_draw(self)
     end
 end
 
+-- local function Shortcut_pressed(self)
+--     if self.needArgs[1] and not self.needArgs[2] then
+--         local path = self.filePath
+--         local args = ""
+--         local dial = UI.New_DialWin(self.root)
+--         dial:callWin(" Arguments ", "Enter arguments")
+--         dial.btnOK.pressed = function (self)
+--             args = dial.child[2].text
+--             self.parent:removeWin()
+--             c.openFile(self.root, path, args)
+--         end
+--     else
+--         c.openFile(self.root, self.filePath, self.needArgs[2])
+--     end
+-- end
+
 local function Shortcut_pressed(self)
-    if self.needArgs[1] and not self.needArgs[2] then
-        local path = self.filePath
-        local args = ""
-        local dial = UI.New_DialWin(self.root)
-        dial:callWin(" Arguments ", "Enter arguments")
-        dial.btnOK.pressed = function (self)
-            args = dial.child[2].text
-            self.parent:removeWin()
-            c.openFile(self.root, path, args)
-        end
+    local func, load_err = loadfile(self.filePath, _ENV)  -- "t" для text, или "bt" если нужно
+    if not func then
+        error(load_err)
     else
-        c.openFile(self.root, self.filePath, self.needArgs[2])
+        local ret, exec_err = pcall(func)
+        if not ret then
+            error(exec_err)
+        end
     end
 end
 
@@ -560,7 +573,7 @@ function UI.New_Shortcut(x, y, w, h, text, filepath, icopath, color_bg, color_tx
     --instance.w, instance.h = instance.blittle_img.width, instance.blittle_img.height
 
     instance.draw = Shortcut_draw
-    --instance.pressed = Shortcut_pressed
+    instance.pressed = Shortcut_pressed
 
     return instance
 end

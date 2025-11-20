@@ -17,7 +17,7 @@ local window, surface = system.add_window("Titled", colors.lightGray, "Polygon")
 local buttonInfo = UI.New_Button(1, 1, 1, 1, "?", _, colors.white, colors.black)
 window:addChild(buttonInfo)
 
-local buttonError = UI.New_Button(buttonInfo.x + 1, 1, 1, 1, "Error", _, colors.white, colors.black)
+local buttonError = UI.New_Button(buttonInfo.x + 1, 1, 5, 1, "Error", _, colors.white, colors.black)
 window:addChild(buttonError)
 
 local list = UI.New_List(math.ceil(surface.w/2), 2, math.floor(surface.w/2) - 1, surface.h-2, fslist, colors.white, colors.black)
@@ -78,7 +78,7 @@ scrollBox:addChild(slider)
 ------| СЕКЦИЯ ОБЪЯВЛЕНИЯ ФУНКЦИЙ ПРОГРАММЫ |--------
 
 -----------------------------------------------------
------| СЕКЦИЯ ПЕРЕОПРЕДЕЛЕНИЯ ФУНКЦИОНАЛЬНЫХ МЕТОДОВ |--
+--| СЕКЦИЯ ПЕРЕОПРЕДЕЛЕНИЯ ФУНКЦИОНАЛЬНЫХ МЕТОДОВ |--
 buttonInfo.pressed = function (self)
     -- local infoWin = UI.New_MsgWin(root,"INFO")
     -- infoWin:callWin(" INFO ","This is a polygon. A test file that displays all interface elements except shortcuts, as they are represented on the desktop you accessed (most likely).")

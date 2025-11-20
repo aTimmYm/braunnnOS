@@ -5,29 +5,13 @@
 -- +--------------------------------------------------------+
 
 local version = "Version 1.1.6beta"
+local _blittle = {}
 
 -- By Jeffrey Alexander, aka Bomb Bloke.
 -- Convenience functions to make use of ComputerCraft 1.76's new "drawing" characters.
 -- http://www.computercraft.info/forums2/index.php?/topic/25354-cc-176-blittle-api/
 
 -------------------------------------------------------------
-
-if shell then
-	local arg = {...}
-
-	if #arg == 0 then
-		print("Usage:")
-		print("blittle <scriptName> [args]")
-		return
-	end
-
-	if not blittle then os.loadAPI(shell.getRunningProgram()) end
-	local oldTerm = term.redirect(blittle.createWindow())
-	shell.run(unpack(arg))
-	term.redirect(oldTerm)
-
-	return
-end
 
 local relations = {[0] = {8, 4, 3, 6, 5}, {4, 14, 8, 7}, {6, 10, 8, 7}, {9, 11, 8, 0}, {1, 14, 8, 0}, {13, 12, 8, 0}, {2, 10, 8, 0}, {15, 8, 10, 11, 12, 14},
 		{0, 7, 1, 9, 2, 13}, {3, 11, 8, 7}, {2, 6, 7, 15}, {9, 3, 7, 15}, {13, 5, 7, 15}, {5, 12, 8, 7}, {1, 4, 7, 15}, {7, 10, 11, 12, 14}}
@@ -103,7 +87,7 @@ local function snooze()
 	os.pullEvent(myEvent)
 end
 
-function shrink(image, bgCol)
+function _blittle.shrink(image, bgCol)
 	local pad_height = (3 - (#image % 3)) % 3
 	local results, width, height, bgCol = {{}, {}, {}}, 0, #image + pad_height, bgCol or colours.black
 
@@ -133,7 +117,7 @@ function shrink(image, bgCol)
 	return results
 end
 
-function shrinkGIF(image, bgCol)
+function _blittle.shrinkGIF(image, bgCol)
 	if not GIF and not os.loadAPI("GIF") then error("blittle.shrinkGIF: Load GIF API first.", 2) end
 
 	image = GIF.flattenGIF(image)
@@ -222,7 +206,7 @@ local function newLine(width, bCol)
 	return line
 end
 
-function createWindow(parent, x, y, width, height, visible)
+function _blittle.createWindow(parent, x, y, width, height, visible)
 	if parent == term or not parent then
 		parent = term.current()
 	elseif type(parent) ~= "table" or not parent.write then
@@ -535,7 +519,7 @@ function createWindow(parent, x, y, width, height, visible)
 	return window
 end
 
-function draw(image, x, y, terminal)
+function _blittle.draw(image, x, y, terminal)
 	local t, tC, bC = image[1], image[2], image[3]
 	x, y, terminal = x or 1, y or 1, terminal or term.current()
 
@@ -551,7 +535,7 @@ function draw(image, x, y, terminal)
 	end
 end
 
-function save(image, filename)
+function _blittle.save(image, filename)
 	local output = fs.open(filename, "wb")
 	if not output then error("Can't open "..filename.." for output.") end
 
@@ -633,7 +617,7 @@ function save(image, filename)
 	output.close()
 end
 
-function load(filename)
+function _blittle.load(filename)
 	local input = fs.open(filename, "rb")
 	if not input then error("Can't open "..filename.." for input.") end
 
@@ -743,3 +727,5 @@ if term.setPaletteColour then
 		end
 	end
 end
+
+return _blittle

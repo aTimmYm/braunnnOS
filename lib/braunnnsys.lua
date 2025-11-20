@@ -9,7 +9,7 @@ function _system.set_root(r)
 end
 
 function _system.dekstop_manager()
-    local surface = UI.New_Box(1, 1, root.w, root.h, colors.green)
+    local surface = UI.New_Box(1, 1, root.w, root.h, colors.black)
     root:addChild(surface)
     local radioButton_horizontal = UI.New_RadioButton_horizontal(math.floor(root.w/2), root.h, 1, colors.black, colors.white)
     surface:addChild(radioButton_horizontal)
@@ -31,6 +31,27 @@ function _system.dekstop_manager()
     radioButton_horizontal.pressed = function(self)
         dM.selectDesk(self.item)
         self.parent:onLayout()
+    end
+    btnReboot.pressed = function(self)
+        term.setCursorPos(1,1)
+        term.clear()
+        print("Rebooting...")
+        os.sleep(0.1)
+        term.clear()
+        os.reboot()
+    end
+    btnExit.pressed = function(self)
+        root.running_program = false
+    end
+    btnSpeaker.pressed = function(self)
+        if periphemu then periphemu.create("right", "speaker") end
+        bOS.speaker = peripheral.find("speaker")
+    end
+    btnDebug.pressed = function(self)
+        if periphemu then periphemu.create("left", "debugger") end
+    end
+    btnModem.pressed = function(self)
+        if periphemu then periphemu.create("top", "modem") end
     end
     surface.onResize = function (width, height)
         surface.w, surface.h = width, height
