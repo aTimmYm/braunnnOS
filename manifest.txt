@@ -5,12 +5,12 @@ d05119ae7307b31058fed885744757ee   home/Games/Chess/Chess_Data/interface_classes
 a65296abd8f0d4b19bf3f0c331045603   home/Games/Chess/Chess_Data/obj_classes
 15bd8440c4d46154045c779f8b4acc4e   init.lua
 653aeeef4cb942e75783d78d5adfe846   lib/blittle
-5dde4c11d1d51a23a626b550c6a7b3a3   lib/braunnnsys.lua
+21bd0cac84140676fe2c8de4e6966ce2   lib/braunnnsys.lua
 a63818cabc44cb04270e6d1380508070   lib/cfunc.lua
-e01a2def07649fefcc1b243a8eee214a   lib/deskManager.lua
+4cf1c543ed2ce2c89fb82cdfdec075b2   lib/deskManager.lua
 916edb95e57cc65c7090dcee6352b973   lib/events
 0e8430925597fb135103b506fe2c669f   lib/palette
-2d98bfeeb26efb81354306fd23163b53   lib/ui.lua
+47cc0df3bbea57fe0a9d4121a1635dd8   lib/ui.lua
 d41d8cd98f00b204e9800998ecf8427e   new_manifest.txt
 89b0b700ec66f8f1128e5783e1d32e86   sbin/Calculator/icon.ico
 ee8ad5afa31e6f4a4b42ece82a71261a   sbin/Calculator/main.lua
