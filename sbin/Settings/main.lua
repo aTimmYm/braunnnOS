@@ -8,7 +8,7 @@ local table_insert = table.insert
 -------| СЕКЦИЯ ПОДКЛЮЧЕНИЯ БИБЛИОТЕК И ROOT |-------
 local c = require("cfunc")
 local UI = require("ui")
-local root = UI.New_Root()
+local system = require("braunnnsys")
 -----------------------------------------------------
 -----| СЕКЦИЯ ОБЪЯВЛЕНИЯ ПЕРЕМЕННЫХ ПРОГРАММЫ |------
 local pageBuffer
@@ -24,223 +24,122 @@ for k, _ in pairs(PALETTE) do
 end
 -----------------------------------------------------
 ----------| СЕКЦИЯ ИНИЦИАЛИЗАЦИИ ОБЪЕКТОВ |----------
-local surface = UI.New_Box(root,colors.white)
-root:addChild(surface)
+local window, surface = system.add_window("Titled", colors.black, "Settings")
 
-local label = UI.New_Label(root,"Settings",colors.white,colors.black)
-label.reSize = function (self)
-    self.pos.x = 2
-    self.size.w = self.parent.size.w-self.pos.x
-end
-surface:addChild(label)
-
-local buttonClose = UI.New_Button(root,"x",colors.white,colors.black)
-buttonClose.reSize = function (self)
-    self.pos.x = self.parent.size.w
-end
-surface:addChild(buttonClose)
-
-local box = UI.New_Box(root,colors.black)
-box.reSize = function (self)
-    self.pos.y = 2
-    self.size = {w=11,h=self.parent.size.h-self.pos.y+1}
-end
+local box = UI.New_Box(1, 1, 11, surface.h, colors.black)
 box.draw = function (self)
-    c.drawFilledBox(self.pos.x,self.pos.y,self.size.w+self.pos.x-1,self.size.h+self.pos.y-1,self.bg)
-    for i=self.pos.y,self.size.h+self.pos.y-1 do
-        c.write("|",self.pos.x,i,self.bg,self.txtcol)
-        c.write("|",self.size.w+self.pos.x-1,i,self.bg,self.txtcol)
+    c.drawFilledBox(self.x, self.y, self.w + self.x - 1, self.h + self.y - 1, self.color_bg)
+    for i = self.y, self.h + self.y - 1 do
+        c.write("|", self.x, i, self.color_bg, self.color_txt)
+        c.write("|", self.w + self.x - 1, i, self.color_bg, self.color_txt)
     end
 end
 surface:addChild(box)
 
-local function reSizePages(page)
-    page.reSize = function (self)
-        self.pos = {x=box.size.w+box.pos.x,y=box.pos.y}
-        self.size = {w=self.parent.size.w-self.pos.x+1,h=box.size.h}
-    end
-end
-
-local displayLabel = UI.New_Label(root,"-DISPLAY-",colors.black,colors.lightGray)
-displayLabel.reSize = function (self)
-    self.pos = {x=self.parent.pos.x+1,y=self.parent.pos.y+1}
-    self.size.w = self.parent.size.w-self.pos.x
-end
+local displayLabel = UI.New_Label(2, 1, box.w - 2, 1, "-DISPLAY-", _, colors.black, colors.lightGray)
 box:addChild(displayLabel)
 
-local buttonSCREEN = UI.New_Button(root,"SCREEN",colors.black,colors.white)
-buttonSCREEN.reSize = function (self)
-    self.pos = {x=self.parent.pos.x+1,y=displayLabel.pos.y+1}
-    self.size.w = self.parent.size.w-self.pos.x
-end
+local buttonSCREEN = UI.New_Button(2, displayLabel.y + 1, displayLabel.w, 1, "SCREEN", _, box.color_bg, colors.white)
 box:addChild(buttonSCREEN)
 
-local buttonTIME = UI.New_Button(root,"TIME&DATE",colors.black,colors.white)
-buttonTIME.reSize = function (self)
-    self.pos = {x=self.parent.pos.x+1,y=buttonSCREEN.pos.y+1}
-    self.size.w = self.parent.size.w-self.pos.x
-end
+local buttonTIME = UI.New_Button(2, buttonSCREEN.y + 1, buttonSCREEN.w, 1, "TIME&DATE",_, box.color_bg,colors.white)
 box:addChild(buttonTIME)
 
-local buttonCOLORS = UI.New_Button(root, "COLORS", colors.black, colors.white)
-buttonCOLORS.reSize = function (self)
-    self.pos = {x=self.parent.pos.x+1,y=buttonTIME.pos.y+1}
-    self.size.w = self.parent.size.w-self.pos.x
-end
+local buttonCOLORS = UI.New_Button(2, buttonTIME.y + 1, buttonTIME.w, 1, "COLORS", _, box.color_bg, colors.white)
 box:addChild(buttonCOLORS)
 
-local systemLabel = UI.New_Label(root,"-SYSTEM--",colors.black,colors.lightGray)
-systemLabel.reSize = function (self)
-    self.pos = {x=buttonCOLORS.pos.x,y=buttonCOLORS.pos.y+1}
-    self.size.w = self.parent.size.w-self.pos.x
-end
+local systemLabel = UI.New_Label(2, buttonTIME.y + 1, box.w - 2, 1, "-SYSTEM--", _, box.color_bg, colors.lightGray)
 box:addChild(systemLabel)
 
-local buttonAbout = UI.New_Button(root, "ABOUT", colors.black, colors.white)
-buttonAbout.reSize = function (self)
-    self.pos = {x=systemLabel.pos.x,y=systemLabel.pos.y+1}
-    self.size.w = self.parent.size.w-self.pos.x
-end
+local buttonAbout = UI.New_Button(2, systemLabel.y + 1, systemLabel.w, 1, "ABOUT", _, box.color_bg, colors.white)
 box:addChild(buttonAbout)
 
-local page1 = UI.New_Box(root)
-reSizePages(page1)
+local page1 = UI.New_Box(box.w + 1, 1, surface.w - box.w, surface.h, colors.black)
 surface:addChild(page1)
+pageBuffer = page1
 
-local tumblerLabel = UI.New_Label(root, "Monitor Mode")
-tumblerLabel.reSize = function (self)
-    self.pos = {x = self.parent.pos.x + 1, y = self.parent.pos.y + 1}
-    self.size.w = #self.text
-end
+local tumblerLabel = UI.New_Label(2, 2, 12, 1, "Monitor Mode", "left", page1.color_bg, colors.white)
 page1:addChild(tumblerLabel)
 
-local monitorTumbler = UI.New_Tumbler(root,colors.white, colors.lightGray, colors.gray, conf["isMonitor"])
-monitorTumbler.reSize = function (self)
-    self.pos = {x = self.parent.size.w+self.parent.pos.x-3, y = tumblerLabel.pos.y}
-end
+local monitorTumbler = UI.New_Tumbler(page1.w - 2, tumblerLabel.y, colors.white, colors.lightGray, colors.gray, conf["isMonitor"])
 page1:addChild(monitorTumbler)
 
-local dropdownLabel = UI.New_Label(root, "Monitor Scale")
-dropdownLabel.reSize = function (self)
-    self.pos = {x = self.parent.pos.x + 1, y = tumblerLabel.pos.y + tumblerLabel.size.h+1}
-    self.size.w = #self.text
-end
+local dropdownLabel = UI.New_Label(tumblerLabel.x, tumblerLabel.y + 2, 13, 1, "Monitor Scale", "left", page1.color_bg, colors.white)
 page1:addChild(dropdownLabel)
 
-local dropdown = UI.New_Dropdown(root, {"0.5","1","1.5","2","2.5","3","3.5","4","4.5","5"}, colors.white, colors.black, tostring(conf["monitorScale"]))
-dropdown.reSize = function (self)
-    self.pos = {x = self.parent.pos.x + self.parent.size.w - 1 - self.size.w, y = dropdownLabel.pos.y}
-end
+local dropdown = UI.New_Dropdown(page1.w - 4, dropdownLabel.y, {"0.5","1","1.5","2","2.5","3","3.5","4","4.5","5"}, _, _, _, colors.white, colors.black, tostring(conf["monitorScale"]))
 page1:addChild(dropdown)
 
-local page2 = UI.New_Box(root)
-reSizePages(page2)
+local page2 = UI.New_Box(box.w + 1, 1, surface.w - box.w, surface.h, colors.black)
 
-local time24FormatLabel = UI.New_Label(root, "Enable 24h format")
-time24FormatLabel.reSize = function (self)
-    self.pos = {x = self.parent.pos.x + 1, y = self.parent.pos.y + 1}
-    self.size.w = #self.text
-end
+local time24FormatLabel = UI.New_Label(2,2, 17, 1, "Enable 24h format", "left", page2.color_bg, colors.white)
 page2:addChild(time24FormatLabel)
 
-local time24FormatTumbler = UI.New_Tumbler(root, colors.lightGray, colors.gray, _, conf["24format"])
-time24FormatTumbler.reSize = function (self)
-    self.pos = {x = self.parent.pos.x + self.parent.size.w - 3, y = time24FormatLabel.pos.y}
-end
+local time24FormatTumbler = UI.New_Tumbler(page2.w - 2, time24FormatLabel.y, colors.lightGray, colors.gray, _, conf["24format"])
 page2:addChild(time24FormatTumbler)
 
-local showSecondsLabel = UI.New_Label(root, "Show seconds")
-showSecondsLabel.reSize = function (self)
-    self.pos = {x = self.parent.pos.x + 1, y = self.parent.pos.y + 3}
-    self.size.w = #self.text
-end
+local showSecondsLabel = UI.New_Label(2, time24FormatLabel.y + 2, 12, 1, "Show seconds", "left", page2.color_bg, colors.white)
 page2:addChild(showSecondsLabel)
 
-local showSecondsTumbler = UI.New_Tumbler(root, colors.lightGray, colors.gray, _, conf["show_seconds"])
-showSecondsTumbler.reSize = function (self)
-    self.pos = {x = self.parent.pos.x + self.parent.size.w - 3, y = showSecondsLabel.pos.y}
-end
+local showSecondsTumbler = UI.New_Tumbler(page2.w - 2, showSecondsLabel.y, colors.lightGray, colors.gray, _, conf["show_seconds"])
 page2:addChild(showSecondsTumbler)
 
-local page3 = UI.New_Box(root)
-reSizePages(page3)
+local page3 = UI.New_Box(box.w + 1, 1, surface.w - box.w, surface.h, colors.black)
 
-local labelCurrCols = UI.New_Label(root, "Current colors: ",colors.white,colors.black)
-labelCurrCols.reSize = function (self)
-    self.pos = {x = self.parent.pos.x+1, y = self.parent.pos.y + 1}
-    self.size.w = #self.text
-end
+local labelCurrCols = UI.New_Label(2, 2, 16, 1, "Current colors: ", "left", colors.white, colors.black)
 page3:addChild(labelCurrCols)
 
-local currCols = UI.New_Label(root)
-currCols.reSize = function (self)
-    self.pos = {x = labelCurrCols.pos.x + labelCurrCols.size.w + 1, y = labelCurrCols.pos.y}
-    self.size.w = #self.text
-end
+local currCols = UI.New_Label(labelCurrCols.x + labelCurrCols.w + 1, labelCurrCols.y, 4, 1)
 currCols.draw = function (self)
-    c.write(" ", self.pos.x, self.pos.y, colors.black)
-    c.write(" ", self.pos.x+1, self.pos.y, colors.white)
-    c.write(" ", self.pos.x+2, self.pos.y, colors.lightGray)
-    c.write(" ", self.pos.x+3, self.pos.y, colors.gray)
+    c.write(" ", self.x, self.y, colors.black)
+    c.write(" ", self.x + 1, self.y, colors.white)
+    c.write(" ", self.x + 2, self.y, colors.lightGray)
+    c.write(" ", self.x + 3, self.y, colors.gray)
 
-    c.write(string_char(149),self.pos.x-1,self.pos.y,colors.red,colors.black)
-    c.write(string_char(149),self.pos.x+4,self.pos.y,colors.black,colors.red)
-    c.write(string_char(144),self.pos.x+4,self.pos.y-1,colors.black,colors.red)
-    c.write(string_char(129),self.pos.x+4,self.pos.y+1,colors.black,colors.red)
-    c.write(string_char(159),self.pos.x-1,self.pos.y-1,colors.red,colors.black)
-    c.write(string_char(130),self.pos.x-1,self.pos.y+1,colors.black,colors.red)
-    c.write(string_rep(string_char(143),4),self.pos.x,self.pos.y-1,colors.red,colors.black)
-    c.write(string_rep(string_char(131),4),self.pos.x,self.pos.y+1,colors.black,colors.red)
+    c.write(string_char(149), self.x - 1, self.y, colors.red, colors.black)
+    c.write(string_char(149), self.x + 4, self.y, colors.black, colors.red)
+    c.write(string_char(144), self.x + 4, self.y - 1, colors.black, colors.red)
+    c.write(string_char(129), self.x + 4, self.y + 1, colors.black, colors.red)
+    c.write(string_char(159), self.x - 1, self.y - 1, colors.red, colors.black)
+    c.write(string_char(130), self.x - 1, self.y + 1, colors.black, colors.red)
+    c.write(string_rep(string_char(143), 4), self.x, self.y - 1, colors.red, colors.black)
+    c.write(string_rep(string_char(131), 4), self.x, self.y + 1, colors.black, colors.red)
 end
 page3:addChild(currCols)
 
-local chooseLabel = UI.New_Label(root, "Choose your palette: ")
-chooseLabel.reSize = function (self)
-    self.pos = {x = self.parent.pos.x+1, y = self.parent.pos.y + 3}
-    self.size.w = #self.text
-end
+local chooseLabel = UI.New_Label(2, currCols.y + 2, 21, 1, "Choose your palette: ", _, page3.color_bg, colors.white)
 page3:addChild(chooseLabel)
 
-local dropdownChoose = UI.New_Dropdown(root, dropdownChooseArr, colors.white, colors.black, conf["palette"])
-dropdownChoose.reSize = function (self)
-    self.pos = {x = self.parent.pos.x + self.parent.size.w - 1 - self.size.w, y = self.parent.pos.y+3}
-end
+local dropdownChoose = UI.New_Dropdown(page3.w - 13, chooseLabel.y, dropdownChooseArr, conf["palette"], _, _, colors.white, colors.black)
 page3:addChild(dropdownChoose)
 
-local page4 = UI.New_Box(root)
-reSizePages(page4)
+local page4 = UI.New_Box(box.w + 1, 1, surface.w - box.w, surface.h, colors.black)
 
-local braunnnOS = UI.New_Label(root,string_char(223).."raunnnOS")
-braunnnOS.reSize = function (self)
-    self.pos = {x = self.parent.pos.x+1, y = self.parent.pos.y + 1}
-    self.size.w = #self.text
-end
+local braunnnOS = UI.New_Label(2, 2, 9, 1, string_char(223).."raunnnOS", _, page4.color_bg, colors.white)
 page4:addChild(braunnnOS)
 
-local versionLabel = UI.New_Label(root,"Version "..version,_,colors.lightGray)
-versionLabel.reSize = function (self)
-    self.pos = {x = braunnnOS.pos.x, y = braunnnOS.pos.y + 1}
-    self.size.w = #self.text
-end
+local versionLabel = UI.New_Label(2, braunnnOS.y + 1, 12, 1, "Version "..version, _, page4.color_bg, colors.lightGray)
 page4:addChild(versionLabel)
 
-local buttonCheckUpdate = UI.New_Button(root, "(CHECK FOR UPDATES)", colors.black, colors.white)
-buttonCheckUpdate.reSize = function (self)
-    if self.root.size.w <= 30 then
-        self.pos.x = self.parent.pos.x
-        self.pos.y = versionLabel.pos.y + 1
-        return
-    end
-    self.pos = {x=versionLabel.pos.x+versionLabel.size.w+1,y=versionLabel.pos.y}
-end
+local buttonCheckUpdate = UI.New_Button(versionLabel.x + versionLabel.w, versionLabel.y, 19, 1, "(CHECK FOR UPDATES)", _, page4.color_bg, colors.white)
+-- buttonCheckUpdate.reSize = function (self)
+--     if self.root.size.w <= 30 then
+--         self.pos.x = self.parent.pos.x
+--         self.pos.y = versionLabel.pos.y + 1
+--         return
+--     end
+--     self.pos = {x=versionLabel.pos.x+versionLabel.size.w+1,y=versionLabel.pos.y}
+-- end
 page4:addChild(buttonCheckUpdate)
 -----------------------------------------------------
 ------| СЕКЦИЯ ОБЪЯВЛЕНИЯ ФУНКЦИЙ ПРОГРАММЫ |--------
 local function setPage(page)
-    surface:removeChild(pageBuffer)
-    surface:addChild(page)
-    pageBuffer = page
-    surface:onLayout()
+    if pageBuffer ~= page then
+        surface:removeChild(pageBuffer)
+        surface:addChild(page)
+        pageBuffer = page
+        --page:onLayout()
+    end
 end
 
 local function write_file(path,data)
@@ -286,10 +185,6 @@ local function checkUpdates(manifest)
 end
 -----------------------------------------------------
 --| СЕКЦИЯ ПЕРЕОПРЕДЕЛЕНИЯ ФУНКЦИОНАЛЬНЫХ МЕТОДОВ |--
-buttonClose.pressed = function (self)
-    self.root.running_program = false
-end
-
 buttonSCREEN.pressed = function (self)
     setPage(page1)
 end
@@ -342,13 +237,13 @@ end
 
 buttonCheckUpdate.pressed = function (self)
     self:setText("(CHECKING)")
-    local response, err = http.get("https://raw.githubusercontent.com/aTimmYm/braunnnOS/refs/heads/main/manifest.txt")
+    local response, err = http.get("https://raw.githubusercontent.com/aTimmYm/braunnnOS/refs/heads/dev/manifest.txt")
     local manifest = response.readAll()
     response.close()
     if response then
         if checkUpdates(manifest) then
             for _,v in pairs(files_to_update) do
-                local request = http.get("https://raw.githubusercontent.com/aTimmYm/braunnnOS/refs/heads/main/"..v)
+                local request = http.get("https://raw.githubusercontent.com/aTimmYm/braunnnOS/refs/heads/dev/"..v)
                 if request then
                     write_file(v,request.readAll())
                     request.close()
@@ -364,6 +259,4 @@ buttonCheckUpdate.pressed = function (self)
     end
 end
 -----------------------------------------------------
----------| MAINLOOP И ДЕЙСТВИЯ ПОСЛЕ НЕГО |----------
-root:mainloop()
------------------------------------------------------
+surface:onLayout()
