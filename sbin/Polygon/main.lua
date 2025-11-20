@@ -1,7 +1,8 @@
 -------| СЕКЦИЯ ПОДКЛЮЧЕНИЯ БИБЛИОТЕК И ROOT |-------
+package.path = package.path .. ";/lib/?" .. ";/lib/?.lua"
 local c = require("cfunc")
 local UI = require("ui")
-local root = UI.New_Root()
+local system = require("braunnnsys")
 -----------------------------------------------------
 -----| СЕКЦИЯ ОБЪЯВЛЕНИЯ ПЕРЕМЕННЫХ ПРОГРАММЫ |------
 local fslist = {} for i=1,64 do fslist[i]="Item - "..i end
@@ -11,151 +12,82 @@ local dropdown_array = {
 }
 -----------------------------------------------------
 ----------| СЕКЦИЯ ИНИЦИАЛИЗАЦИИ ОБЪЕКТОВ |----------
-local surface = UI.New_Box(root,colors.lightGray)
-root:addChild(surface)
+local window, surface = system.add_window("Titled", colors.lightGray, "Polygon")
 
-local buttonClose = UI.New_Button(root,"x")
-surface:addChild(buttonClose)
+local buttonInfo = UI.New_Button(1, 1, 1, 1, "?", _, colors.white, colors.black)
+window:addChild(buttonInfo)
 
-local buttonInfo = UI.New_Button(root,"?",colors.blue,colors.white)
-buttonInfo.reSize = function (self)
-    self.pos.x = buttonClose.pos.x+1
-end
-surface:addChild(buttonInfo)
+local buttonError = UI.New_Button(buttonInfo.x + 1, 1, 1, 1, "Error", _, colors.white, colors.black)
+window:addChild(buttonError)
 
-local buttonError = UI.New_Button(root,"Error",colors.red,colors.white)
-buttonError.reSize = function (self)
-    self.pos.x = buttonInfo.pos.x+1
-end
-surface:addChild(buttonError)
-
-local clock = UI.New_Clock(root,surface.bg,colors.white, conf["show_seconds"], conf["24format"])
-clock.reSize = function (self)
-    self.pos.x = self.parent.size.w + self.parent.pos.x - self.size.w
-end
-surface:addChild(clock)
-
-local list = UI.New_List(root,fslist,colors.black,colors.white)
-list.reSize = function (self)
-    self.pos.x = math.ceil(self.parent.size.w/2)
-    self.pos.y = self.parent.pos.y + 1
-    self.size.w = math.floor(self.parent.size.w/2)-1
-    self.size.h = self.parent.size.h-self.pos.y
-end
+local list = UI.New_List(math.ceil(surface.w/2), 2, math.floor(surface.w/2) - 1, surface.h-2, fslist, colors.white, colors.black)
 surface:addChild(list)
 
+local clock = UI.New_Clock(list.x, 1, conf["show_seconds"], conf["24format"], surface.color_bg, colors.white)
+surface:addChild(clock)
+
 local scrollbar = UI.New_Scrollbar(list)
-scrollbar.reSize = function (self)
-    self.pos.x = self.obj.pos.x + self.obj.size.w
-    self.pos.y = self.obj.pos.y
-    self.size.h = self.obj.size.h
-end
 surface:addChild(scrollbar)
 
-local label = UI.New_Label(root,"Label",colors.white,colors.black)
-label.reSize = function (self)
-    self.pos.x = self.parent.pos.x + 1
-    self.pos.y = self.parent.pos.y + 1
-    self.size.w = list.pos.x - self.pos.x-1
-end
+local label = UI.New_Label(2, 2, list.x - 1 - 2, 1, "Label", _, colors.white, colors.black)
 surface:addChild(label)
 
-local textfield = UI.New_Textfield(root,colors.white,colors.black)
-textfield.reSize = function (self)
-    self.pos.x = label.pos.x
-    self.pos.y = label.pos.y + label.size.h+1
-    self.size.w = label.size.w
-end
+local textfield = UI.New_Textfield(label.x, label.y + 2, label.w, 1, _, _,colors.white,colors.black)
 surface:addChild(textfield)
 
-local scrollBox = UI.New_ScrollBox(root,colors.brown)
-scrollBox.reSize = function (self)
-    self.pos = {x = 2, y = textfield.pos.y+2}
-    self.size = {w = list.pos.x-self.pos.x-2, h = self.parent.size.h-self.pos.y}
-    self.win.reposition(self.pos.x, self.pos.y, self.size.w, self.size.h)
-end
+local scrollBox = UI.New_ScrollBox(2, textfield.y + 3, list.x - 3, surface.h - 6, colors.brown)
 surface:addChild(scrollBox)
 
-local scrollbar2 = UI.New_Scrollbar(scrollBox)
-scrollbar2.reSize = function (self)
-    self.pos = {x = self.obj.pos.x + self.obj.size.w, y = self.obj.pos.y}
-    self.size.h = self.obj.size.h
-end
-surface:addChild(scrollbar2)
+-- local scrollbar2 = UI.New_Scrollbar(scrollBox)
+-- scrollbar2.reSize = function (self)
+--     self.pos = {x = self.obj.pos.x + self.obj.size.w, y = self.obj.pos.y}
+--     self.size.h = self.obj.size.h
+-- end
+-- surface:addChild(scrollbar2)
 
-local radioButton = UI.New_RadioButton(root,_,{"CAT","DOG"},scrollBox.bg)
-radioButton.reSize = function (self)
-    self.pos.x = self.parent.pos.x
-    self.pos.y = self.parent.pos.y
-end
+local radioButton = UI.New_RadioButton(1, 1, _, {"CAT","DOG"}, scrollBox.color_bg)
 scrollBox:addChild(radioButton)
 
-local radioButton_horizontal = UI.New_RadioButton_horizontal(root,10,scrollBox.bg)
-radioButton_horizontal.reSize = function (self)
-    self.pos.x = scrollBox.size.w+scrollBox.pos.x-1 - self.size.w
-    self.pos.y = textfield.pos.y + textfield.size.h+1
-end
+local radioButton_horizontal = UI.New_RadioButton_horizontal(scrollBox.w - 9, radioButton.y, 10, scrollBox.color_bg)
 scrollBox:addChild(radioButton_horizontal)
 
-local radioLabel = UI.New_Label(root, tostring(radioButton_horizontal.item), colors.white, colors.black)
-radioLabel.reSize = function (self)
-    self.pos = {x = radioButton_horizontal.pos.x, y = radioButton_horizontal.pos.y + 1}
-    self.size = radioButton_horizontal.size
-end
+local radioLabel = UI.New_Label(radioButton_horizontal.x, radioButton_horizontal.y + 1, radioButton_horizontal.w, 1, tostring(radioButton_horizontal.item), _, colors.white, colors.black)
 scrollBox:addChild(radioLabel)
 
-local tumbler = UI.New_Tumbler(root, colors.white, colors.gray, colors.black, true)
-tumbler.reSize = function (self)
-    self.pos.x = self.parent.pos.x
-    self.pos.y = radioButton.pos.y + radioButton.size.h+1
-end
+local tumbler = UI.New_Tumbler(radioButton.x, radioButton.h + radioButton.y + 1, colors.white, colors.gray, colors.black, true)
 scrollBox:addChild(tumbler)
 
-local tumblerLabel = UI.New_Label(root, "ON", scrollBox.bg, colors.white)
-tumblerLabel.reSize = function (self)
-    self.pos = {x = tumbler.pos.x + tumbler.size.w + 1, y = tumbler.pos.y}
-    self.size.w = 3
-end
+local tumblerLabel = UI.New_Label(tumbler.x + tumbler.w + 1, tumbler.y, 3, 1, "ON", _, scrollBox.color_bg)
 scrollBox:addChild(tumblerLabel)
 
-local checkbox = UI.New_Checkbox(root,_,_,true)
-checkbox.reSize = function (self)
-    self.pos = {x = self.parent.pos.x, y = tumbler.pos.y + tumbler.size.h + 1}
-end
+local checkbox = UI.New_Checkbox(list.x - 7, tumbler.y, true, colors.black)
 scrollBox:addChild(checkbox)
 
-local checkboxLabel = UI.New_Label(root, "ON", scrollBox.bg, colors.white)
-checkboxLabel.reSize = function (self)
-    self.pos = {x = checkbox.pos.x + checkbox.size.w + 1, y = checkbox.pos.y}
-    self.size.w = 3
-end
+local checkboxLabel = UI.New_Label(checkbox.x + checkbox.w + 1, checkbox.y, 3, 1, "ON", _, scrollBox.color_bg)
 scrollBox:addChild(checkboxLabel)
 
-local dropdown = UI.New_Dropdown(root, dropdown_array, colors.white, colors.black)
-dropdown.reSize = function (self)
-    self.pos.x = self.parent.pos.x
-    self.pos.y = checkbox.pos.y + checkbox.size.h + 1
-end
+local dropdown = UI.New_Dropdown(tumbler.x, tumbler.y + 2, dropdown_array, _, _, _, colors.white, colors.black)
 scrollBox:addChild(dropdown)
 
-local running_label = UI.New_Running_Label(root, "Some text here ")
-running_label.reSize = function (self)
-    self.pos = {x = tumblerLabel.pos.x + tumblerLabel.size.w + 1, y = tumblerLabel.pos.y}
-    self.size = {w = 5, h = 1}
-end
+local running_label = UI.New_Running_Label(list.x - 7, dropdown.y, 5, 1, "Some text here ")
 scrollBox:addChild(running_label)
+
+local slider = UI.New_Slider(dropdown.x, dropdown.y + 2, list.x - 3, {1,2,3,4,5,6,7,8,9,10}, 5, colors.red, scrollBox.color_bg, colors.white)
+scrollBox:addChild(slider)
 -----------------------------------------------------
 ------| СЕКЦИЯ ОБЪЯВЛЕНИЯ ФУНКЦИЙ ПРОГРАММЫ |--------
 
 -----------------------------------------------------
 -----| СЕКЦИЯ ПЕРЕОПРЕДЕЛЕНИЯ ФУНКЦИОНАЛЬНЫХ МЕТОДОВ |--
-buttonClose.pressed = function (self)
-    self.root.running_program = false
-end
-
 buttonInfo.pressed = function (self)
-    local infoWin = UI.New_MsgWin(root,"INFO")
-    infoWin:callWin(" INFO ","This is a polygon. A test file that displays all interface elements except shortcuts, as they are represented on the desktop you accessed (most likely).")
+    -- local infoWin = UI.New_MsgWin(root,"INFO")
+    -- infoWin:callWin(" INFO ","This is a polygon. A test file that displays all interface elements except shortcuts, as they are represented on the desktop you accessed (most likely).")
+    if surface:removeChild(list) then
+        surface:onLayout()
+    else
+        surface:addChild(list)
+    end
+
 end
 
 buttonError.pressed = function (self)
@@ -169,8 +101,6 @@ end
 
 textfield.pressed = function (self)
     label:setText(textfield.text)
-    self:onFocus(false)
-    self.root.focus = nil
 end
 
 radioButton.pressed = function (self)
@@ -182,21 +112,26 @@ radioButton_horizontal.pressed = function (self)
 end
 
 tumbler.pressed = function (self)
-    if self.on then
-        tumblerLabel:setText("OFF")
-    else
-        tumblerLabel:setText("ON")
-    end
+    tumblerLabel:setText(self.on and "OFF" or "ON")
 end
 
 checkbox.pressed = function (self)
-    if self.on then
-        checkboxLabel:setText("OFF")
-    else
-        checkboxLabel:setText("ON")
-    end
+    checkboxLabel:setText(self.on and "OFF" or "ON")
 end
------------------------------------------------------
----------| MAINLOOP И ДЕЙСТВИЯ ПОСЛЕ НЕГО |----------
-root:mainloop()
+
+surface.onResize = function (width, height)
+    list.local_x, list.local_y, list.w, list.h = math.ceil(surface.w/2), 2, math.floor(surface.w/2) - 1, surface.h - 2
+    label.w = list.local_x - label.local_x - 1
+    clock.local_x, clock.local_y = list.local_x, 1
+    textfield.w = list.local_x - textfield.local_x - 1
+    scrollBox.w, scrollBox.h = list.local_x - 3, surface.h - 6
+    scrollBox.win.reposition(2, textfield.y+2, list.local_x - 3, surface.h - 6)
+    radioButton_horizontal.local_x, radioButton_horizontal.local_y = scrollBox.w - 9, radioButton.local_y
+    radioLabel.local_x, radioLabel.local_y = radioButton_horizontal.local_x, radioButton_horizontal.local_y + 1
+    checkbox.local_x, checkbox.local_y = scrollBox.w - 4, tumbler.local_y
+    checkboxLabel.local_x, checkboxLabel.local_y = checkbox.local_x + checkbox.w + 1, checkbox.local_y
+    running_label.local_x, running_label.local_y = scrollBox.w - 4, dropdown.local_y
+    scrollbar.local_x, scrollbar.local_y, scrollbar.h = list.local_x + list.w, list.local_y, list.h
+    slider.w = list.local_x - 3
+end
 -----------------------------------------------------
