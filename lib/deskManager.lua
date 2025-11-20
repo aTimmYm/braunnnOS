@@ -153,7 +153,7 @@ function dM.makeShortcuts()
             local iconPath = appDir .. APP_ICON_SUFFIX
             local offset_X = (col - 1) * (shortcut_width + spacing_x)
             local offset_Y = (row - 1) * (shortcut_height + spacing_y)
-            local shortcut = UI.New_Shortcut(desktops[d].x + offset_X, desktops[d].y + offset_Y, shortcut_width, shortcut_height, appName, mainPath, iconPath, colors.blue, colors.white)
+            local shortcut = UI.New_Shortcut(1 + offset_X, 1 + offset_Y, shortcut_width, shortcut_height, appName, mainPath, iconPath, colors.blue, colors.white)
             if config.needArgs then
                 shortcut.needArgs = config.needArgs
             end
