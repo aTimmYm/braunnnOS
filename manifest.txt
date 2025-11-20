@@ -10,7 +10,7 @@ a63818cabc44cb04270e6d1380508070   lib/cfunc.lua
 a3acca28cb8890d376636c25c1fd8161   lib/deskManager.lua
 916edb95e57cc65c7090dcee6352b973   lib/events
 0e8430925597fb135103b506fe2c669f   lib/palette
-ce7fa49455901cbe640ba4d556ff7c2c   lib/ui.lua
+da4404bf426326bbbec9e5e2f6a38d8b   lib/ui.lua
 d41d8cd98f00b204e9800998ecf8427e   new_manifest.txt
 89b0b700ec66f8f1128e5783e1d32e86   sbin/Calculator/icon.ico
 ee8ad5afa31e6f4a4b42ece82a71261a   sbin/Calculator/main.lua
