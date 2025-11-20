@@ -17,11 +17,6 @@ system.set_root(root)
 
 -----------------------------------------------------
 ----------| СЕКЦИЯ ИНИЦИАЛИЗАЦИИ ОБЪЕКТОВ |----------
-local surface = UI.New_Box(1, 1, root.w, root.h, colors.green)
-root:addChild(surface)
-
-local polyButton = UI.New_Button(2, 2, 7, 1, "POLYGON", _, colors.yellow, colors.black)
-surface:addChild(polyButton)
 --[[
 local radioButton_horizontal = UI.New_RadioButton_horizontal(root,1,colors.black,colors.white)
 radioButton_horizontal.reSize = function (self)
@@ -66,25 +61,12 @@ surface:addChild(btnModem)]]
 -- dM.makeShortcuts()
 -- dM.setRadio(radioButton_horizontal)
 -- radioButton_horizontal:changeCount(dM.updateNumDesks())
-
+system.dekstop_manager()
 -- if PALETTE[conf["palette"]] then
 --     PALETTE[conf["palette"]]()
 -- end
 -----------------------------------------------------
 --| СЕКЦИЯ ПЕРЕОПРЕДЕЛЕНИЯ ФУНКЦИОНАЛЬНЫХ МЕТОДОВ |--
-polyButton.pressed = function (self)
-    local func, load_err = loadfile("sbin/Polygon/main.lua", _ENV)  -- "t" для text, или "bt" если нужно
-    if not func then
-        error(load_err)
-    else
-        -- M.termClear()
-        local ret, exec_err = pcall(func)
-        if not ret then
-            error(exec_err)
-        end
-    end
-    root:onLayout()
-end
 --[[
 radioButton_horizontal.pressed = function(self)
     dM.selectDesk(self.item,self)

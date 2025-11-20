@@ -1,10 +1,32 @@
 local UI = require("UI")
+local dM = require("deskManager")
 local _system = {}
 
 local root
 
 function _system.set_root(r)
     root = r
+end
+
+function _system.dekstop_manager()
+    local desktop = UI.New_Box(1, 1, root.w, root.h, colors.green)
+    root:addChild(desktop)
+    local radioButton_horizontal = UI.New_RadioButton_horizontal(math.floor(root.w/2), root.h, 1, colors.black, colors.white)
+    desktop:addChild(radioButton_horizontal)
+    dM.setObjects(root, desktop, radioButton_horizontal)
+    --dM.readShortcuts()
+    dM.makeDesktops()
+    dM.makeShortcuts()
+    radioButton_horizontal:changeCount(dM.updateNumDesks())
+    desktop.onResize = function (width, height)
+        desktop.w, desktop.h = width, height
+        radioButton_horizontal.local_x, radioButton_horizontal.local_y = math.floor(root.w/2), root.h
+        dM.makeDesktops()
+        dM.makeShortcuts()
+        radioButton_horizontal:changeCount(dM.updateNumDesks())
+        radioButton_horizontal.item = dM.getCurrdesk()
+
+    end
 end
 
 function _system.add_window(mode, color_bg, title)

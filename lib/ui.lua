@@ -496,17 +496,17 @@ end
 local function Shortcut_draw(self)
     c.drawFilledBox(self.x, self.y, self.w + self.x - 1, self.h + self.y - 1, self.color_bg)
 
-    local dX = math_floor((self.w-self.blittle_img.width)/2) + self.x
-    local dY = math_floor((self.h-1-self.blittle_img.height)/2) + self.y
+    local dX = math_floor((self.w - self.blittle_img.width)/2) + self.x
+    local dY = math_floor((self.h - 1 - self.blittle_img.height)/2) + self.y
     blittle.draw(self.blittle_img, dX, dY)
     local txtcol_override = self.held and colors.lightGray or self.color_txt
     if #self.text >= self.w then
-        c.write(string_sub(self.text, 1, self.w-2).."..",
-        self.x, dY + self.blittle_img.height,self.color_bg,txtcol_override)
+        c.write(string_sub(self.text, 1, self.w - 2).."..",
+        self.x, dY + self.blittle_img.height, self.color_bg, txtcol_override)
     else
-        c.write(string_rep(" ",math_floor((self.w-#self.text)/2))..self.text..
-        string_rep(" ", self.w - (math_floor((self.w-#self.text)/2)+self.x + #self.text)),
-        self.x, dY + self.blittle_img.height,self.color_bg,txtcol_override)
+        c.write(string_rep(" ",math_floor((self.w - #self.text)/2))..self.text..
+        string_rep(" ", self.w - (math_floor((self.w - #self.text)/2) + self.x + #self.text)),
+        self.x, dY + self.blittle_img.height, self.color_bg, txtcol_override)
     end
 end
 
@@ -519,10 +519,10 @@ local function Shortcut_pressed(self)
         dial.btnOK.pressed = function (self)
             args = dial.child[2].text
             self.parent:removeWin()
-            c.openFile(self.root,path,args)
+            c.openFile(self.root, path, args)
         end
     else
-        c.openFile(self.root,self.filePath,self.needArgs[2])
+        c.openFile(self.root, self.filePath, self.needArgs[2])
     end
 end
 
@@ -548,19 +548,21 @@ function UI.New_Shortcut(x, y, w, h, text, filepath, icopath, color_bg, color_tx
     expect(8, color_bg, "number", "nil")
     expect(9, color_txt, "number", "nil")
 
-    local instance = UI.New_Button(x, y, w, h, text, color_bg, color_txt)
-    if icopath and fs.exists(icopath) then
+    local instance = UI.New_Button(x, y, w, h, text, _, color_bg, color_txt)
+    --[[if icopath and fs.exists(icopath) then
         instance.icoPath = icopath
     else
         instance.icoPath = "sbin/icon_default.ico"
-    end
+    end]]
+    instance.icoPath = icopath and fs.exists(icopath) and icopath or "sbin/icon_default.ico"
     instance.needArgs = {}
     instance.filePath = filepath
     instance.blittle_img = blittle.load(instance.icoPath)
-    instance.size = {w=instance.blittle_img.width,h=instance.blittle_img.height + 1}
+    --instance.w, instance.h = instance.blittle_img.width, instance.blittle_img.height
 
     instance.draw = Shortcut_draw
-    instance.pressed = Shortcut_pressed
+    --instance.pressed = Shortcut_pressed
+
     return instance
 end
 
@@ -2132,7 +2134,7 @@ end
 ---@return table object root
 function UI.New_Root()
 
-    local instance = UI.New_Container(1,1)
+    local instance = UI.New_Container(1, 1, 1, 1)
     instance.focus = nil
     instance.running_program = true
     instance.modal = nil
