@@ -135,3 +135,4 @@ surface.onResize = function (width, height)
     slider.w = list.local_x - 3
 end
 -----------------------------------------------------
+surface:onLayout()
