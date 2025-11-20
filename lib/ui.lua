@@ -59,9 +59,12 @@ local function onEvent(self,evt)
 end
 
 ---Basic *class*. Using automatically to create all another *classes*.
----@param root table
----@param bg color|number|nil
----@param txtcol color|number|nil
+---@param x number
+---@param y number
+---@param w number
+---@param h number
+---@param color_bg color|number|nil
+---@param color_txt color|number|nil
 ---@return table object widget (bigbrother)
 local function New_Widget(x, y, w, h, color_bg, color_txt)
     return {
@@ -146,7 +149,8 @@ local function Tumbler_onEvent(self,evt)
 end
 
 ---Creating new *object* of *class*
----@param root table
+---@param x number
+---@param y number
 ---@param bg_off color|number|nil
 ---@param bg_on color|number|nil
 ---@param switch_color color|number|nil
@@ -225,18 +229,18 @@ local function RadioButton_horizontal_onMouseUp(self,btn,x,y)
 end
 
 ---Creating new *object* of *class*
----@param root table
+---@param x number
+---@param y number
 ---@param count number|nil
----@param bg color|number|nil
----@param txtcol color|number|nil
+---@param color_bg color|number|nil
+---@param color_txt color|number|nil
 ---@return table object radioButton_horizontal
 function UI.New_RadioButton_horizontal(x, y, count, color_bg, color_txt)
     expect(1, x, "number")
     expect(2, y, "number")
     expect(3, count, "number", "nil")
-    expect(4, text, "table", "nil") -- ← table of strings
-    expect(5, color_bg, "number", "nil")
-    expect(6, color_txt, "number", "nil")
+    expect(4, color_bg, "number", "nil")
+    expect(5, color_txt, "number", "nil")
 
     local instance = New_Widget(x, y, 1, 1, color_bg, color_txt)
     instance.count = (count and count >= 1 and count or 1)
@@ -273,11 +277,12 @@ local function RadioButton_onMouseUp(self, btn, x, y)
 end
 
 ---Creating new *object* of *class*
----@param root table
+---@param x number
+---@param y number
 ---@param count number|nil
 ---@param text string[]|nil table of strings, example: {"string1", "string2"}
----@param bg color|number|nil
----@param txtcol color|number|nil
+---@param color_bg color|number|nil
+---@param color_txt color|number|nil
 ---@return table object radioButton
 function UI.New_RadioButton(x, y, count, text, color_bg, color_txt)
     expect(1, x, "number")
@@ -405,11 +410,14 @@ local function Label_setText(self, text)
 end
 
 ---Creating new *object* of *class*
----@param root table
+---@param x number
+---@param y number
+---@param w number
+---@param h number
 ---@param text string|nil
----@param bg color|number|nil
----@param txtcol color|number|nil
 ---@param align string|nil
+---@param color_bg color|number|nil
+---@param color_txt color|number|nil
 ---@return table object label
 function UI.New_Label(x, y, w, h, text, align, color_bg, color_txt)
     expect(1, x, "number")
@@ -453,11 +461,14 @@ local function Button_onMouseUp(self,btn,x,y)
 end
 
 ---Creating new *object* of *class*
----@param root table
+---@param x number
+---@param y number
+---@param w number
+---@param h number
 ---@param text string|nil
----@param bg color|number|nil
----@param txtcol color|number|nil
 ---@param align string|nil
+---@param color_bg color|number|nil
+---@param color_txt color|number|nil
 ---@return table object button
 function UI.New_Button(x, y, w, h, text, align, color_bg, color_txt)
     expect(1, x, "number")
@@ -516,20 +527,26 @@ local function Shortcut_pressed(self)
 end
 
 ---Creating new *object* of *class*
----@param root table
+---@param x number
+---@param y number
+---@param w number
+---@param h number
 ---@param text string|nil
 ---@param filepath string
 ---@param icopath string
----@param bg number|nil
----@param txtcol number|nil
+---@param color_bg number|nil
+---@param color_txt number|nil
 ---@return table object shortcut
 function UI.New_Shortcut(x, y, w, h, text, filepath, icopath, color_bg, color_txt)
-    expect(1, root, "table")
-    expect(2, text, "string", "nil")
-    expect(3, filepath, "string")
-    expect(4, icopath, "string")
-    expect(5, bg, "number", "nil")
-    expect(6, txtcol, "number", "nil")
+    expect(1, x, "number")
+    expect(2, y, "number")
+    expect(3, w, "number")
+    expect(4, h, "number")
+    expect(5, text, "string", "nil")
+    expect(6, filepath, "string")
+    expect(7, icopath, "string")
+    expect(8, color_bg, "number", "nil")
+    expect(9, color_txt, "number", "nil")
 
     local instance = UI.New_Button(x, y, w, h, text, color_bg, color_txt)
     if icopath and fs.exists(icopath) then
@@ -659,13 +676,16 @@ local function Running_Label_onLayout(self)
 end
 
 ---Creating new *object* of *class* "shortcut"
----@param root table
+---@param x number
+---@param y number
+---@param w number
+---@param h number
 ---@param text string|nil
----@param bg color|number|nil
----@param txtcol color|number|nil
 ---@param align string|nil
 ---@param scroll_speed number|nil
 ---@param gap string|nil
+---@param color_bg color|number|nil
+---@param color_txt color|number|nil
 ---@return table return Running_Label
 function UI.New_Running_Label(x, y, w, h, text, align, scroll_speed, gap, color_bg, color_txt)
     expect(1, x, "number")
@@ -953,10 +973,13 @@ local function List_updateDirty(self)
 end
 
 ---Creating new *object* of *class*
----@param root table
+---@param x number
+---@param y number
+---@param w number
+---@param h number
 ---@param array table|nil
----@param txtcol color|number|nil
----@param bg color|number|nil
+---@param color_bg color|number|nil
+---@param color_txt color|number|nil
 ---@return table object list
 function UI.New_List(x, y, w, h, array, color_bg, color_txt)
     expect(1, x, "number")
@@ -1080,11 +1103,14 @@ local function Textfield_onKeyDown(self,key,held)
 end
 
 ---Creating new *object* of *class*
----@param root table
----@param bg color|number|nil
----@param txtcol color|number|nil
+---@param x number
+---@param y number
+---@param w number
+---@param h number
 ---@param hint string|nil
 ---@param hidden boolean|nil
+---@param color_bg color|number|nil
+---@param color_txt color|number|nil
 ---@return table object Textfield
 function UI.New_Textfield(x, y, w, h, hint, hidden, color_bg, color_txt)
     expect(1, x, "number")
@@ -1140,10 +1166,11 @@ local function Checkbox_onMouseUp(self,btn, x, y)
 end
 
 ---Creating new *object* of *class*
----@param root table
----@param bg color|number|nil
----@param txtcol color|number|nil
+---@param x number
+---@param y number
 ---@param on boolean|nil
+---@param color_bg color|number|nil
+---@param color_txt color|number|nil
 ---@return table object checkbox
 function UI.New_Checkbox(x, y, on, color_bg, color_txt)
     expect(1, x, "number")
@@ -1205,10 +1232,12 @@ local function Clock_onEvent(self, evt)
 end
 
 ---Creating new *object* of *class*
----@param root table
----@param bg color|number|nil
----@param txtcol color|number|nil
+---@param x number
+---@param y number
 ---@param show_seconds boolean|nil
+---@param is_24h boolean|nil
+---@param color_bg color|number|nil
+---@param color_txt color|number|nil
 ---@return table object clock
 function UI.New_Clock(x, y, show_seconds, is_24h, color_bg, color_txt)
     expect(1, x, "number")
@@ -1293,20 +1322,21 @@ local function Dropdown_onMouseDown(self,btn, x, y)
 end
 
 ---Creating new *object* of *class*
----@param root table
+---@param x number
+---@param y number
 ---@param array sting[]|nil
----@param bg color|number|nil
----@param txtcol color|number|nil
 ---@param defaultValue string|nil
 ---@param maxSizeW number|nil
 ---@param orientation string|nil
+---@param color_bg color|number|nil
+---@param color_txt color|number|nil
 ---@return table object dropdown
 function UI.New_Dropdown(x, y, array, defaultValue, maxSizeW, orientation, color_bg, color_txt)
     expect(1, x, "number")
     expect(2, y, "number")
     expect(3, array, "table", "nil")
     expect(4, defaultValue, "string", "nil")
-    expect(5, maxSizew, "number", "nil")
+    expect(5, maxSizeW, "number", "nil")
     expect(6, orientation, "string", "nil")
     expect(7, color_bg, "number", "nil")
     expect(8, color_txt, "number", "nil")
@@ -1382,27 +1412,29 @@ local function Slider_updateArr(self,array)
 end
 
 ---Creating new *object* of *class*
----@param root table
+---@param x number
+---@param y number
+---@param w number
 ---@param arr number[]|nil
----@param bg color|number|nil
----@param txtcol color|number|nil
 ---@param defaultPosition number|nil
----@param txtcol2 color|number|nil
+---@param color_txt2 color|number|nil
+---@param color_bg color|number|nil
+---@param color_txt color|number|nil
 ---@return table object slider
-function UI.New_Slider(x, y, w, arr, defaultPosition, txtcol2, color_bg, color_txt)
+function UI.New_Slider(x, y, w, arr, defaultPosition, color_txt2, color_bg, color_txt)
     expect(1, x, "number")
     expect(2, y, "number")
     expect(3, w, "number")
     expect(4, arr, "table", "nil")
     expect(5, defaultPosition, "number", "nil")
-    expect(6, txtcol2, "number", "nil")
+    expect(6, color_txt2, "number", "nil")
     expect(7, color_bg, "number", "nil")
     expect(8, color_txt, "number", "nil")
 
     local instance = New_Widget(x, y, w, 1, color_bg, color_txt)
     instance.arr = arr
     instance.slidePosition = defaultPosition or 1
-    instance.color_txt2 = txtcol2 or instance.color_txt
+    instance.color_txt2 = color_txt2 or instance.color_txt
 
     instance.draw = Slider_draw
     instance.pressed = pressed
@@ -1497,9 +1529,19 @@ local function Container_onEvent(self, evt)
 end
 
 ---Creating new *object* of *class*
----@param root table
+---@param x number
+---@param y number
+---@param w number
+---@param h number
+---@param color_bg color|number|nil
 ---@return table object container
 function UI.New_Container(x, y, w, h, color_bg)
+    expect(1, x, "number")
+    expect(2, y, "number")
+    expect(3, w, "number")
+    expect(4, h, "number")
+    expect(5, color_bg, "number", "nil")
+
     local instance = New_Widget(x, y, w, h, color_bg, _)
     instance.children = {}
 
@@ -1896,11 +1938,21 @@ function UI.New_Keyboard(root)
     return instance
 end
 
+---Creating new *object* of *class*
+---@param x number
+---@param y number
+---@param w number
+---@param h number
+---@param color_bg color|number
+---@param title string
+---@return table object Window
 function UI.New_Window(x, y, w, h, color_bg, title)
     expect(1, x, "number")
     expect(2, y, "number")
     expect(3, w, "number")
     expect(4, h, "number")
+    expect(5, color_bg, "number")
+    expect(6, title, "string")
 
     local instance = UI.New_Box(x, y, w, h, colors.white)
     instance.label = UI.New_Label(math.floor((w - #title)/2), y, #title, 1, title, _, colors.white, colors.black)
@@ -1918,8 +1970,11 @@ local function Box_draw(self)
 end
 
 ---Creating new *object* of *class*
----@param root table
----@param bg color|number|nil
+---@param x number
+---@param y number
+---@param w number
+---@param h number
+---@param color_bg color|number|nil
 ---@return table object box
 function UI.New_Box(x, y, w, h, color_bg)
     expect(1, x, "number")
@@ -1990,8 +2045,11 @@ local function ScrollBox_updateDirty(self)
 end
 
 ---Creating new *object* of *class*
----@param root table
----@param bg color|number|nil
+---@param x number
+---@param y number
+---@param w number
+---@param h number
+---@param color_bg color|number|nil
 ---@return table object ScrollBox
 function UI.New_ScrollBox(x, y, w, h, color_bg)
     expect(1, x, "number")
@@ -2071,7 +2129,6 @@ local function Root_mainloop(self)
 end
 
 ---Creating new *object* of *class* root - event handler, to use root:mainloop()
----@param bg color|number|nil
 ---@return table object root
 function UI.New_Root()
 
