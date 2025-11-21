@@ -2015,7 +2015,7 @@ local function ScrollBox_redraw(self)
     if self.dirty then self:draw() self.dirty = false end
     for _, child in ipairs(self.visibleChild) do
         local tempX, tempY = child.x, child.y
-        child.x, child.y = child.local_x, child.local_y-- - (self.scrollpos - 1)
+        child.x, child.y = child.local_x, child.local_y - (self.scrollpos - 1)
         child:redraw()
         child.x, child.y = tempX, tempY
     end
@@ -2031,7 +2031,7 @@ local function ScrollBox_onLayout(self)
     self.dirty = true
     Container_onLayout(self)
     for _, child in pairs(self.children) do
-        --child.y = child.y - (self.scrollpos - 1)
+        child.y = child.y - (self.scrollpos - 1)
         self.scrollmax = math_max(math_max(self.scrollmax, child.y + child.h - 1 + self.scrollpos) - self.h, 1)
         if child.y + child.h > self.y and child.y <= self.y + self.h - 1 then
             table_insert(self.visibleChild, child)
