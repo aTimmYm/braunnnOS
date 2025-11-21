@@ -14,11 +14,11 @@ local dropdown_array = {
 ----------| СЕКЦИЯ ИНИЦИАЛИЗАЦИИ ОБЪЕКТОВ |----------
 local window, surface = system.add_window("Titled", colors.lightGray, "Polygon")
 
-local buttonInfo = UI.New_Button(1, 1, 1, 1, "?", _, colors.white, colors.black)
-window:addChild(buttonInfo)
-
-local buttonError = UI.New_Button(buttonInfo.x + 1, 1, 5, 1, "Error", _, colors.white, colors.black)
+local buttonError = UI.New_Button(1, 1, 5, 1, "Error", _, colors.white, colors.red)
 window:addChild(buttonError)
+
+local buttonInfo = UI.New_Button(buttonError.x+buttonError.w+1, 1, 1, 1, "?", _, colors.white, colors.blue)
+window:addChild(buttonInfo)
 
 local list = UI.New_List(math.ceil(surface.w/2), 2, math.floor(surface.w/2) - 1, surface.h-2, fslist, colors.white, colors.black)
 surface:addChild(list)
@@ -35,7 +35,7 @@ surface:addChild(label)
 local textfield = UI.New_Textfield(label.x, label.y + 2, label.w, 1, _, _,colors.white,colors.black)
 surface:addChild(textfield)
 
-local scrollBox = UI.New_ScrollBox(2, textfield.y + 3, list.x - 3, surface.h - 6, colors.brown)
+local scrollBox = UI.New_ScrollBox(2, textfield.y + 2, list.x - 3, surface.h - 6, colors.brown)
 surface:addChild(scrollBox)
 
 -- local scrollbar2 = UI.New_Scrollbar(scrollBox)
@@ -125,7 +125,6 @@ surface.onResize = function (width, height)
     clock.local_x, clock.local_y = list.local_x, 1
     textfield.w = list.local_x - textfield.local_x - 1
     scrollBox.w, scrollBox.h = list.local_x - 3, surface.h - 6
-    scrollBox.win.reposition(2, textfield.y+2, list.local_x - 3, surface.h - 6)
     radioButton_horizontal.local_x, radioButton_horizontal.local_y = scrollBox.w - 9, radioButton.local_y
     radioLabel.local_x, radioLabel.local_y = radioButton_horizontal.local_x, radioButton_horizontal.local_y + 1
     checkbox.local_x, checkbox.local_y = scrollBox.w - 4, tumbler.local_y

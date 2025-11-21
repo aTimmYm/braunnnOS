@@ -9,66 +9,34 @@ local table_sort = table.sort
 local fs = fs
 -----------------------------------------------------
 -------| СЕКЦИЯ ПОДКЛЮЧЕНИЯ БИБЛИОТЕК И ROOT |-------
+local system = require("braunnnsys")
 local c = require("cfunc")
 local UI = require("ui")
-local root = UI.New_Root()
 -----------------------------------------------------
 -----| СЕКЦИЯ ОБЪЯВЛЕНИЯ ПЕРЕМЕННЫХ ПРОГРАММЫ |------
 local fslist = fs.list("")
 local mode = ""
 -----------------------------------------------------
 ----------| СЕКЦИЯ ИНИЦИАЛИЗАЦИИ ОБЪЕКТОВ |----------
-local surface = UI.New_Box(root,colors.white)
-root:addChild(surface)
+local window, surface = system.add_window("Titled", colors.black, "Explorer")
 
-local label = UI.New_Label(root,"Explorer",colors.white,colors.black)
-label.reSize = function (self)
-    self.pos = { x = 4, y = 1 }
-    self.size.w = self.parent.size.w-self.pos.x-2
-end
-surface:addChild(label)
+local buttonAdd = UI.New_Button(1, 1, 1, 1, "+", _, colors.white, colors.black)
+window:addChild(buttonAdd)
 
-local buttonClose = UI.New_Button(root,"x",colors.white,colors.black)
-buttonClose.reSize = function (self)
-    self.pos.x = self.parent.size.w
-end
-surface:addChild(buttonClose)
+local buttonDelete = UI.New_Button(buttonAdd.x + 1, 1, 1, 1, "-", _, colors.white, colors.black)
+window:addChild(buttonDelete)
 
-local buttonAdd = UI.New_Button(root,"+",colors.white,colors.black)
-surface:addChild(buttonAdd)
+local buttonMove = UI.New_Button(buttonDelete.x + 1, 1, 1, 1, string_char(187), _, colors.white, colors.black)
+window:addChild(buttonMove)
 
-local buttonRet = UI.New_Button(root,"...",_,_,"left")
-buttonRet.reSize = function (self)
-    self.pos.y = label.pos.y+1
-    self.size.w = self.parent.size.w-1
-end
+local buttonRet = UI.New_Button(1, 1, surface.w, 1, "...", "left", surface.color_bg, colors.white)
 surface:addChild(buttonRet)
 
-local list = UI.New_List(root,{},colors.white,colors.black)
-list.reSize = function (self)
-    self.pos.y = buttonRet.pos.y+1
-    self.size = {w=self.parent.size.w-1,h=self.parent.size.h-self.pos.y+1}
-end
+local list = UI.New_List(1, buttonRet.y + 1, surface.w - 1, surface.h-1, {}, colors.black, colors.white)
 surface:addChild(list)
 
 local scrollbar = UI.New_Scrollbar(list)
-scrollbar.reSize = function (self)
-    self.pos = {x=list.size.w+1,y=buttonRet.pos.y}
-    self.size.h = list.size.h+1
-end
 surface:addChild(scrollbar)
-
-local buttonDelete = UI.New_Button(root, "-", colors.white, colors.black)
-buttonDelete.reSize = function (self)
-    self.pos.x = buttonAdd.pos.x+1
-end
-surface:addChild(buttonDelete)
-
-local buttonMove = UI.New_Button(root, string_char(187), colors.white, colors.black)
-buttonMove.reSize = function (self)
-    self.pos.x = buttonDelete.pos.x+1
-end
-surface:addChild(buttonMove)
 -----------------------------------------------------
 ------| СЕКЦИЯ ОБЪЯВЛЕНИЯ ФУНКЦИЙ ПРОГРАММЫ |--------
 local extensions = {
@@ -139,15 +107,10 @@ local function sort(arr)
         table_insert(fslist, v)
     end
 end
- sort()
- list:updateArr(fslist)
+sort()
+list:updateArr(fslist)
 -----------------------------------------------------
 --| СЕКЦИЯ ПЕРЕОПРЕДЕЛЕНИЯ ФУНКЦИОНАЛЬНЫХ МЕТОДОВ |--
-buttonClose.pressed = function (self)
-    shell.setDir("")
-    self.root.running_program = false
-end
-
 buttonAdd.pressed = function (self)
     if mode == "delete" then return end
     local dialWin = UI.New_DialWin(root)
@@ -183,7 +146,7 @@ list.pressed = function (self)
         sort()
         self.scrollpos = 1
         self:updateArr(fslist)
-        label:setText(shell.dir())
+        window.label:setText(shell.dir())
 
     elseif fs.exists(fullPath) then
         local extension = list.item:match("^.+(%..+)$") or ""
@@ -204,9 +167,9 @@ buttonRet.pressed = function (self)
         list.scrollpos = 1
         list:updateArr(fslist)
         if shell.dir() == "" then
-            label:setText("Explorer")
+            window.label:setText("Explorer")
         else
-            label:setText(shell.dir())
+            window.label:setText(shell.dir())
         end
     end
 end
@@ -237,11 +200,12 @@ buttonDelete.pressed = function (self)
         fslist = fs.list(shell.dir())
         sort()
         list:updateArr(fslist)
-        label:setText("Explorer")
+        window.label:setText("Explorer")
         mode = ""
     elseif mode == "" then
         mode = "delete"
-        label:setText("DELETE MODE")
+        window.label:setText("DELETE MODE")
+        --window.label.w =
         for i,_ in pairs(list.array) do
             list.array[i] = " "..list.array[i]
         end
@@ -290,6 +254,5 @@ buttonMove.pressed = function (self)
 end
 -----------------------------------------------------
 ---------| MAINLOOP И ДЕЙСТВИЯ ПОСЛЕ НЕГО |----------
-root:mainloop()
-bOS.Explorer = nil
+surface:onLayout()
 -----------------------------------------------------

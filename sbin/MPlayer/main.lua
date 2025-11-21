@@ -16,15 +16,16 @@ local math_floor = math.floor
 -----------------------------------------------------
 -------| СЕКЦИЯ ПОДКЛЮЧЕНИЯ БИБЛИОТЕК И ROOT |-------
 local dfpwm = require("cc.audio.dfpwm")
+local system = require("braunnnsys")
+local blittle = require("blittle_extended")
 local c = require("cfunc")
 local UI = require("ui")
-local root = UI.New_Root()
 -----------------------------------------------------
 -----| СЕКЦИЯ ОБЪЯВЛЕНИЯ ПЕРЕМЕННЫХ ПРОГРАММЫ |------
 if bOS.shell or bOS.Explorer then return end
-root.coroutine = {}
-root.seek_to = nil
-root.expected_event = nil
+-- root.coroutine = {}
+-- root.seek_to = nil
+-- root.expected_event = nil
 
 if periphemu then periphemu.create("right", "speaker") end
 bOS.speaker = peripheral.find("speaker")
@@ -60,47 +61,20 @@ for i, v in pairs(volumes) do
 end
 -----------------------------------------------------
 ----------| СЕКЦИЯ ИНИЦИАЛИЗАЦИИ ОБЪЕКТОВ |----------
-local surface = UI.New_Box(root, colors.white)
-root:addChild(surface)
+local window, surface = system.add_window("Titled", colors.black, "MPlayer")
 
-local btnAll = UI.New_Button(root, "All", colors.white,colors.black)
-surface:addChild(btnAll)
+local btnAll = UI.New_Button(1, 1, 3, 1, "All", _, colors.white, colors.black)
+window:addChild(btnAll)
 
-local btnAlbum = UI.New_Button(root, "Album", colors.white,colors.lightGray)
-btnAlbum.reSize = function(self)
-    self.pos.x = btnAll.pos.x + btnAll.size.w + 1
-end
+local btnAlbum = UI.New_Button(btnAll.x + btnAll.w + 1, 1, 5, 1, "Album", _, colors.white, colors.lightGray)
 surface:addChild(btnAlbum)
 
-local label = UI.New_Label(root, "MPlayer", colors.white, colors.black)
-label.reSize = function(self)
-    self.size.w = #self.text
-    self.pos.x = math_floor((self.parent.size.w-self.size.w)/2)+1
-end
-surface:addChild(label)
-
-local btnClose = UI.New_Button(root, "x", colors.white, colors.black)
-btnClose.reSize = function(self)
-    self.pos.x = self.parent.size.w
-end
-surface:addChild(btnClose)
-
-local boxAll = UI.New_ScrollBox(root, colors.black)
-boxAll.reSize = function(self)
-    self.pos = {x = self.parent.pos.x, y = self.parent.pos.y+1}
-    self.size = {w = self.parent.size.w - self.pos.x, h = self.parent.size.h - self.pos.y + 1 - 5}
-    self.win.reposition(self.pos.x, self.pos.y, self.size.w, self.size.h)
-    self.win.redraw()
-end
+local boxAll = UI.New_ScrollBox(1, 1, surface.w - 1, surface.h - 5, colors.black)
 surface:addChild(boxAll)
 
 local scrollbar = UI.New_Scrollbar(boxAll)
-scrollbar.reSize = function(self)
-    self.pos = {x = self.obj.pos.x + self.obj.size.w, y = self.obj.pos.y}
-    self.size.h = self.obj.size.h
-end
 surface:addChild(scrollbar)
-
+--[[
 local boxAlbum = UI.New_Box(root)
 boxAlbum.reSize = function(self)
     self.pos = {x = self.parent.pos.x, y = self.parent.pos.y+1}
@@ -158,124 +132,84 @@ numCompose.reSize = function(self)
     self.size.w = 15
 end
 scrollboxAlbum:addChild(numCompose)
+]]
 
-local box2 = UI.New_Box(root, colors.gray)
-box2.draw = function(self)
-    c.drawFilledBox(self.pos.x, self.pos.y, self.size.w + self.pos.x - 1, self.size.h + self.pos.y - 1, self.bg)
-    if self.root.size.w > 41 then blittle.draw(blittle.load("sbin/MPlayer/Data/MusicAlbum.ico"), self.pos.x+1, self.pos.y) end
-end
-box2.reSize = function(self)
-    self.pos = {x = 1, y = self.parent.size.h - 4}
-    self.size = {w = self.parent.size.w, h = 5}
+local box2 = UI.New_Box(1, surface.h - 4, surface.w, 5, colors.gray)
+box2.draw = function (self)
+    c.drawFilledBox(self.x, self.y, self.x + self.w - 1, self.y + self.h - 1, self.color_bg)
+    blittle.draw(blittle.load("sbin/MPlayer/Data/MusicAlbum.ico"), self.x + 1, self.y)
 end
 surface:addChild(box2)
 
-local btnVolume = UI.New_Button(root, "")
+local btnVolume = UI.New_Button(surface.w - 13, 2, 3, 1, "", _, box2.color_bg, colors.white)
 btnVolume.PrevStatus = 1
-btnVolume.reSize = function(self)
-    self.pos.x = self.parent.size.w - 13
-    self.pos.y = self.parent.pos.y + 1
-    self.size.w = 3
-end
-btnVolume.draw = function(self)
-    c.write(string_char(145), self.pos.x, self.pos.y, self.txtcol, self.parent.bg)
+btnVolume.draw = function (self)
+    c.write(string_char(145), self.x, self.y, self.color_txt, self.parent.color_bg)
     if conf["volume"] ~= 0 then
-        c.write(string_char(157), self.pos.x+1, self.pos.y, self.txtcol, self.parent.bg)
-        c.write(string_char(132), self.pos.x+2, self.pos.y, self.parent.bg, self.txtcol)
+        c.write(string_char(157), self.x + 1, self.y, self.color_txt, self.color_bg)
+        c.write(string_char(132), self.x + 2, self.y, self.color_bg, self.color_txt)
     else
-        c.write("x ",self.pos.x+1, self.pos.y, self.parent.bg, self.txtcol)
+        c.write("x ", self.pos.x + 1, self.y, self.parent.color_bg, self.color_txt)
     end
 end
 box2:addChild(btnVolume)
 
-local pause = UI.New_Button(root, "|"..string_char(16), colors.gray, colors.white)
+local pause = UI.New_Button(math_floor((box2.w - 2) / 2) + 1, 2, 2, 1, "|"..string_char(16), _, box2.color_bg, colors.white)
 pause.play = false
 pause.draw = function(self)
-    local bg, txtcol, text = self.parent.bg, self.txtcol, "|"..string_char(16)
+    local color_bg, color_txt, text = self.parent.color_bg, self.color_txt, "|"..string_char(16)
     if self.play then text = "||" end
     if self.held then
-        c.write(text, self.pos.x, self.pos.y, txtcol, bg)
-    else
-        c.write(text, self.pos.x, self.pos.y, bg, txtcol)
+        color_txt = self.color_bg
+        color_bg = self.color_txt
     end
-end
-pause.reSize = function(self)
-    self.pos.x = math_floor((self.parent.size.w - self.size.w) / 2) + 1
-    self.pos.y = self.parent.pos.y + 1
+    c.write(text, self.x, self.y, color_bg, color_txt)
 end
 box2:addChild(pause)
 
-local btnNext = UI.New_Button(root, string_char(16).."|", colors.gray, colors.white)
-btnNext.reSize = function(self)
-    self.pos.x = pause.pos.x + pause.size.w + 1
-    self.pos.y = pause.pos.y
-end
+local btnNext = UI.New_Button(pause.x + pause.w + 1, pause.y, 2, 1, string_char(16).."|", _, box2.color_bg, colors.white)
 box2:addChild(btnNext)
 
-local btnPrev = UI.New_Button(root, "|"..string_char(17), colors.gray, colors.white)
-btnPrev.reSize = function(self)
-    self.pos.x = pause.pos.x - self.size.w - 1
-    self.pos.y = pause.pos.y
-end
+local btnPrev = UI.New_Button(pause.x - 3, pause.y, 2, 1, "|"..string_char(17), _, box2.color_bg, colors.white)
 box2:addChild(btnPrev)
 
-local btnOptionAutoNext = UI.New_Button(root, " ", colors.gray, colors.white)
-btnOptionAutoNext.reSize = function(self)
-    self.pos.x = btnNext.pos.x + btnNext.size.w + 1
-    self.pos.y = btnNext.pos.y
-end
+local btnOptionAutoNext = UI.New_Button(btnNext.x + btnNext.w + 1, btnNext.y, 1, 1, " ", _, box2.color_bg, colors.white)
 box2:addChild(btnOptionAutoNext)
 
-local ArtistName = UI.New_Running_Label(root, "Unknown", colors.gray, colors.lightGray, "top left")
-ArtistName.reSize = function(self)
-    self.pos.x = self.root.size.w > 41 and 10 or 2
-    self.pos.y = self.parent.pos.y + 1
-    self.size.w = btnPrev.pos.x-self.pos.x-1
-end
+local ArtistName = UI.New_Running_Label(surface.w > 41 and 10 or 2, 2, 7, 1, "Unknown", "left", _, _, box2.color_bg, colors.lightGray)
+-- ArtistName.reSize = function(self)
+--     self.pos.x = self.root.size.w > 41 and 10 or 2
+--     self.pos.y = self.parent.pos.y + 1
+--     self.size.w = btnPrev.pos.x-self.pos.x-1
+-- end
 box2:addChild(ArtistName)
 
-local trackName = UI.New_Running_Label(root, "Unknown", colors.gray, colors.lightGray, "top left", _, "   ")
-trackName.reSize = function(self)
-    self.pos.x = ArtistName.pos.x
-    self.pos.y = ArtistName.pos.y + 1
-    self.size.w = ArtistName.size.w
-    self.size.h = 1
-end
+local trackName = UI.New_Running_Label(ArtistName.x, ArtistName.y + 1, ArtistName.w, 1, "Unknown", "left", _, _, box2.color_bg, colors.lightGray)
 box2:addChild(trackName)
 
-local volumeSlider = UI.New_Slider(root, volumes, colors.gray, colors.white, def, colors.lightGray)
-volumeSlider.reSize = function(self)
-    self.size.w = #self.arr
-    self.pos.x = self.parent.size.w - self.size.w
-    self.pos.y = btnNext.pos.y
-end
+local volumeSlider = UI.New_Slider(box2.w - 10, 2, 10, volumes, def, colors.lightGray, box2.color_bg, colors.white)
 box2:addChild(volumeSlider)
 
-root.timeLine = UI.New_Slider(root, {}, colors.gray, colors.white, 1, colors.lightGray)
-root.timeLine.reSize = function(self)
-    self.pos.x = self.root.size.w > 41 and 16 or 8
-    self.pos.y = self.parent.size.h + self.parent.pos.y - 2
-    self.size.w = self.parent.size.w - self.pos.x - 2 - 10
-    self.size.w = self.root.size.w > 41 and self.parent.size.w - self.pos.x - 12 or self.parent.size.w- self.pos.x - 6
-end
-box2:addChild(root.timeLine)
+local timeLine = UI.New_Slider(surface.w > 41 and 16 or 8, surface.h - 2, 10, {}, 1, colors.white, box2.color_bg, colors.lightGray)
+-- root.timeLine.reSize = function(self)
+--     self.pos.x = self.root.size.w > 41 and 16 or 8
+--     self.pos.y = self.parent.size.h + self.parent.pos.y - 2
+--     self.size.w = self.parent.size.w - self.pos.x - 2 - 10
+--     self.size.w = self.root.size.w > 41 and self.parent.size.w - self.pos.x - 12 or self.parent.size.w- self.pos.x - 6
+-- end
+box2:addChild(timeLine)
 
-local currentTimeLabel = UI.New_Label(root, "00:00", colors.gray, colors.lightGray, "right")
-currentTimeLabel.reSize = function(self)
-    self.size.w = 5
-    self.pos.x = self.root.size.w > 41 and 10 or 2
-    self.pos.y = root.timeLine.pos.y
-end
+local currentTimeLabel = UI.New_Label(surface.w > 41 and 10 or 2, surface.h - 2, 5, 1, "00:00", _, box2.color_bg, colors.lightGray, "right")
 box2:addChild(currentTimeLabel)
 
-local totalTimeLabel = UI.New_Label(root, "00:00", colors.gray, colors.lightGray, "left")
-totalTimeLabel.reSize = function(self)
-    self.size.w = 5
-    self.pos.x = self.root.size.w > 41 and self.parent.size.w - self.size.w-6 or self.parent.size.w - self.size.w
-    self.pos.y = root.timeLine.pos.y
-end
+local totalTimeLabel = UI.New_Label(surface.w - 11, surface.h - 2, 5, 1, "00:00", _, box2.color_bg, colors.lightGray)
+-- totalTimeLabel.reSize = function(self)
+--     self.size.w = 5
+--     self.pos.x = self.root.size.w > 41 and self.parent.size.w - self.size.w-6 or self.parent.size.w - self.size.w
+--     self.pos.y = root.timeLine.pos.y
+-- end
 box2:addChild(totalTimeLabel)
-
+--[[
 local btnVolumeUp = UI.New_Button(root,string_char(30),colors.gray,colors.white)
 btnVolumeUp.reSize = function (self)
     self.pos = {x=self.parent.size.w-1,y=self.parent.pos.y}
@@ -677,34 +611,34 @@ btnNext.pressed = function(self)
     played[1] = sortedCache[next_index]
 
     startTrack(played[1], false)
+]]
+--     if trackButtons[played[3]] then
+--         trackButtons[played[3]].play = true
+--         trackButtons[played[3]].dirty = true
+--         played[2] = trackButtons[played[3]]
+--     end
+-- end
 
-    if trackButtons[played[3]] then
-        trackButtons[played[3]].play = true
-        trackButtons[played[3]].dirty = true
-        played[2] = trackButtons[played[3]]
-    end
-end
+-- btnPrev.pressed = function(self)
+--     if not played[1] or #sortedCache == 0 then return end
 
-btnPrev.pressed = function(self)
-    if not played[1] or #sortedCache == 0 then return end
+--     local current_index = played[3] or 1
+--     local prev_index = current_index - 1
+--     if prev_index < 1 then
+--         prev_index = #sortedCache
+--     end
+--     played[3] = prev_index
+--     played[1] = sortedCache[prev_index]
 
-    local current_index = played[3] or 1
-    local prev_index = current_index - 1
-    if prev_index < 1 then
-        prev_index = #sortedCache
-    end
-    played[3] = prev_index
-    played[1] = sortedCache[prev_index]
+--     startTrack(played[1], false)
 
-    startTrack(played[1], false)
-
-    if trackButtons[played[3]] then
-        trackButtons[played[3]].play = true
-        trackButtons[played[3]].dirty = true
-        played[2] = trackButtons[played[3]]
-    end
-end
-
+--     if trackButtons[played[3]] then
+--         trackButtons[played[3]].play = true
+--         trackButtons[played[3]].dirty = true
+--         played[2] = trackButtons[played[3]]
+--     end
+-- end
+--[[
 local temp_onEvent = pause.onEvent
 pause.onEvent = function(self,evt)
     if evt[1] == "pause_music" then
@@ -888,8 +822,8 @@ root.mainloop = function(self)
         self:redraw()
     end
     c.termClear()
-end
+end]]
 -----------------------------------------------------
 ---------| MAINLOOP И ДЕЙСТВИЯ ПОСЛЕ НЕГО |----------
-root:mainloop()
 -----------------------------------------------------
+surface:onLayout()

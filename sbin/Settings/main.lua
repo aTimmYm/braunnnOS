@@ -55,8 +55,6 @@ local buttonAbout = UI.New_Button(2, systemLabel.y + 1, systemLabel.w, 1, "ABOUT
 box:addChild(buttonAbout)
 
 local page1 = UI.New_Box(box.w + 1, 1, surface.w - box.w, surface.h, colors.black)
-surface:addChild(page1)
-pageBuffer = page1
 
 local tumblerLabel = UI.New_Label(2, 2, 12, 1, "Monitor Mode", "left", page1.color_bg, colors.white)
 page1:addChild(tumblerLabel)
@@ -114,6 +112,8 @@ local dropdownChoose = UI.New_Dropdown(page3.w - 13, chooseLabel.y, dropdownChoo
 page3:addChild(dropdownChoose)
 
 local page4 = UI.New_Box(box.w + 1, 1, surface.w - box.w, surface.h, colors.black)
+surface:addChild(page4)
+pageBuffer = page4
 
 local braunnnOS = UI.New_Label(2, 2, 9, 1, string_char(223).."raunnnOS", _, page4.color_bg, colors.white)
 page4:addChild(braunnnOS)
@@ -121,7 +121,7 @@ page4:addChild(braunnnOS)
 local versionLabel = UI.New_Label(2, braunnnOS.y + 1, 12, 1, "Version "..version, _, page4.color_bg, colors.lightGray)
 page4:addChild(versionLabel)
 
-local buttonCheckUpdate = UI.New_Button(versionLabel.x + versionLabel.w, versionLabel.y, 19, 1, "(CHECK FOR UPDATES)", _, page4.color_bg, colors.white)
+local buttonCheckUpdate = UI.New_Button(2, versionLabel.y + 1, 19, 1, "(CHECK FOR UPDATES)", _, page4.color_bg, colors.white)
 -- buttonCheckUpdate.reSize = function (self)
 --     if self.root.size.w <= 30 then
 --         self.pos.x = self.parent.pos.x

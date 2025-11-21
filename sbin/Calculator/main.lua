@@ -1,6 +1,6 @@
 -------| СЕКЦИЯ ПОДКЛЮЧЕНИЯ БИБЛИОТЕК И ROOT |-------
+local system = require("braunnnsys")
 local UI = require("ui")
-local root = UI.New_Root(colors.black)
 -----------------------------------------------------
 -----| СЕКЦИЯ ОБЪЯВЛЕНИЯ ПЕРЕМЕННЫХ ПРОГРАММЫ |------
 local expr = ""
@@ -15,35 +15,18 @@ local btnTexts = {
 }
 -----------------------------------------------------
 ----------| СЕКЦИЯ ИНИЦИАЛИЗАЦИИ ОБЪЕКТОВ |----------
-local app = UI.New_Box(root, root.bg)
-root:addChild(app)
+local window, surface = system.add_window("Titled", colors.black, "Calculator")
 
-local header = UI.New_Label(root, "Calculator", colors.white, colors.black, "center")
-header.reSize = function(self)
-    self.pos = { x = 1, y = 1 }
-    self.size.w = self.parent.size.w-1
-end
-app:addChild(header)
-
-local buttonClose = UI.New_Button(root, "x",colors.white, colors.black)
-buttonClose.reSize = function(self)
-    self.pos = { x = self.parent.size.w, y = 1 }
-end
-app:addChild(buttonClose)
-
-local display = UI.New_Label(root, "0", root.bg, colors.white, "right")
-display.reSize = function(self)
-	self.pos = { x = self.parent.pos.x + 1, y = self.parent.pos.y + 1 }
-	self.size = { w = math.max(10, self.parent.size.w - 2), h = 3 }
-end
-app:addChild(display)
+local display = UI.New_Label(1, 1, math.max(10, surface.w - 2), 3, "0", "right", surface.color_bg, colors.white)
+surface:addChild(display)
 -----------------------------------------------------
 ------| СЕКЦИЯ ОБЪЯВЛЕНИЯ ФУНКЦИЙ ПРОГРАММЫ |--------
+
 local function setDisplay(text)
 	text = tostring(text or "0")
 	-- Truncate if too long
-	if #text > display.size.w then
-		text = text:sub(#text - display.size.w + 1)
+	if #text > display.w then
+		text = text:sub(#text - display.w + 1)
 	end
 	display:setText(text)
 end
@@ -113,16 +96,11 @@ for row = 1, #btnTexts do
 			end
 		end
 
-		app:addChild(btn)
+		surface:addChild(btn)
 		table.insert(buttons, btn)
 	end
 end
 -----------------------------------------------------
 --| СЕКЦИЯ ПЕРЕОПРЕДЕЛЕНИЯ ФУНКЦИОНАЛЬНЫХ МЕТОДОВ |--
-buttonClose.pressed = function(self)
-    self.root.running_program = false
-end
 -----------------------------------------------------
----------| MAINLOOP И ДЕЙСТВИЯ ПОСЛЕ НЕГО |----------
-root:mainloop()
------------------------------------------------------
+surface:onLayout()

@@ -407,6 +407,7 @@ end
 
 local function Label_setText(self, text)
     self.text = text
+    self.w = #text
     self.dirty = true
 end
 
@@ -529,11 +530,11 @@ end
 local function Shortcut_pressed(self)
     local func, load_err = loadfile(self.filePath, _ENV)  -- "t" для text, или "bt" если нужно
     if not func then
-        error(load_err)
+        print(load_err) os.sleep(2)
     else
         local ret, exec_err = pcall(func)
         if not ret then
-            error(exec_err)
+            print(exec_err) os.sleep(2)
         end
     end
 end
@@ -2019,7 +2020,7 @@ local function ScrollBox_redraw(self)
     if self.dirty then self:draw() self.dirty = false end
     for _, child in ipairs(self.visibleChild) do
         local tempX, tempY = child.x, child.y
-        child.x, child.y = child.local_x, child.local_y - (self.scrollpos - 1)
+        child.x, child.y = child.local_x, child.local_y-- - (self.scrollpos - 1)
         child:redraw()
         child.x, child.y = tempX, tempY
     end
@@ -2028,11 +2029,14 @@ local function ScrollBox_redraw(self)
 end
 
 local function ScrollBox_onLayout(self)
+    if self.win then
+        self.win.reposition(self.x, self.y, self.w, self.h)
+    end
     self.visibleChild = {}
     self.dirty = true
     Container_onLayout(self)
     for _, child in pairs(self.children) do
-        child.y = child.y - (self.scrollpos - 1)
+        --child.y = child.y - (self.scrollpos - 1)
         self.scrollmax = math_max(math_max(self.scrollmax, child.y + child.h - 1 + self.scrollpos) - self.h, 1)
         if child.y + child.h > self.y and child.y <= self.y + self.h - 1 then
             table_insert(self.visibleChild, child)

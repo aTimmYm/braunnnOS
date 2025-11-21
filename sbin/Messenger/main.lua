@@ -4,9 +4,9 @@ local table_sort = table.sort
 local table_unpack = table.unpack
 -----------------------------------------------------
 -------| СЕКЦИЯ ПОДКЛЮЧЕНИЯ БИБЛИОТЕК И ROOT |-------
+local system = require("braunnnsys")
 local c = require("cfunc")
 local UI = require("ui")
-local root = UI.New_Root()
 -----------------------------------------------------
 -----| СЕКЦИЯ ОБЪЯВЛЕНИЯ ПЕРЕМЕННЫХ ПРОГРАММЫ |------
 local texts = {}
@@ -40,8 +40,7 @@ if not account_key then
     rednet.send(serverID,{cType = "get_friends", user = account_key},protocol)
 end
 ----------| СЕКЦИЯ ИНИЦИАЛИЗАЦИИ ОБЪЕКТОВ |----------
-local surface = UI.New_Box(root,colors.white)
-root:addChild(surface)
+local window, surface = system.add_window("Titled", colors.black, "Messenger")
 
 local buttonClose = UI.New_Button(root,"x",colors.white,colors.black)
 buttonClose.reSize = function (self)
@@ -221,6 +220,4 @@ root.mainloop = function (self)
     c.termClear()
 end
 -----------------------------------------------------
----------| MAINLOOP И ДЕЙСТВИЯ ПОСЛЕ НЕГО |----------
-root:mainloop()
------------------------------------------------------
+surface:onLayout()
