@@ -65,7 +65,7 @@ page1:addChild(monitorTumbler)
 local dropdownLabel = UI.New_Label(tumblerLabel.x, tumblerLabel.y + 2, 13, 1, "Monitor Scale", "left", page1.color_bg, colors.white)
 page1:addChild(dropdownLabel)
 
-local dropdown = UI.New_Dropdown(page1.w - 4, dropdownLabel.y, {"0.5","1","1.5","2","2.5","3","3.5","4","4.5","5"}, _, _, _, colors.white, colors.black, tostring(conf["monitorScale"]))
+local dropdown = UI.New_Dropdown(page1.w - 4, dropdownLabel.y, {"0.5","1","1.5","2","2.5","3","3.5","4","4.5","5"}, tostring(conf["monitorScale"]), _, _, colors.white, colors.black)
 page1:addChild(dropdown)
 
 local page2 = UI.New_Box(box.w + 1, 1, surface.w - box.w, surface.h, colors.black)

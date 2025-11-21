@@ -1339,7 +1339,7 @@ end
 ---Creating new *object* of *class*
 ---@param x number
 ---@param y number
----@param array sting[]|nil
+---@param array string[]|nil
 ---@param defaultValue string|nil
 ---@param maxSizeW number|nil
 ---@param orientation string|nil
