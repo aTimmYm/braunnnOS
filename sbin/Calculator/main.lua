@@ -16,6 +16,7 @@ local btnTexts = {
 -----------------------------------------------------
 ----------| СЕКЦИЯ ИНИЦИАЛИЗАЦИИ ОБЪЕКТОВ |----------
 local window, surface = system.add_window("Titled", colors.black, "Calculator")
+if not surface then error("sosal22") end
 
 local display = UI.New_Label(1, 1, math.max(10, surface.w - 2), 3, "0", "right", surface.color_bg, colors.white)
 surface:addChild(display)
@@ -51,21 +52,18 @@ end
 for row = 1, #btnTexts do
 	for col = 1, #btnTexts[row] do
 		local txt = btnTexts[row][col]
-		local btn = UI.New_Button(root, txt)
-		btn.size = btn.size or { w = 6, h = 3 }
+		local padX = 0
+		local padY = 0
+		local totalCols = #btnTexts[1]
+		local w = math.floor((surface.w - (totalCols - 1)) / totalCols)
+		local h = math.floor((surface.h - 3)/5)
+		local x = surface.x + (col - 1) * (w + padX) + 1
+		local y = surface.y + display.h + (row - 1) * (h + padY) + 1
 
-		btn.reSize = function(self)
-			local padX = 0
-			local padY = 0
-			local totalCols = #btnTexts[1]
-			--local btnW = math.floor((self.parent.size.w - (totalCols + 1)) / totalCols)
-			local btnW = math.floor((self.parent.size.w - (totalCols - 1)) / totalCols)
-			self.size.w = btnW
-			self.size.h =  math.floor((self.parent.size.h - 3)/5)
-			local x = self.parent.pos.x + (col - 1) * (btnW + padX) + 1
-			local y = self.parent.pos.y + display.size.h + (row - 1) * (self.size.h + padY) + 1
-			self.pos = { x = x, y = y }
-		end
+		local btn = UI.New_Button(x, y, w, h, txt)
+
+		--btn.reSize = function(self)
+		--end
 
 		btn.pressed = function(self)
 			if txt == "C" then

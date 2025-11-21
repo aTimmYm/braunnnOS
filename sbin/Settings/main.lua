@@ -237,6 +237,7 @@ end
 
 buttonCheckUpdate.pressed = function (self)
     self:setText("(CHECKING)")
+    self.w = #self.text
     local response, err = http.get("https://raw.githubusercontent.com/aTimmYm/braunnnOS/refs/heads/dev/manifest.txt")
     local manifest = response.readAll()
     response.close()
@@ -256,6 +257,8 @@ buttonCheckUpdate.pressed = function (self)
         else
             self:setText("(NO UPDATES)")
         end
+        self.w = #self.text
+        surface:onLayout()
     end
 end
 -----------------------------------------------------

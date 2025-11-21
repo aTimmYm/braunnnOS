@@ -407,7 +407,7 @@ end
 
 local function Label_setText(self, text)
     self.text = text
-    self.w = #text
+    --self.w = #text
     self.dirty = true
 end
 
