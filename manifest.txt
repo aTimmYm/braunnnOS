@@ -10,7 +10,7 @@ a63818cabc44cb04270e6d1380508070   lib/cfunc.lua
 cc72e992343aeb53f6b1dc0d55e152c2   lib/deskManager.lua
 916edb95e57cc65c7090dcee6352b973   lib/events
 0e8430925597fb135103b506fe2c669f   lib/palette
-7ed9dd4f1ff1a7ee3972b049511554ed   lib/ui.lua
+628c7aee3f23e3a9ce06fb383f37fac9   lib/ui.lua
 d41d8cd98f00b204e9800998ecf8427e   new_manifest.txt
 89b0b700ec66f8f1128e5783e1d32e86   sbin/Calculator/icon.ico
 900b79c52bda8e43d8452b92ea65294a   sbin/Calculator/main.lua
@@ -19,7 +19,7 @@ bbbebcddc2e828fe192688059590b545   sbin/Explorer/main.lua
 7e554e61628f2c4328fbffc85cd20e8f   sbin/MPlayer/Data/MusicAlbum.ico
 4461760019647e8a2ddf428b038b5fa8   sbin/MPlayer/Data/volume.ico
 22b8b48e5600d9073054d8f003e3c832   sbin/MPlayer/icon.ico
-b50a4eadbf57491d1978621e6973b1bf   sbin/MPlayer/main.lua
+65f2aff78091ea4d0df415b8d559bfe4   sbin/MPlayer/main.lua
 ffc00e10ce6a18d9ca71f9307568c4db   sbin/Messenger/Data/register.lua
 117de29ab363f7522b3bbbd0d133235d   sbin/Messenger/icon.ico
 ebb330dff0d5bc39947333f19801d47f   sbin/Messenger/main.lua
