@@ -1475,12 +1475,11 @@ local function Container_onLayout(self)
 end
 
 local function Container_addChild(self, child)
-    --[[for _, v in ipairs(self.children) do
+    for _, v in ipairs(self.children) do
         if v == child then
             return false
         end
-    end]]
-    if child.childIndex and self.children[child.childIndex] == child then return false end
+    end
     local function addRoot(object, root)
 		object.root = root
 
@@ -1492,28 +1491,24 @@ local function Container_addChild(self, child)
 	end
 
 	addRoot(child, self.root or self)
-    child.local_x, child.local_y = child.x, child.y
+    if not child.local_x then child.local_x = child.x end
+    if not child.local_y then child.local_y = child.y end
     child.parent = self
-    -- child.root = self.root or self
     table_insert(self.children, child)
-    child.childIndex = #self.children
     child.dirty = true
     return true
 end
 
 local function Container_removeChild(self, child)
-    --[[for i,v in ipairs(self.children) do
+    for i, v in ipairs(self.children) do
         if v == child then
             child.parent = nil
             table.remove(self.children, i)
             self:onLayout()
             return true
         end
-    end]]
-    if not child.childIndex then return false end
-    table.remove(self.children, child.childIndex)
-    child.childIndex = nil
-    return true
+    end
+    return false
 end
 
 local function Container_redraw(self)

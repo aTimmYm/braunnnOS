@@ -138,7 +138,7 @@ local function setPage(page)
         surface:removeChild(pageBuffer)
         surface:addChild(page)
         pageBuffer = page
-        --page:onLayout()
+        surface:onLayout()
     end
 end
 
