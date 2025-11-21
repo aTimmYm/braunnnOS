@@ -1398,7 +1398,7 @@ local function Slider_draw(self)
     end
 end
 
-local function Slider_updatePos(self,x,y)
+local function Slider_updatePos(self, x, y)
     local N = #self.arr
 
     if N > 0 and self.w > 1 then  -- Avoid div by zero
@@ -1409,19 +1409,19 @@ local function Slider_updatePos(self,x,y)
     self.dirty = true
 end
 
-local function Slider_onMouseDown(self,btn, x, y)
-    self:updatePos(x,y)
+local function Slider_onMouseDown(self, btn, x, y)
+    self:updatePos(x, y)
     self:pressed(btn, x, y)
     return true
 end
 
-local function Slider_onMouseDrag(self,btn, x, y)
-    self:updatePos(x,y)
+local function Slider_onMouseDrag(self, btn, x, y)
+    self:updatePos(x, y)
     self:pressed(btn, x, y)
     return true
 end
 
-local function Slider_updateArr(self,array)
+local function Slider_updateArr(self, array)
     self.arr = array
     self.dirty = true
 end
@@ -1440,7 +1440,7 @@ function UI.New_Slider(x, y, w, arr, defaultPosition, color_txt2, color_bg, colo
     expect(1, x, "number")
     expect(2, y, "number")
     expect(3, w, "number")
-    expect(4, arr, "table", "nil")
+    expect(4, arr, "table")
     expect(5, defaultPosition, "number", "nil")
     expect(6, color_txt2, "number", "nil")
     expect(7, color_bg, "number", "nil")
