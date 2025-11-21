@@ -59,6 +59,7 @@ local def = 1
 for i, v in pairs(volumes) do
     if conf["volume"] == v then def = i break end
 end
+local volume = conf["volume"]
 -----------------------------------------------------
 ----------| СЕКЦИЯ ИНИЦИАЛИЗАЦИИ ОБЪЕКТОВ |----------
 local window, surface = system.add_window("Titled", colors.black, "MPlayer")
@@ -149,7 +150,7 @@ btnVolume.draw = function (self)
         c.write(string_char(157), self.x + 1, self.y, self.color_txt, self.color_bg)
         c.write(string_char(132), self.x + 2, self.y, self.color_bg, self.color_txt)
     else
-        c.write("x ", self.pos.x + 1, self.y, self.parent.color_bg, self.color_txt)
+        c.write("x ", self.x + 1, self.y, self.parent.color_bg, self.color_txt)
     end
 end
 box2:addChild(btnVolume)
@@ -224,10 +225,109 @@ end
 local btnVolumeDown = UI.New_Button(root,string_char(31),colors.gray,colors.white)
 btnVolumeDown.reSize = function (self)
     self.pos = {x=self.parent.size.w-1,y=self.parent.pos.y+2}
-end
+end]]
 -----------------------------------------------------
 ------| СЕКЦИЯ ОБЪЯВЛЕНИЯ ФУНКЦИЙ ПРОГРАММЫ |--------
-local function adaptive()
+local function checkSpeaker()
+    if bOS.speaker then return true end
+    if peripheral.find("speaker") then
+        bOS.speaker = peripheral.find("speaker")
+        return true
+    end
+    local speakerWin = UI.New_MsgWin(root,"INFO")
+    speakerWin:callWin(" INFO ","Speaker not found. Please, put speaker near computer.")
+    return false
+end
+
+local function play(self, path, start_chunk)
+    --textutils.slowPrint(path) os.sleep(1)
+    if not checkSpeaker() then return end
+    start_chunk = start_chunk or 1
+    local temp = path:match("([^/\\]+)$")
+
+    -- Update UI labels with parsed metadata (if available)
+
+    ArtistName:setText(cache[temp].artist)
+    local Title = cache[temp].title
+    if Title ~= "Unknown" then
+        trackName:setText(Title)
+    else
+        trackName:setText(temp)
+    end
+
+    self.music_file = fs.open(path, "rb")
+    if not self.music_file then error("Failed to open file: " .. path) end
+    local ok, fileSize = pcall(function() return self.music_file.seek("end") end)
+    fileSize = tonumber(fileSize) or 0
+
+    -- compute data end position (if metadata present, stop before it)
+    self.data_end = fileSize
+    if cache[temp].meta_start then
+        self.data_end = cache[temp].meta_start - 1
+    end
+
+    -- Seek to requested start_chunk
+    if start_chunk > 1 then
+        local start_pos = (start_chunk - 1) * CHUNK_SIZE
+        if start_pos < data_end then
+            self.music_file.seek("set", start_pos)
+        else
+            -- start beyond data; nothing to play
+            self.music_file.close()
+            return
+        end
+    else
+        self.music_file.seek("set", 0)
+    end
+    self.current_chunk = start_chunk
+
+    self:play_next_chunk()
+end
+
+local function play_next_chunk(self)
+    local cur_pos = self.music_file.seek("cur") or 0
+    if cur_pos >= self.data_end then return false end
+    local to_read = math_min(CHUNK_SIZE, self.data_end - cur_pos)
+    if to_read <= 0 then return false end
+    local chunk = self.music_file.read(to_read)
+    if not chunk then return false end
+    local buffer = self.decoder(chunk)
+    bOS.speaker.playAudio(buffer, volume)
+    self.current_chunk = self.current_chunk + 1
+end
+
+local function onEvent(self, evt)
+    if evt[1] == "speaker_audio_empty" and not self.pause or evt[1] == "unpause_music" then
+        self:play_next_chunk() -- Подкидываем дров в топку
+        self.pause = false
+        return true
+    elseif evt[1] == "play_music" and evt[2] then
+        self:play(evt[2], evt[3])
+        self.pause = false
+        return true
+    elseif evt[1] == "pause_music" then
+        self.pause = true
+        return true
+    end
+    return false
+end
+
+local MPlayer = {
+    x = 0, y = 0,
+    w = 0, h = 0,
+    decoder = dfpwm.make_decoder(),
+
+    onEvent = onEvent,
+    onLayout = function (self) end,
+    redraw = function (self) end,
+    play = play,
+    play_next_chunk = play_next_chunk,
+    check = function (self) return false end
+}
+
+surface:addChild(MPlayer)
+
+--[[local function adaptive()
     if root.size.w <= 41 then
         box2:removeChild(btnVolume)
         box2:removeChild(volumeSlider)
@@ -242,7 +342,7 @@ local function adaptive()
         box2:removeChild(volumeLabel)
     end
 end
-adaptive()
+adaptive()]]
 
 local function getConf()
     local val = ""
@@ -406,19 +506,7 @@ local function getTotalChunks(path)
     return math.ceil(size / CHUNK_SIZE)
 end
 
-local function checkSpeaker()
-    if bOS.speaker then return true end
-    if peripheral.find("speaker") then
-        bOS.speaker = peripheral.find("speaker")
-        return true
-    end
-    local speakerWin = UI.New_MsgWin(root,"INFO")
-    speakerWin:callWin(" INFO ","Speaker not found. Please, put speaker near computer.")
-    return false
-end
-
-local volume = conf["volume"]
-local function runMusic(path, start_chunk)
+--[[local function runMusic(path, start_chunk)
     --textutils.slowPrint(path) os.sleep(1)
     if not checkSpeaker() then return end
     start_chunk = start_chunk or 1
@@ -481,7 +569,7 @@ local function runMusic(path, start_chunk)
         end
         h:close()
     end)
-end
+end]]
 
 local function startTrack(filename, isTogglePause)
     if not checkSpeaker() then return false end
@@ -490,7 +578,7 @@ local function startTrack(filename, isTogglePause)
     if isTogglePause then
         pause.play = not pause.play
         pause.dirty = true
-        root.coroutine[2] = not root.coroutine[2]
+        --root.coroutine[2] = not root.coroutine[2]
         return
     end
 
@@ -498,16 +586,16 @@ local function startTrack(filename, isTogglePause)
         played[2].play = false
         played[2].dirty = true
     end
-    if root.coroutine[1] then root.coroutine = {} end
+    --if root.coroutine[1] then root.coroutine = {} end
 
     local total_chunks = getTotalChunks(full_path)
-    root.timeLine.arr = {}
+    --[[root.timeLine.arr = {}
     for i = 1, total_chunks do
         root.timeLine.arr[i] = i
     end
     root.timeLine.slidePosition = 1
     root.timeLine.dirty = true
-    root.seek_to = nil
+    root.seek_to = nil]]
 
     totalTimeLabel:setText(cache[filename].time)
 
@@ -518,48 +606,34 @@ local function startTrack(filename, isTogglePause)
     pause.play = true
     pause.dirty = true
 
-    runMusic(full_path)
+    --MPlayer:play(full_path)
+    os.queueEvent("play_music", full_path)
     return true
 end
 
 for i,v in pairs(sortedCache) do
-    local trackPlay = UI.New_Button(root,string_char(16),colors.black,colors.white)
+    local trackPlay = UI.New_Button(boxAll.x, boxAll.y + i, 3, 1, string_char(16), _, boxAll.color_bg, colors.white)
     trackPlay.play = false
-    trackPlay.draw = function(self)
-        local bg, txtcol, text = self.parent.bg, self.txtcol, string_char(16)
+    trackPlay.draw = function (self)
+        local color_bg, color_txt, text = self.color_bg, self.color_txt, string_char(16)
         if self.play then text = string_char(15) end
-        if self.held then
-            c.write(" "..text.." ", self.pos.x, self.pos.y, txtcol, bg)
-        else
-            c.write(" "..text.." ", self.pos.x, self.pos.y, bg, txtcol)
-        end
-    end
-    trackPlay.reSize = function(self)
-        self.pos = {x = self.parent.pos.x, y = self.parent.pos.y + i-self.parent.scrollpos+1}
-        self.size.w = 3
+        if self.held then color_bg, color_txt = self.color_txt, self.color_bg end
+        c.write(" "..text.." ", self.x, self.y, color_bg, color_txt)
     end
     boxAll:addChild(trackPlay)
     table_insert(trackButtons, trackPlay)
-    local trackLabel = UI.New_Label(root,v,colors.black,colors.white,"left")
-    trackLabel.reSize = function(self)
-        self.pos = {x = trackPlay.pos.x + trackPlay.size.w, y = trackPlay.pos.y}
-        self.size.w = self.parent.size.w - self.pos.x - 6
-    end
+    local trackLabel = UI.New_Label(trackPlay.x + trackPlay.w, trackPlay.y, boxAll.w - 9, 1, v, "left", colors.black, colors.white)
     boxAll:addChild(trackLabel)
-    local trackTime = UI.New_Label(root,cache[v].time,colors.black,colors.lightGray,"left")
-    trackTime.reSize = function(self)
-        self.size.w = 5
-        self.pos = {x = self.parent.size.w-self.size.w, y = self.parent.pos.y + i-self.parent.scrollpos+1}
-    end
+    local trackTime = UI.New_Label(boxAll.w - 5, trackPlay.y, 5, 1, cache[v].time, "left", colors.black, colors.lightGray)
     boxAll:addChild(trackTime)
-    trackPlay.pressed = function(self)
-        if not startTrack(v,false) then return end
+    trackPlay.pressed = function (self)
+        if not startTrack(v, false) then return end
         self.play = true
         played[2] = self
         played[3] = i
     end
 end
-
+--[[
 for i,v in pairs(artistS) do
     local buttonArtist = UI.New_Button(root,v,_,_,"left")
     buttonArtist.reSize = function(self)
@@ -567,7 +641,7 @@ for i,v in pairs(artistS) do
         self.size.w = self.parent.size.w
     end
     scrollArtist:addChild(buttonArtist)
-end
+end]]
 -----------------------------------------------------
 --| СЕКЦИЯ ПЕРЕОПРЕДЕЛЕНИЯ ФУНКЦИОНАЛЬНЫХ МЕТОДОВ |--
 btnAll.pressed = function(self)
@@ -590,13 +664,16 @@ btnAlbum.pressed = function(self)
     end
 end
 
-btnClose.pressed = function(self)
-    self.root.running_program = false
-end
-
-pause.pressed = function(self)
-    if not played[1] then return end
-    startTrack(played[1], true)
+pause.pressed = function (self)
+    --if not played[1] then return end
+    --startTrack(played[1], true)
+    if self.play then
+        os.queueEvent("pause_music")
+        self.play = false
+    else
+        os.queueEvent("unpause_music")
+        self.play = true
+    end
 end
 
 btnNext.pressed = function(self)
@@ -611,53 +688,52 @@ btnNext.pressed = function(self)
     played[1] = sortedCache[next_index]
 
     startTrack(played[1], false)
-]]
---     if trackButtons[played[3]] then
---         trackButtons[played[3]].play = true
---         trackButtons[played[3]].dirty = true
---         played[2] = trackButtons[played[3]]
---     end
--- end
 
--- btnPrev.pressed = function(self)
---     if not played[1] or #sortedCache == 0 then return end
-
---     local current_index = played[3] or 1
---     local prev_index = current_index - 1
---     if prev_index < 1 then
---         prev_index = #sortedCache
---     end
---     played[3] = prev_index
---     played[1] = sortedCache[prev_index]
-
---     startTrack(played[1], false)
-
---     if trackButtons[played[3]] then
---         trackButtons[played[3]].play = true
---         trackButtons[played[3]].dirty = true
---         played[2] = trackButtons[played[3]]
---     end
--- end
---[[
-local temp_onEvent = pause.onEvent
-pause.onEvent = function(self,evt)
-    if evt[1] == "pause_music" then
-        self.play = false
-        self:setText("|"..string_char(16))
-        return true
-    elseif evt[1] == "play_next" then
-        btnNext:pressed()
-        return true
+    if trackButtons[played[3]] then
+        trackButtons[played[3]].play = true
+        trackButtons[played[3]].dirty = true
+        played[2] = trackButtons[played[3]]
     end
-    temp_onEvent(self,evt)
 end
+
+btnPrev.pressed = function(self)
+    if not played[1] or #sortedCache == 0 then return end
+
+    local current_index = played[3] or 1
+    local prev_index = current_index - 1
+    if prev_index < 1 then
+        prev_index = #sortedCache
+    end
+    played[3] = prev_index
+    played[1] = sortedCache[prev_index]
+
+    startTrack(played[1], false)
+
+    if trackButtons[played[3]] then
+        trackButtons[played[3]].play = true
+        trackButtons[played[3]].dirty = true
+        played[2] = trackButtons[played[3]]
+    end
+end
+
+-- pause.onEvent = function(self,evt)
+--     if evt[1] == "pause_music" then
+--         self.play = false
+--         self:setText("|"..string_char(16))
+--         return true
+--     elseif evt[1] == "play_next" then
+--         btnNext:pressed()
+--         return true
+--     end
+--     temp_onEvent(self,evt)
+-- end
 
 volumeSlider.pressed = function(self,btn, x, y)
     volume = self.arr[self.slidePosition]
     conf["volume"] = volume
     c.saveConf(confPath, conf)
     btnVolume.dirty = true
-    volumeLabel:setText(tostring(self.slidePosition))
+    --volumeLabel:setText(tostring(self.slidePosition))
 end
 
 btnVolume.pressed = function(self)
@@ -692,7 +768,7 @@ btnOptionAutoNext.pressed = function(self)
     c.saveConf(confPath, conf)
 end
 
-btnVolumeUp.pressed = function (self)
+--[[btnVolumeUp.pressed = function (self)
     local temp = math_min(tonumber(volumeLabel.text)+1,10)
     volume = volumes[temp]
     conf["volume"] = volume
@@ -708,9 +784,9 @@ btnVolumeDown.pressed = function (self)
     c.saveConf(confPath, conf)
     volumeLabel:setText(tostring(temp))
     volumeSlider.slidePosition = temp
-end
+end]]
 
-root.timeLine.pressed = function(self,btn, x, y)
+timeLine.pressed = function(self,btn, x, y)
     if btn == 1 and played[1] then
         local new_pos = math_max(1, math_min(#self.arr, math_floor((x - self.pos.x) / self.size.w * #self.arr) + 1))
         self.slidePosition = new_pos
@@ -722,107 +798,6 @@ root.timeLine.pressed = function(self,btn, x, y)
         currentTimeLabel:setText(format_time(current_sec))
     end
 end
-
-local function resume_coroutine(co, ...)
-    local success, result = coroutine_resume(co, ...)
-    if success and result and type(result) == "string" then
-        root.expected_event = result
-        return true, nil
-    end
-    return success, result
-end
-root.tResize = function (self)
-    c.termClear(self.bg)
-    self.size.w, self.size.h = term.getSize()
-    adaptive()
-    self:onLayout()
-end
-
-root.mainloop = function(self)
-    self:show()
-    while self.running_program do
-        if self.seek_to then
-            local full_path = Path .. played[1]
-            self.coroutine = {}
-            self.expected_event = nil
-            runMusic(full_path, self.seek_to)
-            self.seek_to = nil
-            pause.play = true
-            pause:setText("||")
-            pause.dirty = true
-            -- Новый: обновить current_time после seek
-            local time_per_chunk = CHUNK_SIZE * SAMPLES_PER_BYTE / SAMPLE_RATE
-            local current_sec = (self.timeLine.slidePosition - 1) * time_per_chunk
-            currentTimeLabel:setText(format_time(current_sec))
-        end
-
-        if self.coroutine[1] and not self.coroutine[2] and coroutine_status(self.coroutine[1]) == "suspended" and not self.expected_event then
-            local success, current_chunk = resume_coroutine(self.coroutine[1])
-            if success then
-                if current_chunk then
-                    self.timeLine.slidePosition = current_chunk
-                    self.timeLine.dirty = true
-                    -- Новый: обновить current_time
-                    local time_per_chunk = CHUNK_SIZE * SAMPLES_PER_BYTE / SAMPLE_RATE
-                    local current_sec = (current_chunk - 1) * time_per_chunk
-                    currentTimeLabel:setText(format_time(current_sec))
-                end
-            else
-                local infoWin = UI.New_MsgWin(root, "ERROR")
-                infoWin:callWin(" Coroutine error ", tostring(current_chunk))
-                self.coroutine = {}
-                self.expected_event = nil
-            end
-            if coroutine_status(self.coroutine[1]) == "dead" then
-                self.coroutine = {}
-                self.expected_event = nil
-                if conf["play_next"] then
-                    os.queueEvent("play_next")
-                else
-                    os.queueEvent("pause_music")
-                end
-            end
-        end
-
-        local evt = {os.pullEventRaw()}
-
-        local event_used = false
-        if self.coroutine[1] and self.expected_event and evt[1] == self.expected_event then
-            local success, current_chunk = resume_coroutine(self.coroutine[1], table_unpack(evt))
-            self.expected_event = nil
-            event_used = true
-            if success then
-                if current_chunk then
-                    self.timeLine.slidePosition = current_chunk
-                    self.timeLine.dirty = true
-                    -- Новый: обновить current_time
-                    local time_per_chunk = CHUNK_SIZE * SAMPLES_PER_BYTE / SAMPLE_RATE
-                    local current_sec = (current_chunk - 1) * time_per_chunk
-                    currentTimeLabel:setText(format_time(current_sec))
-                end
-            else
-                local infoWin = UI.New_MsgWin(root, "ERROR")
-                infoWin:callWin(" Coroutine error ", tostring(current_chunk))
-                self.coroutine = {}
-            end
-            if coroutine_status(self.coroutine[1]) == "dead" then
-                self.coroutine = {}
-                os.queueEvent("pause_music")
-            end
-        end
-
-        if not event_used then
-                if evt[1] == "terminate" then
-                    c.termClear(self.bg)
-                    self.running_program = false
-                end
-                self:onEvent(evt)
-                --dbg.print(textutils.serialise(evt))
-            end
-        self:redraw()
-    end
-    c.termClear()
-end]]
 -----------------------------------------------------
 ---------| MAINLOOP И ДЕЙСТВИЯ ПОСЛЕ НЕГО |----------
 -----------------------------------------------------
