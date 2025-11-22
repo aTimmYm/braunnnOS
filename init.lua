@@ -3,11 +3,11 @@ if bOS.init then error("bOS is already running!") end
 bOS.init = true
 package.path = package.path .. ";/lib/?" .. ";/lib/?.lua"
 local c = require("cfunc")
-local system = require("braunnnsys")
 local UI = require("ui")
 local PALETTE = require("palette")
 local conf = c.readConf("usr/settings.conf")
 local dM = require("deskManager")
+local system = require("braunnnsys")
 
 dbg = c.DEBUG()
 local root = UI.New_Root()

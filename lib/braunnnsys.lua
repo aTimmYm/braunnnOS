@@ -1,4 +1,4 @@
-local UI = require("UI")
+local UI = require("ui")
 local dM = require("deskManager")
 local _system = {}
 
