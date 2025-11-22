@@ -24,7 +24,6 @@ function _system.dekstop_manager()
     local btnModem = UI.New_Button(btnDebug.x - 6, 1, 5, 1, "MODEM", _, colors.black, colors.lightGray)
     surface:addChild(btnModem)
     dM.setObjects(root, surface, radioButton_horizontal)
-    --dM.readShortcuts()
     dM.makeDesktops()
     dM.makeShortcuts()
     radioButton_horizontal:changeCount(dM.updateNumDesks())
@@ -87,10 +86,10 @@ function _system.add_window(mode, color_bg, title)
 
         window.onResize = function (width, height)
             window.w, window.h = width, height
-            window.label.local_x = math.floor((width - #window.label.text)/2)
+            window.label.local_x = math.floor((width - #window.label.text)/2) + 1
             window.close.local_x = width
             window.surface.w, window.surface.h = width, height - 1
-            window.surface.onResize(width, height)
+            if window.surface.onResize then window.surface.onResize(window.surface.w, window.surface.h) end
         end
         return window, window.surface
     elseif mode == "UnTitled" then

@@ -5,11 +5,6 @@ local string_lower = string.lower
 local string_gmatch = string.gmatch
 local table_insert = table.insert
 local table_sort = table.sort
-local table_unpack = table.unpack
-local coroutine_resume = coroutine.resume
-local coroutine_create = coroutine.create
-local coroutine_status = coroutine.status
-local coroutine_yield = coroutine.yield
 local math_max = math.max
 local math_min = math.min
 local math_floor = math.floor
@@ -23,9 +18,6 @@ local UI = require("ui")
 -----------------------------------------------------
 -----| СЕКЦИЯ ОБЪЯВЛЕНИЯ ПЕРЕМЕННЫХ ПРОГРАММЫ |------
 if bOS.shell or bOS.Explorer then return end
--- root.coroutine = {}
--- root.seek_to = nil
--- root.expected_event = nil
 
 if periphemu then periphemu.create("right", "speaker") end
 bOS.speaker = peripheral.find("speaker")
@@ -52,7 +44,6 @@ if not fs.exists(confPath) then
     file.close()
 end
 local conf = c.readConf(confPath)
-local played = {}
 local Path = "home/Music/"
 
 local volumes = {0, 0.05, 0.1, 0.25, 0.5, 0.75, 1, 1.5, 2, 3}
@@ -78,19 +69,19 @@ local scrollbar = UI.New_Scrollbar(boxAll)
 surface:addChild(scrollbar)
 --[[
 local boxAlbum = UI.New_Box(root)
-boxAlbum.reSize = function(self)
+boxAlbum.reSize = function (self)
     self.pos = {x = self.parent.pos.x, y = self.parent.pos.y+1}
     self.size = {w = self.parent.size.w - self.pos.x, h = self.parent.size.h - self.pos.y + 1 - 5}
 end
 
 local scrollboxAlbum = UI.New_ScrollBox(root)
-scrollboxAlbum.draw = function(self)
+scrollboxAlbum.draw = function (self)
     c.drawFilledBox(1,1,self.size.w,self.size.h,self.bg)
     for i=1,self.size.h do
         c.write("|",1,i,self.bg,self.txtcol)
     end
 end
-scrollboxAlbum.reSize = function(self)
+scrollboxAlbum.reSize = function (self)
     self.pos = {x = self.parent.pos.x+15, y = self.parent.pos.y}
     self.size = {w = self.parent.size.w - self.pos.x+1, h = self.parent.size.h}
     self.win.reposition(self.pos.x, self.pos.y, self.size.w, self.size.h)
@@ -99,7 +90,7 @@ end
 boxAlbum:addChild(scrollboxAlbum)
 
 local scrollArtist = UI.New_ScrollBox(root)
-scrollArtist.reSize = function(self)
+scrollArtist.reSize = function (self)
     self.pos.y = 2
     self.size = {w = scrollboxAlbum.pos.x-1, h = self.parent.size.h}
     self.win.reposition(self.pos.x, self.pos.y, self.size.w, self.size.h)
@@ -108,28 +99,28 @@ end
 boxAlbum:addChild(scrollArtist)
 
 local IMG = UI.New_Label(root,_,colors.white,colors.white)
-IMG.reSize = function(self)
+IMG.reSize = function (self)
     self.pos = {x = self.parent.pos.x+2, y = self.parent.pos.y+1}
     self.size = {w=9,h=5}
 end
 scrollboxAlbum:addChild(IMG)
 
 local AlbumName = UI.New_Label(root,"Album Name",colors.black,colors.white,"left")
-AlbumName.reSize = function(self)
+AlbumName.reSize = function (self)
     self.pos = {x = IMG.pos.x+IMG.size.w+1, y = IMG.pos.y+2}
     self.size.w = 15
 end
 scrollboxAlbum:addChild(AlbumName)
 
 local AlbumArtistName = UI.New_Label(root,"Artist Name",colors.black,colors.lightGray,"left")
-AlbumArtistName.reSize = function(self)
+AlbumArtistName.reSize = function (self)
     self.pos = {x = AlbumName.pos.x, y = AlbumName.pos.y+1}
     self.size.w = 15
 end
 scrollboxAlbum:addChild(AlbumArtistName)
 
 local numCompose = UI.New_Label(root,"5 - Tracks",colors.black,colors.lightGray,"left")
-numCompose.reSize = function(self)
+numCompose.reSize = function (self)
     self.pos = {x = AlbumArtistName.pos.x, y = AlbumArtistName.pos.y+1}
     self.size.w = 15
 end
@@ -139,26 +130,16 @@ scrollboxAlbum:addChild(numCompose)
 local box2 = UI.New_Box(1, surface.h - 4, surface.w, 5, colors.gray)
 box2.draw = function (self)
     c.drawFilledBox(self.x, self.y, self.x + self.w - 1, self.y + self.h - 1, self.color_bg)
-    blittle.draw(blittle.load("sbin/MPlayer/Data/MusicAlbum.ico"), self.x + 1, self.y)
+    if surface.w > 41 then blittle.draw(blittle.load("sbin/MPlayer/Data/MusicAlbum.ico"), self.x + 1, self.y) end
 end
 surface:addChild(box2)
 
-local btnVolume = UI.New_Button(surface.w - 13, 2, 3, 1, "", _, box2.color_bg, colors.white)
-btnVolume.PrevStatus = 1
-btnVolume.draw = function (self)
-    c.write(string_char(145), self.x, self.y, self.color_txt, self.parent.color_bg)
-    if conf["volume"] ~= 0 then
-        c.write(string_char(157), self.x + 1, self.y, self.color_txt, self.color_bg)
-        c.write(string_char(132), self.x + 2, self.y, self.color_bg, self.color_txt)
-    else
-        c.write("x ", self.x + 1, self.y, self.parent.color_bg, self.color_txt)
-    end
-end
-box2:addChild(btnVolume)
+local currentTimeLabel = UI.New_Label(box2.w > 41 and 10 or 2, box2.h - 1, 5, 1, "00:00", _, box2.color_bg, colors.lightGray, "right")
+box2:addChild(currentTimeLabel)
 
 local pause = UI.New_Button(math_floor((box2.w - 2) / 2) + 1, 2, 2, 1, "|"..string_char(16), _, box2.color_bg, colors.white)
 pause.play = false
-pause.draw = function(self)
+pause.draw = function (self)
     local color_bg, color_txt, text = self.parent.color_bg, self.color_txt, "|"..string_char(16)
     if self.play then text = "||" end
     if self.held then
@@ -178,39 +159,35 @@ box2:addChild(btnPrev)
 local btnOptionAutoNext = UI.New_Button(btnNext.x + btnNext.w + 1, btnNext.y, 1, 1, " ", _, box2.color_bg, colors.white)
 box2:addChild(btnOptionAutoNext)
 
-local ArtistName = UI.New_Running_Label(surface.w > 41 and 10 or 2, 2, 7, 1, "Unknown", "left", _, _, box2.color_bg, colors.lightGray)
--- ArtistName.reSize = function(self)
---     self.pos.x = self.root.size.w > 41 and 10 or 2
---     self.pos.y = self.parent.pos.y + 1
---     self.size.w = btnPrev.pos.x-self.pos.x-1
--- end
+local AN_X = box2.w > 41 and 10 or 2
+local ArtistName = UI.New_Running_Label(AN_X, 2, btnPrev.x - AN_X - 1, 1, "Unknown", "left", _, _, box2.color_bg, colors.lightGray)
 box2:addChild(ArtistName)
 
 local trackName = UI.New_Running_Label(ArtistName.x, ArtistName.y + 1, ArtistName.w, 1, "Unknown", "left", _, _, box2.color_bg, colors.lightGray)
 box2:addChild(trackName)
 
+local btnVolume = UI.New_Button(box2.w - 13, 2, 3, 1, "", _, box2.color_bg, colors.white)
+btnVolume.PrevStatus = 1
+btnVolume.draw = function (self)
+    c.write(string_char(145), self.x, self.y, self.color_txt, self.color_bg)
+    if conf["volume"] ~= 0 then
+        c.write(string_char(157), self.x + 1, self.y, self.color_txt, self.color_bg)
+        c.write(string_char(132), self.x + 2, self.y, self.color_bg, self.color_txt)
+    else
+        c.write("x ", self.x + 1, self.y, self.parent.color_bg, self.color_txt)
+    end
+end
+box2:addChild(btnVolume)
+
 local volumeSlider = UI.New_Slider(box2.w - 10, 2, 10, volumes, def, colors.lightGray, box2.color_bg, colors.white)
 box2:addChild(volumeSlider)
 
--- root.timeLine.reSize = function(self)
---     self.pos.x = self.root.size.w > 41 and 16 or 8
---     self.pos.y = self.parent.size.h + self.parent.pos.y - 2
---     self.size.w = self.parent.size.w - self.pos.x - 2 - 10
---     self.size.w = self.root.size.w > 41 and self.parent.size.w - self.pos.x - 12 or self.parent.size.w- self.pos.x - 6
--- end
-local timeLine = UI.New_Slider(box2.w > 41 and 16 or 8, box2.h - 1, 23, {}, 1, colors.lightGray, box2.color_bg, colors.white)
-box2:addChild(timeLine)
-
-local currentTimeLabel = UI.New_Label(box2.w > 41 and 10 or 2, box2.h - 1, 5, 1, "00:00", _, box2.color_bg, colors.lightGray, "right")
-box2:addChild(currentTimeLabel)
-
-local totalTimeLabel = UI.New_Label(box2.w - 11, box2.h - 1, 5, 1, "00:00", _, box2.color_bg, colors.lightGray)
--- totalTimeLabel.reSize = function(self)
---     self.size.w = 5
---     self.pos.x = self.root.size.w > 41 and self.parent.size.w - self.size.w-6 or self.parent.size.w - self.size.w
---     self.pos.y = root.timeLine.pos.y
--- end
+local totalTimeLabel = UI.New_Label(box2.w > 41 and box2.w - 11 or box2.w - 5, box2.h - 1, 5, 1, "00:00", _, box2.color_bg, colors.lightGray)
 box2:addChild(totalTimeLabel)
+
+local TL_X = box2.w > 41 and 16 or 8
+local timeLine = UI.New_Slider(TL_X, box2.h - 1, totalTimeLabel.local_x - TL_X - 1, {}, 1, colors.lightGray, box2.color_bg, colors.white)
+box2:addChild(timeLine)
 --[[
 local btnVolumeUp = UI.New_Button(root,string_char(30),colors.gray,colors.white)
 btnVolumeUp.reSize = function (self)
@@ -265,6 +242,7 @@ local function play(self, path, start_chunk)
     --textutils.slowPrint(path) os.sleep(1)
     start_chunk = start_chunk or 1
     local temp = self.filePath:match("([^/\\]+)$")
+    totalTimeLabel:setText(cache[temp].time)
 
     -- Update UI labels with parsed metadata (if available)
 
@@ -278,7 +256,7 @@ local function play(self, path, start_chunk)
 
     self.music_file = fs.open(self.filePath, "rb")
     if not self.music_file then error("Failed to open file: " .. self.filePath) end
-    local ok, fileSize = pcall(function() return self.music_file.seek("end") end)
+    local ok, fileSize = pcall(function () return self.music_file.seek("end") end)
     fileSize = tonumber(fileSize) or 0
 
     -- compute data end position (if metadata present, stop before it)
@@ -304,10 +282,18 @@ local function play(self, path, start_chunk)
 
     self:play_next_chunk()
 end
--- ПИЗДА
+
 local function play_next_chunk(self)
     local cur_pos = self.music_file.seek("cur") or 0
-    if cur_pos >= self.data_end then return false end
+    if cur_pos >= self.data_end then
+        if conf["play_next"] then
+            os.queueEvent("play_next")
+            return
+        end
+        self.music_file.close()
+        self.music_file = nil
+        return
+    end
     local to_read = math_min(CHUNK_SIZE, self.data_end - cur_pos)
     if to_read <= 0 then return false end
     local chunk = self.music_file.read(to_read)
@@ -323,107 +309,68 @@ local function play_next_chunk(self)
 end
 
 local function set_pause(bool)
+    if pause.play == bool then return end
     pause.play = bool
     pause.dirty = true
+    window.pause = not bool
 end
 
-local function updateListIcons(index)
-    currentTrackIndex = index
-    for i, btn in pairs(trackButtons) do
-        if i == index then
-            btn.play = true  -- Этот трек сейчас играет (покажет иконку паузы/активности)
-        else
-            btn.play = false -- Остальные сбрасываем на "play" (треугольник)
-        end
-        btn.dirty = true     -- Сообщаем UI, что кнопку надо перерисовать
+local function updateTrackIcons(newIndex)
+    -- Если что-то играло до этого, возвращаем треугольник
+    if currentTrackIndex > 0 and trackButtons[currentTrackIndex] then
+        trackButtons[currentTrackIndex].play = false
+        trackButtons[currentTrackIndex].dirty = true
+    end
+
+    -- Обновляем текущий индекс
+    currentTrackIndex = newIndex
+
+    -- Ставим ноту на новую кнопку
+    if trackButtons[currentTrackIndex] then
+        trackButtons[currentTrackIndex].play = true
+        trackButtons[currentTrackIndex].dirty = true
     end
 end
 
--- local function prev_btn_play(btn)
---     if played[2] then
---         played[2].play = false
---         played[2].dirty = true
---     end
---     played[1] = btn
---     played[1].play = true
---     played[1].dirty = true
--- end
+local temp_pressed = window.close.pressed
+local function pressed(self)
+    if self.parent.music_file then
+        self.parent.music_file.close()
+    end
+    package.loaded["cc.audio.dfpwm"] = nil
+    package.loaded["sbin/MPlayer/Data/cache"] = nil
+    return temp_pressed(self)
+end
 
+local temp_onEvent = window.onEvent
 local function onEvent(self, evt)
-    if evt[1] == "speaker_audio_empty" and not self.pause or evt[1] == "unpause_music" then
-        self:play_next_chunk() -- Подкидываем дров в топку
+    local event = evt[1]
+    if event == "speaker_audio_empty" and not self.pause or event == "unpause_music" then
+        self:play_next_chunk()
         set_pause(true)
-        self.pause = false
         return true
-    elseif evt[1] == "play_music" then
+    elseif event == "play_music" then
+        local trackIdx = evt[4]
+        if trackIdx then
+            updateTrackIcons(trackIdx)
+        end
         self:play(evt[2], evt[3])
         set_pause(true)
-        self.pause = false
         return true
-    elseif evt[1] == "pause_music" then
-        self.pause = true
+    elseif event == "pause_music" then
         set_pause(false)
         return true
+    elseif event == "play_next" then
+        btnNext:pressed()
     end
-    return false
+    return temp_onEvent(self, evt)
 end
 
-local MPlayer = {
-    x = 0, y = 0,
-    w = 0, h = 0,
-    decoder = dfpwm.make_decoder(),
-    filePath = nil,
-
-    onEvent = onEvent,
-    onLayout = function (self) end,
-    redraw = function (self) end,
-    play = play,
-    play_next_chunk = play_next_chunk,
-    check = function (self) return false end
-}
-
-surface:addChild(MPlayer)
-
-local function playTrackByIndex(index)
-    if not sortedCache[index] then return end
-
-    -- Обновляем иконки
-    updateListIcons(index)
-
-    -- Запускаем музыку через событие (как у тебя и было)
-    os.queueEvent("play_music", Path .. sortedCache[index])
-
-    -- Если кнопка паузы была в состоянии "пауза", переключаем её в "играет"
-    pause.play = true
-    pause.dirty = true
-end
-
-local function playTrackByIndex(index)
-    if not sortedCache[index] then return end
-
-    -- Обновляем иконки
-    updateListIcons(index)
-
-    -- Запускаем музыку через событие (как у тебя и было)
-    os.queueEvent("play_music", Path .. sortedCache[index])
-end
-
---[[local function adaptive()
-    if root.size.w <= 41 then
-        box2:removeChild(btnVolume)
-        box2:removeChild(volumeSlider)
-        box2:addChild(btnVolumeUp)
-        box2:addChild(btnVolumeDown)
-        box2:addChild(volumeLabel)
-    elseif root.size.w > 41 then
-        box2:addChild(btnVolume)
-        box2:addChild(volumeSlider)
-        box2:removeChild(btnVolumeUp)
-        box2:removeChild(btnVolumeDown)
-        box2:removeChild(volumeLabel)
-    end
-end
-adaptive()]]
+window.decoder = dfpwm.make_decoder()
+window.onEvent = onEvent
+window.play = play
+window.play_next_chunk = play_next_chunk
+window.close.pressed = pressed
 
 local function getConf()
     local val = ""
@@ -488,7 +435,7 @@ local function cacheUpdate()
             end
 
             local metadata = {}
-            local _, fileSize = pcall(function() return handle:seek("end") end)
+            local _, fileSize = pcall(function () return handle:seek("end") end)
             fileSize = tonumber(fileSize) or 0
             local total_sec = getTotalSeconds(Path .. v)
             total_sec = format_time(total_sec)
@@ -497,7 +444,7 @@ local function cacheUpdate()
             local tail = ""
             if tailRead > 0 then
                 -- Обернем в pcall на случай ошибки доступа
-                pcall(function() handle:seek("set", math_max(0, fileSize - tailRead)) end)
+                pcall(function () handle:seek("set", math_max(0, fileSize - tailRead)) end)
                 tail = handle:read(tailRead) or ""
             end
 
@@ -516,7 +463,7 @@ local function cacheUpdate()
             end
 
             if meta_start and meta_end and meta_end > meta_start then
-                pcall(function() handle:seek("set", meta_start + #"--METADATA--") end)
+                pcall(function () handle:seek("set", meta_start + #"--METADATA--") end)
                 local meta_len = meta_end - meta_start - #"--METADATA--"
                 local meta_block = handle:read(meta_len) or ""
 
@@ -559,8 +506,8 @@ local function cacheUpdate()
         cacheFile.close()
 
         -- 5. Перезагружаем модуль кеша, чтобы программа использовала актуальные данные
-        package.loaded["sbin/MPlayer/Data/cache"] = nil
-        cache = require("sbin/MPlayer/Data/cache")
+        -- package.loaded["sbin/MPlayer/Data/cache"] = nil
+        -- cache = require("sbin/MPlayer/Data/cache")
     end
 end
 cacheUpdate()
@@ -575,114 +522,6 @@ end
 table_sort(sortedCache)
 table_sort(artistS)
 
---[[local function runMusic(path, start_chunk)
-    --textutils.slowPrint(path) os.sleep(1)
-    if not checkSpeaker() then return end
-    start_chunk = start_chunk or 1
-    local temp = path:match("([^/\\]+)$")
-
-    -- Update UI labels with parsed metadata (if available)
-
-    ArtistName:setText(cache[temp].artist)
-    local Title = cache[temp].title
-    if Title ~= "Unknown" then
-        trackName:setText(Title)
-    else
-        trackName:setText(temp)
-    end
-
-    -- Prepare coroutine to stream only the audio bytes (exclude appended metadata)
-    root.coroutine[1] = coroutine_create(function()
-        -- Re-open handle in coroutine scope to ensure proper position handling
-        local h = io.open(path, "rb")
-        if not h then error("Failed to open file: " .. path) end
-        local ok, fileSize = pcall(function() return h:seek("end") end)
-        fileSize = tonumber(fileSize) or 0
-
-        -- compute data end position (if metadata present, stop before it)
-        local data_end = fileSize
-        if cache[temp].meta_start then
-            data_end = cache[temp].meta_start - 1
-        end
-
-        -- Seek to requested start_chunk
-        if start_chunk > 1 then
-            local start_pos = (start_chunk - 1) * CHUNK_SIZE
-            if start_pos < data_end then
-                h:seek("set", start_pos)
-            else
-                -- start beyond data; nothing to play
-                h:close()
-                return
-            end
-        else
-            h:seek("set", 0)
-        end
-
-        local decoder = dfpwm.make_decoder()
-        local current_chunk = start_chunk
-
-        while true do
-            local cur_pos = h:seek("cur") or 0
-            if cur_pos >= data_end then break end
-            local to_read = math_min(CHUNK_SIZE, data_end - cur_pos)
-            if to_read <= 0 then break end
-            local chunk = h:read(to_read)
-            if not chunk then break end
-            local buffer = decoder(chunk)
-            while not bOS.speaker.playAudio(buffer, volume) do
-                os.pullEvent("speaker_audio_empty")
-            end
-            coroutine_yield(current_chunk)
-            current_chunk = current_chunk + 1
-        end
-        h:close()
-    end)
-end]]
-
---[[local function startTrack(filename, isTogglePause)
-    if not checkSpeaker() then return false end
-    local full_path = Path .. filename
-
-    if isTogglePause then
-        pause.play = not pause.play
-        if pause.play then
-            os.queueEvent("unpause_music")
-        else
-            os.queueEvent("pause_music")
-        end
-        pause.dirty = true
-        --root.coroutine[2] = not root.coroutine[2]
-        return
-    end
-
-    if played[2] then
-        played[2].play = false
-        played[2].dirty = true
-    end
-    --if root.coroutine[1] then root.coroutine = {} end
-
-    local total_chunks = getTotalChunks(full_path)
-    timeLine.arr = {}
-    for i = 1, total_chunks do
-        timeLine.arr[i] = i
-    end
-    timeLine.slidePosition = 1
-    timeLine.dirty = true
-
-    totalTimeLabel:setText(cache[filename].time)
-
-    played[1] = filename
-    ArtistName:setText(cache[filename].artist or "Unknown")
-    trackName:setText(cache[filename].title or filename)
-
-    pause.play = true
-    pause.dirty = true
-
-    os.queueEvent("play_music", full_path)
-    return true
-end]]
-
 for i,v in pairs(sortedCache) do
     local trackPlay = UI.New_Button(boxAll.x, boxAll.y + i, 3, 1, string_char(16), _, boxAll.color_bg, colors.white)
     trackPlay.play = false
@@ -692,59 +531,30 @@ for i,v in pairs(sortedCache) do
         if self.held then color_bg, color_txt = self.color_txt, self.color_bg end
         c.write(" "..text.." ", self.x, self.y, color_bg, color_txt)
     end
+    trackPlay.pressed = function (self)
+        os.queueEvent("play_music", Path..v, 1, i)
+    end
     boxAll:addChild(trackPlay)
     table_insert(trackButtons, trackPlay)
-    local trackLabel = UI.New_Label(trackPlay.x + trackPlay.w, trackPlay.y, boxAll.w - 9, 1, v, "left", colors.black, colors.white)
+
+    local trackLabel = UI.New_Label(trackPlay.x + trackPlay.w, trackPlay.y, boxAll.w - 10, 1, v, "left", boxAll.color_bg, colors.white)
     boxAll:addChild(trackLabel)
-    local trackTime = UI.New_Label(boxAll.w - 5, trackPlay.y, 5, 1, cache[v].time, "left", colors.black, colors.lightGray)
+
+    local trackTime = UI.New_Label(boxAll.w - 5, trackPlay.y, 5, 1, cache[v].time, "left", boxAll.color_bg, colors.lightGray)
     boxAll:addChild(trackTime)
-    trackPlay.pressed = function (self)
-        -- if not startTrack(v, false) then return end
-        -- if not MPlayer.pause then os.queueEvent("play_music", Path..v) end
-        -- prev_btn_play(self)
-        os.queueEvent("play_music", Path..v)
-        --self.play = true
-        -- played[2] = self
-        -- played[3] = i
-        --played[1] = self
-    end
 end
 --[[
 for i,v in pairs(artistS) do
     local buttonArtist = UI.New_Button(root,v,_,_,"left")
-    buttonArtist.reSize = function(self)
+    buttonArtist.reSize = function (self)
         self.pos.y = i+2
         self.size.w = self.parent.size.w
     end
     scrollArtist:addChild(buttonArtist)
 end]]
-
--- Общая логика переключения
-local function switchTrack(offset)
-    if #sortedCache == 0 then return end
-
-    local newIndex = currentTrackIndex + offset
-
-    -- Зацикливаем список (если конец -> в начало, если начало -> в конец)
-    if newIndex > #sortedCache then
-        newIndex = 1
-    elseif newIndex < 1 then
-        newIndex = #sortedCache
-    end
-
-    playTrackByIndex(newIndex)
-end
-
-btnNext.pressed = function(self)
-    switchTrack(1) -- Вперед
-end
-
-btnPrev.pressed = function(self)
-    switchTrack(-1) -- Назад
-end
 -----------------------------------------------------
 --| СЕКЦИЯ ПЕРЕОПРЕДЕЛЕНИЯ ФУНКЦИОНАЛЬНЫХ МЕТОДОВ |--
-btnAll.pressed = function(self)
+btnAll.pressed = function (self)
     if surface:removeChild(boxAlbum) then
         btnAlbum.txtcol = colors.lightGray
         self.txtcol = colors.black
@@ -754,7 +564,7 @@ btnAll.pressed = function(self)
     end
 end
 
-btnAlbum.pressed = function(self)
+btnAlbum.pressed = function (self)
     if surface:removeChild(boxAll) then
         btnAll.txtcol = colors.lightGray
         self.txtcol = colors.black
@@ -765,69 +575,40 @@ btnAlbum.pressed = function(self)
 end
 
 pause.pressed = function (self)
-    --if not played[1] then return end
-    --startTrack(played[1], true)
     if self.play then
         os.queueEvent("pause_music")
-    else
+    elseif not self.play and window.pause then
         os.queueEvent("unpause_music")
     end
 end
 
-btnNext.pressed = function(self)
-    --if not played[1] or #sortedCache == 0 then return end
+btnNext.pressed = function (self)
+    if #sortedCache == 0 then return end
 
-    -- local current_index = played[3] or 1
-    -- local next_index = current_index + 1
-    -- if next_index > #sortedCache then
-    --     next_index = 1
-    -- end
-    -- played[3] = next_index
-    -- local nextPath = sortedCache[next_index]
+    local nextIndex = currentTrackIndex + 1
+    if nextIndex > #sortedCache then
+        nextIndex = 1
+    end
 
-    -- prev_btn_play(trackButtons[next_index])
-    switchTrack(1)
-    -- startTrack(played[1], false)
-    -- if trackButtons[played[3]] then
-    --     trackButtons[played[3]].play = true
-    --     trackButtons[played[3]].dirty = true
-    --     played[2] = trackButtons[played[3]]
-    -- end
+    local nextPath = Path .. sortedCache[nextIndex]
+
+    os.queueEvent("play_music", nextPath, 1, nextIndex)
 end
 
-btnPrev.pressed = function(self)
-    --if not played[1] or #sortedCache == 0 then return end
+btnPrev.pressed = function (self)
+    if #sortedCache == 0 then return end
 
-    -- local current_index = played[3] or 1
-    -- local prev_index = current_index - 1
-    -- if prev_index < 1 then
-    --     prev_index = #sortedCache
-    -- end
-    -- played[3] = prev_index
-    -- played[1] = sortedCache[prev_index]
-    -- os.queueEvent("play_music", Path..played[1])
-    switchTrack(-1)
-    -- prev_btn_play()
-    -- if trackButtons[played[3]] then
-    --     trackButtons[played[3]].play = true
-    --     trackButtons[played[3]].dirty = true
-    --     played[2] = trackButtons[played[3]]
-    -- end
+    local prevIndex = currentTrackIndex - 1
+    if prevIndex < 1 then
+        prevIndex = #sortedCache
+    end
+
+    local prevPath = Path .. sortedCache[prevIndex]
+
+    os.queueEvent("play_music", prevPath, 1, prevIndex)
 end
 
--- pause.onEvent = function(self,evt)
---     if evt[1] == "pause_music" then
---         self.play = false
---         self:setText("|"..string_char(16))
---         return true
---     elseif evt[1] == "play_next" then
---         btnNext:pressed()
---         return true
---     end
---     temp_onEvent(self,evt)
--- end
-
-volumeSlider.pressed = function(self,btn, x, y)
+volumeSlider.pressed = function (self, btn, x, y)
     volume = self.arr[self.slidePosition]
     conf["volume"] = volume
     c.saveConf(confPath, conf)
@@ -835,7 +616,7 @@ volumeSlider.pressed = function(self,btn, x, y)
     --volumeLabel:setText(tostring(self.slidePosition))
 end
 
-btnVolume.pressed = function(self)
+btnVolume.pressed = function (self)
     if conf["volume"] == 0 then
         conf["volume"] = self.PrevStatus
         for i, v in pairs(volumes) do
@@ -856,7 +637,7 @@ btnVolume.pressed = function(self)
     volumeSlider.dirty = true
 end
 
-btnOptionAutoNext.pressed = function(self)
+btnOptionAutoNext.pressed = function (self)
     if conf["play_next"] == true then
         conf["play_next"] = false
         self:setText(string_char(173))
@@ -885,14 +666,43 @@ btnVolumeDown.pressed = function (self)
     volumeSlider.slidePosition = temp
 end]]
 
-timeLine.pressed = function(self, btn, x, y)
-    --if btn == 1 and played[1] then
-        local new_pos = math_max(1, math_min(#self.arr, math_floor((x - self.x + 1) / self.w * #self.arr)))
-        self.slidePosition = new_pos
-        os.queueEvent("play_music", _, new_pos)
-    --end
+timeLine.pressed = function (self, btn, x, y)
+    local new_pos = math_max(1, math_min(#self.arr, math_floor((x - self.x + 1) / self.w * #self.arr)))
+    self.slidePosition = new_pos
+    os.queueEvent("play_music", _, new_pos)
 end
------------------------------------------------------
----------| MAINLOOP И ДЕЙСТВИЯ ПОСЛЕ НЕГО |----------
+
+boxAll.onResize = function (width, height)
+    for i = 1, #boxAll.children, 3 do
+        boxAll.children[i + 1].w = width - 10
+        boxAll.children[i + 2].local_x = width - 5
+    end
+end
+
+box2.onResize = function (width, height)
+    local compact = width > 41 and true or false
+    AN_X = compact and 10 or 2
+    TL_X = compact and 16 or 8
+    pause.local_x = math_floor((width - 2) / 2) + 1
+    btnNext.local_x = pause.local_x + pause.w + 1
+    btnPrev.local_x = pause.local_x - 3
+    btnOptionAutoNext.local_x = btnNext.local_x + btnNext.w + 1
+    ArtistName.local_x, ArtistName.w = AN_X, btnPrev.local_x - AN_X - 1
+    trackName.local_x, trackName.w = ArtistName.local_x, ArtistName.w
+    currentTimeLabel.local_x = compact and 10 or 2
+    totalTimeLabel.local_x = compact and width - 11 or width - 5
+    timeLine.local_x, timeLine.w = TL_X, totalTimeLabel.local_x - TL_X - 1
+    btnVolume.local_x = width - 13
+    volumeSlider.local_x = width - 10
+end
+
+surface.onResize = function (width, height)
+    boxAll.w, boxAll.h = width - 1, height - 5
+    scrollbar.local_x, scrollbar.h = boxAll.w + 1, boxAll.h
+    box2.local_y, box2.w = height - 4, width
+    box2.onResize(box2.w, box2.h)
+    boxAll.onResize(boxAll.w, boxAll.h)
+    if window.music_file then play_next_chunk(window) end
+end
 -----------------------------------------------------
 surface:onLayout()

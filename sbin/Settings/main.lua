@@ -11,7 +11,7 @@ local UI = require("ui")
 local system = require("braunnnsys")
 -----------------------------------------------------
 -----| СЕКЦИЯ ОБЪЯВЛЕНИЯ ПЕРЕМЕННЫХ ПРОГРАММЫ |------
-local pageBuffer
+local pageBuffer = nil
 local settingsPath = "usr/settings.conf"
 local conf = c.readConf(settingsPath)
 local PALETTE = require("palette")
@@ -53,95 +53,8 @@ box:addChild(systemLabel)
 
 local buttonAbout = UI.New_Button(2, systemLabel.y + 1, systemLabel.w, 1, "ABOUT", _, box.color_bg, colors.white)
 box:addChild(buttonAbout)
-
-local page1 = UI.New_Box(box.w + 1, 1, surface.w - box.w, surface.h, colors.black)
-
-local tumblerLabel = UI.New_Label(2, 2, 12, 1, "Monitor Mode", "left", page1.color_bg, colors.white)
-page1:addChild(tumblerLabel)
-
-local monitorTumbler = UI.New_Tumbler(page1.w - 2, tumblerLabel.y, colors.white, colors.lightGray, colors.gray, conf["isMonitor"])
-page1:addChild(monitorTumbler)
-
-local dropdownLabel = UI.New_Label(tumblerLabel.x, tumblerLabel.y + 2, 13, 1, "Monitor Scale", "left", page1.color_bg, colors.white)
-page1:addChild(dropdownLabel)
-
-local dropdown = UI.New_Dropdown(page1.w - 4, dropdownLabel.y, {"0.5","1","1.5","2","2.5","3","3.5","4","4.5","5"}, tostring(conf["monitorScale"]), _, _, colors.white, colors.black)
-page1:addChild(dropdown)
-
-local page2 = UI.New_Box(box.w + 1, 1, surface.w - box.w, surface.h, colors.black)
-
-local time24FormatLabel = UI.New_Label(2,2, 17, 1, "Enable 24h format", "left", page2.color_bg, colors.white)
-page2:addChild(time24FormatLabel)
-
-local time24FormatTumbler = UI.New_Tumbler(page2.w - 2, time24FormatLabel.y, colors.lightGray, colors.gray, _, conf["24format"])
-page2:addChild(time24FormatTumbler)
-
-local showSecondsLabel = UI.New_Label(2, time24FormatLabel.y + 2, 12, 1, "Show seconds", "left", page2.color_bg, colors.white)
-page2:addChild(showSecondsLabel)
-
-local showSecondsTumbler = UI.New_Tumbler(page2.w - 2, showSecondsLabel.y, colors.lightGray, colors.gray, _, conf["show_seconds"])
-page2:addChild(showSecondsTumbler)
-
-local page3 = UI.New_Box(box.w + 1, 1, surface.w - box.w, surface.h, colors.black)
-
-local labelCurrCols = UI.New_Label(2, 2, 16, 1, "Current colors: ", "left", colors.white, colors.black)
-page3:addChild(labelCurrCols)
-
-local currCols = UI.New_Label(labelCurrCols.x + labelCurrCols.w + 1, labelCurrCols.y, 4, 1)
-currCols.draw = function (self)
-    c.write(" ", self.x, self.y, colors.black)
-    c.write(" ", self.x + 1, self.y, colors.white)
-    c.write(" ", self.x + 2, self.y, colors.lightGray)
-    c.write(" ", self.x + 3, self.y, colors.gray)
-
-    c.write(string_char(149), self.x - 1, self.y, colors.red, colors.black)
-    c.write(string_char(149), self.x + 4, self.y, colors.black, colors.red)
-    c.write(string_char(144), self.x + 4, self.y - 1, colors.black, colors.red)
-    c.write(string_char(129), self.x + 4, self.y + 1, colors.black, colors.red)
-    c.write(string_char(159), self.x - 1, self.y - 1, colors.red, colors.black)
-    c.write(string_char(130), self.x - 1, self.y + 1, colors.black, colors.red)
-    c.write(string_rep(string_char(143), 4), self.x, self.y - 1, colors.red, colors.black)
-    c.write(string_rep(string_char(131), 4), self.x, self.y + 1, colors.black, colors.red)
-end
-page3:addChild(currCols)
-
-local chooseLabel = UI.New_Label(2, currCols.y + 2, 21, 1, "Choose your palette: ", _, page3.color_bg, colors.white)
-page3:addChild(chooseLabel)
-
-local dropdownChoose = UI.New_Dropdown(page3.w - 13, chooseLabel.y, dropdownChooseArr, conf["palette"], _, _, colors.white, colors.black)
-page3:addChild(dropdownChoose)
-
-local page4 = UI.New_Box(box.w + 1, 1, surface.w - box.w, surface.h, colors.black)
-surface:addChild(page4)
-pageBuffer = page4
-
-local braunnnOS = UI.New_Label(2, 2, 9, 1, string_char(223).."raunnnOS", _, page4.color_bg, colors.white)
-page4:addChild(braunnnOS)
-
-local versionLabel = UI.New_Label(2, braunnnOS.y + 1, 12, 1, "Version "..version, _, page4.color_bg, colors.lightGray)
-page4:addChild(versionLabel)
-
-local buttonCheckUpdate = UI.New_Button(2, versionLabel.y + 1, 19, 1, "(CHECK FOR UPDATES)", _, page4.color_bg, colors.white)
--- buttonCheckUpdate.reSize = function (self)
---     if self.root.size.w <= 30 then
---         self.pos.x = self.parent.pos.x
---         self.pos.y = versionLabel.pos.y + 1
---         return
---     end
---     self.pos = {x=versionLabel.pos.x+versionLabel.size.w+1,y=versionLabel.pos.y}
--- end
-page4:addChild(buttonCheckUpdate)
 -----------------------------------------------------
 ------| СЕКЦИЯ ОБЪЯВЛЕНИЯ ФУНКЦИЙ ПРОГРАММЫ |--------
-local function setPage(page)
-    if pageBuffer ~= page then
-        surface:removeChild(pageBuffer)
-        surface:addChild(page)
-        pageBuffer = page
-        surface:onLayout()
-    end
-end
-
 local function write_file(path,data)
     local file = fs.open(path,"w")
     file.write(data)
@@ -183,83 +96,207 @@ local function checkUpdates(manifest)
         return ret
     end
 end
------------------------------------------------------
---| СЕКЦИЯ ПЕРЕОПРЕДЕЛЕНИЯ ФУНКЦИОНАЛЬНЫХ МЕТОДОВ |--
-buttonSCREEN.pressed = function (self)
-    setPage(page1)
-end
 
-buttonTIME.pressed = function (self)
-    setPage(page2)
-end
+local function createPage1()
+    local page = UI.New_Box(box.w + 1, 1, surface.w - box.w, surface.h, colors.black)
 
-buttonCOLORS.pressed = function (self)
-    setPage(page3)
-end
+    local tumblerLabel = UI.New_Label(2, 2, 12, 1, "Monitor Mode", "left", page.color_bg, colors.white)
+    page:addChild(tumblerLabel)
 
-buttonAbout.pressed = function (self)
-    setPage(page4)
-end
+    local monitorTumbler = UI.New_Tumbler(page.w - 2, tumblerLabel.y, colors.white, colors.lightGray, colors.gray, conf["isMonitor"])
+    page:addChild(monitorTumbler)
 
-monitorTumbler.pressed = function (self)
-    conf["isMonitor"] = not self.on
-    c.saveConf(settingsPath, conf)
-    c.playSound("minecraft:block.lever.click",3)
-end
+    local dropdownLabel = UI.New_Label(tumblerLabel.x, tumblerLabel.y + 2, 13, 1, "Monitor Scale", "left", page.color_bg, colors.white)
+    page:addChild(dropdownLabel)
 
-time24FormatTumbler.pressed = function (self)
-    conf["24format"] = not self.on
-    c.saveConf(settingsPath, conf)
-end
+    local dropdown = UI.New_Dropdown(page.w - 4, dropdownLabel.y, {"0.5","1","1.5","2","2.5","3","3.5","4","4.5","5"}, tostring(conf["monitorScale"]), _, _, colors.white, colors.black)
+    page:addChild(dropdown)
 
-showSecondsTumbler.pressed = function (self)
-    conf["show_seconds"] = not self.on
-    c.saveConf(settingsPath, conf)
-end
-
-dropdown.pressed = function (self)
-    local val = tonumber(self.array[self.item_index])
-    conf["monitorScale"] = val
-    if bOS.monitor[1] then
-        bOS.monitor[1].setTextScale(val) os.queueEvent("term_resize")
+    -- Подписываем события
+    monitorTumbler.pressed = function(self)
+        conf["isMonitor"] = not self.on
+        c.saveConf(settingsPath, conf)
+        c.playSound("minecraft:block.lever.click",3)
     end
-    c.saveConf(settingsPath, conf)
-    c.playSound("minecraft:block.lever.click",3)
+
+    dropdown.pressed = function(self)
+        local val = tonumber(self.array[self.item_index])
+        conf["monitorScale"] = val
+        if bOS.monitor[1] then
+            bOS.monitor[1].setTextScale(val)
+            os.queueEvent("term_resize")
+        end
+        c.saveConf(settingsPath, conf)
+        c.playSound("minecraft:block.lever.click",3)
+    end
+
+    return page
 end
 
-dropdownChoose.pressed = function (self)
-    if PALETTE[self.array[self.item_index]] then
-        PALETTE[self.array[self.item_index]]()
-        conf["palette"] = self.array[self.item_index]
+local function createPage2()
+    local page = UI.New_Box(box.w + 1, 1, surface.w - box.w, surface.h, colors.black)
+
+    local time24FormatLabel = UI.New_Label(2,2, 17, 1, "Enable 24h format", "left", page.color_bg, colors.white)
+    page:addChild(time24FormatLabel)
+
+    local time24FormatTumbler = UI.New_Tumbler(page.w - 2, time24FormatLabel.y, colors.lightGray, colors.gray, _, conf["24format"])
+    page:addChild(time24FormatTumbler)
+
+    local showSecondsLabel = UI.New_Label(2, time24FormatLabel.y + 2, 12, 1, "Show seconds", "left", page.color_bg, colors.white)
+    page:addChild(showSecondsLabel)
+
+    local showSecondsTumbler = UI.New_Tumbler(page.w - 2, showSecondsLabel.y, colors.lightGray, colors.gray, _, conf["show_seconds"])
+    page:addChild(showSecondsTumbler)
+
+    time24FormatTumbler.pressed = function(self)
+        conf["24format"] = not self.on
         c.saveConf(settingsPath, conf)
     end
+
+    showSecondsTumbler.pressed = function(self)
+        conf["show_seconds"] = not self.on
+        c.saveConf(settingsPath, conf)
+    end
+
+    return page
 end
 
-buttonCheckUpdate.pressed = function (self)
-    self:setText("(CHECKING)")
-    self.w = #self.text
-    local response, err = http.get("https://raw.githubusercontent.com/aTimmYm/braunnnOS/refs/heads/dev/manifest.txt")
-    local manifest = response.readAll()
-    response.close()
-    if response then
-        if checkUpdates(manifest) then
-            for _,v in pairs(files_to_update) do
-                local request = http.get("https://raw.githubusercontent.com/aTimmYm/braunnnOS/refs/heads/dev/"..v)
-                if request then
-                    write_file(v,request.readAll())
-                    request.close()
-                end
-            end
-            local file = fs.open("manifest.txt","w")
-            file.write(manifest)
-            file.close()
-            self:setText("(SUCCESS INSTALLED)")
-        else
-            self:setText("(NO UPDATES)")
-        end
-        self.w = #self.text
-        surface:onLayout()
+local function createPage3()
+    local page = UI.New_Box(box.w + 1, 1, surface.w - box.w, surface.h, colors.black)
+
+    local labelCurrCols = UI.New_Label(2, 2, 16, 1, "Current colors: ", "left", colors.white, colors.black)
+    page:addChild(labelCurrCols)
+
+    local currCols = UI.New_Label(labelCurrCols.x + labelCurrCols.w + 1, labelCurrCols.y, 4, 1)
+    currCols.draw = function(self) -- твой кастомный draw
+        c.write(" ", self.x, self.y, colors.black)
+        c.write(" ", self.x + 1, self.y, colors.white)
+        c.write(" ", self.x + 2, self.y, colors.lightGray)
+        c.write(" ", self.x + 3, self.y, colors.gray)
+        -- ... остальной твой красивый драв
+        c.write(string_char(149), self.x - 1, self.y, colors.red, colors.black)
+        c.write(string_char(149), self.x + 4, self.y, colors.black, colors.red)
+        c.write(string_char(144), self.x + 4, self.y - 1, colors.black, colors.red)
+        c.write(string_char(129), self.x + 4, self.y + 1, colors.black, colors.red)
+        c.write(string_char(159), self.x - 1, self.y - 1, colors.red, colors.black)
+        c.write(string_char(130), self.x - 1, self.y + 1, colors.black, colors.red)
+        c.write(string_rep(string_char(143), 4), self.x, self.y - 1, colors.red, colors.black)
+        c.write(string_rep(string_char(131), 4), self.x, self.y + 1, colors.black, colors.red)
     end
+    page:addChild(currCols)
+
+    local chooseLabel = UI.New_Label(2, currCols.y + 2, 21, 1, "Choose your palette: ", _, page.color_bg, colors.white)
+    page:addChild(chooseLabel)
+
+    local dropdownChoose = UI.New_Dropdown(page.w - 13, chooseLabel.y, dropdownChooseArr, conf["palette"], _, _, colors.white, colors.black)
+    page:addChild(dropdownChoose)
+
+    dropdownChoose.pressed = function(self)
+        if PALETTE[self.array[self.item_index]] then
+            PALETTE[self.array[self.item_index]]()
+            conf["palette"] = self.array[self.item_index]
+            c.saveConf(settingsPath, conf)
+        end
+    end
+
+    return page
+end
+
+local function createPage4()
+    local page = UI.New_Box(box.w + 1, 1, surface.w - box.w, surface.h, colors.black)
+
+    local braunnnOS = UI.New_Label(2, 2, 9, 1, string_char(223).."raunnnOS", _, page.color_bg, colors.white)
+    page:addChild(braunnnOS)
+
+    local versionLabel = UI.New_Label(2, braunnnOS.y + 1, 12, 1, "Version "..version, _, page.color_bg, colors.lightGray)
+    page:addChild(versionLabel)
+
+    local buttonCheckUpdate = UI.New_Button(2, versionLabel.y + 1, 19, 1, "(CHECK FOR UPDATES)", _, page.color_bg, colors.white)
+    page:addChild(buttonCheckUpdate)
+
+    buttonCheckUpdate.pressed = function(self)
+        self:setText("(CHECKING)")
+        self.w = #self.text
+        local response, err = http.get("https://raw.githubusercontent.com/aTimmYm/braunnnOS/refs/heads/dev/manifest.txt")
+        local manifest = response.readAll()
+        response.close()
+        if response then
+            if checkUpdates(manifest) then
+                for _,v in pairs(files_to_update) do
+                    local request = http.get("https://raw.githubusercontent.com/aTimmYm/braunnnOS/refs/heads/dev/"..v)
+                    if request then
+                        write_file(v,request.readAll())
+                        request.close()
+                    end
+                end
+                local file = fs.open("manifest.txt","w")
+                file.write(manifest)
+                file.close()
+                self:setText("(SUCCESS INSTALLED)")
+            else
+                self:setText("(NO UPDATES)")
+            end
+            self.w = #self.text
+            surface:onLayout()
+        end
+    end
+
+    return page
+end
+
+local function setPage(creatorFunc)
+    if pageBuffer then
+        surface:removeChild(pageBuffer)  -- выгружаем старую
+    end
+
+    -- Если это тот же самый creator — просто возвращаем текущую (уже есть)
+    if pageBuffer and pageBuffer.creator == creatorFunc then
+        surface:addChild(pageBuffer)
+        surface:onLayout()
+        return
+    end
+
+    -- Создаём новую страницу (только сейчас!)
+    local newPage = creatorFunc()
+    newPage.creator = creatorFunc  -- запоминаем, чтобы понимать, что это та же страница
+    surface:addChild(newPage)
+    pageBuffer = newPage
+    surface:onLayout()
 end
 -----------------------------------------------------
-surface:onLayout()
+--| СЕКЦИЯ ПЕРЕОПРЕДЕЛЕНИЯ ФУНКЦИОНАЛЬНЫХ МЕТОДОВ |--
+buttonSCREEN.pressed  = function() setPage(createPage1) end
+buttonTIME.pressed    = function() setPage(createPage2) end
+buttonCOLORS.pressed  = function() setPage(createPage3) end
+buttonAbout.pressed   = function() setPage(createPage4) end
+-----------------------------------------------------
+setPage(createPage4)  -- открываем "About" при старте
+
+-- Отладочная команда: где живёт объект?
+function _G.where(obj)
+    if not obj then print("no object") return end
+    local found = false
+    for k, v in pairs(_G) do
+        if v == obj then
+            print("FOUND in _G." .. k) os.sleep(2)
+            found = true
+        end
+    end
+    if root then
+        local function scan(node, path)
+            if node == obj then
+                print("FOUND in UI tree: " .. path)
+                found = true
+            end
+            for i, child in ipairs(node.children or {}) do
+                scan(child, path .. ".children[" .. i .. "]")
+            end
+        end
+        scan(root, "root")
+    end
+    if not found then
+        print("Object is DEAD or only in weak refs/registry") os.sleep(2)
+    end
+end
+
+where(pageBuffer)

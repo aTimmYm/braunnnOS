@@ -719,7 +719,7 @@ function UI.New_Running_Label(x, y, w, h, text, align, scroll_speed, gap, color_
     instance.scroll_pos = 1
     instance.timer_id = nil
     instance.scrolling = false
-    instance.scroll_gap = gap or " "
+    instance.scroll_gap = gap or " " --string_rep(" ", instance.w)
 
     instance.draw = Running_Label_draw
     instance.setText = Running_Label_setText
@@ -1519,16 +1519,17 @@ local function Container_redraw(self)
 end
 
 local function Container_onEvent(self, evt)
+    local event = evt[1]
     local ret = onEvent(self, evt)
-    if self.modal and EVENTS.TOP[evt[1]] and (self.modal.root.keyboard:onEvent(evt) or self.modal:onEvent(evt)) then return true end
-    if EVENTS.TOP[evt[1]] then
+    if self.modal and EVENTS.TOP[event] and (self.modal.root.keyboard:onEvent(evt) or self.modal:onEvent(evt)) then return true end
+    if EVENTS.TOP[event] then
         for i = #self.children, 1, -1 do
             local child = self.children[i]
             if child:check(evt[3], evt[4]) and child:onEvent(evt) then
                 return true
             end
         end
-    elseif not EVENTS.FOCUS[evt[1]] then
+    elseif not EVENTS.FOCUS[event] then
         for _,child in pairs(self.children) do
             if child:onEvent(evt) then
                 return true
@@ -1731,13 +1732,13 @@ end
 local function KeyButton_onEvent(self,evt)
     if evt[1] == "mouse_click" then
         if self.parent then self.parent.focus = self end
-        return self:onMouseDown(evt[2],evt[3],evt[4])
+        return self:onMouseDown(evt[2], evt[3], evt[4])
     end
     return onEvent(self,evt)
 end
 
-function UI.New_KeyButton(root,text)
-    local instance = UI.New_Button(root,text)
+function UI.New_KeyButton(root, text)
+    local instance = UI.New_Button(root, text)
 
     instance.pressed = KeyButton_pressed
     instance.onEvent = KeyButton_onEvent
@@ -1965,11 +1966,11 @@ function UI.New_Window(x, y, w, h, color_bg, title)
     expect(6, title, "string")
 
     local instance = UI.New_Box(x, y, w, h, colors.white)
-    instance.label = UI.New_Label(math.floor((w - #title)/2), y, #title, 1, title, _, colors.white, colors.black)
+    instance.label = UI.New_Label(math.floor((w - #title)/2) + 1, y, #title, 1, title, _, colors.white, colors.black)
     instance:addChild(instance.label)
     instance.close = UI.New_Button(w, y, 1, 1, "x" , _, colors.white, colors.black)
     instance:addChild(instance.close)
-    instance.surface = UI.New_Box(1, 2, w, h-1, color_bg)
+    instance.surface = UI.New_Box(1, 2, w, h - 1, color_bg)
     instance:addChild(instance.surface)
 
     return instance
@@ -2032,7 +2033,7 @@ local function ScrollBox_onLayout(self)
     Container_onLayout(self)
     for _, child in pairs(self.children) do
         child.y = child.y - (self.scrollpos - 1)
-        self.scrollmax = math_max(math_max(self.scrollmax, child.y + child.h - 1 + self.scrollpos) - self.h, 1)
+        self.scrollmax = math_max(math_max(self.scrollmax, child.local_y + child.h + 1) - self.h, 1)
         if child.y + child.h > self.y and child.y <= self.y + self.h - 1 then
             table_insert(self.visibleChild, child)
         end
@@ -2040,8 +2041,8 @@ local function ScrollBox_onLayout(self)
     self.len = self.scrollmax + self.h - 1
 end
 
-local function ScrollBox_onMouseScroll(self,dir,x,y)
-    local MinMax = math_min(math_max(self.scrollpos+dir,1),self.scrollmax)
+local function ScrollBox_onMouseScroll(self, dir, x, y)
+    local MinMax = math_min(math_max(self.scrollpos + dir, 1), self.scrollmax)
     if self.scrollpos ~= MinMax then
         self.scrollpos = MinMax
         self:updateDirty()
@@ -2106,12 +2107,13 @@ local function Root_tResize(self)
 end
 
 local function Root_onEvent(self,evt)
+    local event = evt[1]
     local focus = self.focus
     local ret = Container_onEvent(self, evt)
-    if self.focus and EVENTS.FOCUS[evt[1]] and self.focus:onEvent(evt) then-- and self.keyboard:onEvent(evt) then
+    if self.focus and EVENTS.FOCUS[event] and self.focus:onEvent(evt) then-- and self.keyboard:onEvent(evt) then
         ret = true
     end
-    if evt[1] == "term_resize" then
+    if event == "term_resize" then
         self:tResize()
     end
     if self.focus ~= focus then

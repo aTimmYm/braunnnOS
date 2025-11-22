@@ -35,8 +35,11 @@ surface:addChild(label)
 local textfield = UI.New_Textfield(label.x, label.y + 2, label.w, 1, _, _,colors.white,colors.black)
 surface:addChild(textfield)
 
-local scrollBox = UI.New_ScrollBox(2, textfield.y + 2, list.x - 3, surface.h - 6, colors.brown)
+local scrollBox = UI.New_ScrollBox(2, textfield.y + 2, list.x - 4, surface.h - 6, colors.brown)
 surface:addChild(scrollBox)
+
+local scrollbarBox = UI.New_Scrollbar(scrollBox)
+surface:addChild(scrollbarBox)
 
 -- local scrollbar2 = UI.New_Scrollbar(scrollBox)
 -- scrollbar2.reSize = function (self)
@@ -124,7 +127,7 @@ surface.onResize = function (width, height)
     label.w = list.local_x - label.local_x - 1
     clock.local_x, clock.local_y = list.local_x, 1
     textfield.w = list.local_x - textfield.local_x - 1
-    scrollBox.w, scrollBox.h = list.local_x - 3, surface.h - 6
+    scrollBox.w, scrollBox.h = list.local_x - 4, surface.h - 6
     radioButton_horizontal.local_x, radioButton_horizontal.local_y = scrollBox.w - 9, radioButton.local_y
     radioLabel.local_x, radioLabel.local_y = radioButton_horizontal.local_x, radioButton_horizontal.local_y + 1
     checkbox.local_x, checkbox.local_y = scrollBox.w - 4, tumbler.local_y
@@ -132,6 +135,7 @@ surface.onResize = function (width, height)
     running_label.local_x, running_label.local_y = scrollBox.w - 4, dropdown.local_y
     scrollbar.local_x, scrollbar.local_y, scrollbar.h = list.local_x + list.w, list.local_y, list.h
     slider.w = list.local_x - 3
+    scrollbarBox.local_x, scrollbarBox.h = scrollBox.local_x + scrollBox.w, scrollBox.h
 end
 -----------------------------------------------------
 surface:onLayout()
