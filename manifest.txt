@@ -3,9 +3,9 @@
 ca6a0a27c9e2032daebb53d238ff5511   home/Games/Chess/Chess_Data/cfunc.lua
 d05119ae7307b31058fed885744757ee   home/Games/Chess/Chess_Data/interface_classes.lua
 a65296abd8f0d4b19bf3f0c331045603   home/Games/Chess/Chess_Data/obj_classes
-6d9eea69c84c5f7906cb22bf17b26157   init.lua
+51450dd3b4ec8cad9aca02b0d63f517c   init.lua
 47b6c38d73ff7dd093fd28717dcd98bf   lib/blittle_extended
-e7255a0eff25c7ff99d2378106d4b292   lib/braunnnsys.lua
+bd8a951317bc3892a0111ff77bb39676   lib/braunnnsys.lua
 a63818cabc44cb04270e6d1380508070   lib/cfunc.lua
 cc72e992343aeb53f6b1dc0d55e152c2   lib/deskManager.lua
 916edb95e57cc65c7090dcee6352b973   lib/events
