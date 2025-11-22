@@ -534,7 +534,8 @@ local function Shortcut_pressed(self)
     else
         local ret, exec_err = pcall(func)
         if not ret then
-            print(exec_err) os.sleep(2)
+            print(exec_err)
+            read()
         end
     end
 end

@@ -55,8 +55,8 @@ local buttonAbout = UI.New_Button(2, systemLabel.y + 1, systemLabel.w, 1, "ABOUT
 box:addChild(buttonAbout)
 -----------------------------------------------------
 ------| СЕКЦИЯ ОБЪЯВЛЕНИЯ ФУНКЦИЙ ПРОГРАММЫ |--------
-local function write_file(path,data)
-    local file = fs.open(path,"w")
+local function write_file(path, data)
+    local file = fs.open(path, "w")
     file.write(data)
     file.close()
 end

@@ -47,10 +47,6 @@ local conf = c.readConf(confPath)
 local Path = "home/Music/"
 
 local volumes = {0, 0.05, 0.1, 0.25, 0.5, 0.75, 1, 1.5, 2, 3}
-local def = 1
-for i, v in pairs(volumes) do
-    if conf["volume"] == v then def = i break end
-end
 local volume = conf["volume"]
 -----------------------------------------------------
 ----------| СЕКЦИЯ ИНИЦИАЛИЗАЦИИ ОБЪЕКТОВ |----------
@@ -166,44 +162,15 @@ box2:addChild(ArtistName)
 local trackName = UI.New_Running_Label(ArtistName.x, ArtistName.y + 1, ArtistName.w, 1, "Unknown", "left", _, _, box2.color_bg, colors.lightGray)
 box2:addChild(trackName)
 
-local btnVolume = UI.New_Button(box2.w - 13, 2, 3, 1, "", _, box2.color_bg, colors.white)
-btnVolume.PrevStatus = 1
-btnVolume.draw = function (self)
-    c.write(string_char(145), self.x, self.y, self.color_txt, self.color_bg)
-    if conf["volume"] ~= 0 then
-        c.write(string_char(157), self.x + 1, self.y, self.color_txt, self.color_bg)
-        c.write(string_char(132), self.x + 2, self.y, self.color_bg, self.color_txt)
-    else
-        c.write("x ", self.x + 1, self.y, self.parent.color_bg, self.color_txt)
-    end
-end
-box2:addChild(btnVolume)
-
-local volumeSlider = UI.New_Slider(box2.w - 10, 2, 10, volumes, def, colors.lightGray, box2.color_bg, colors.white)
-box2:addChild(volumeSlider)
-
 local totalTimeLabel = UI.New_Label(box2.w > 41 and box2.w - 11 or box2.w - 5, box2.h - 1, 5, 1, "00:00", _, box2.color_bg, colors.lightGray)
 box2:addChild(totalTimeLabel)
 
 local TL_X = box2.w > 41 and 16 or 8
 local timeLine = UI.New_Slider(TL_X, box2.h - 1, totalTimeLabel.local_x - TL_X - 1, {}, 1, colors.lightGray, box2.color_bg, colors.white)
 box2:addChild(timeLine)
---[[
-local btnVolumeUp = UI.New_Button(root,string_char(30),colors.gray,colors.white)
-btnVolumeUp.reSize = function (self)
-    self.pos = {x=self.parent.size.w-1,y=self.parent.pos.y}
-end
 
-local volumeLabel = UI.New_Label(root,tostring(def),colors.gray,_,"right")
-volumeLabel.reSize = function (self)
-    self.pos = {x=self.parent.size.w-2,y=self.parent.pos.y+1}
-    self.size.w = 2
-end
-
-local btnVolumeDown = UI.New_Button(root,string_char(31),colors.gray,colors.white)
-btnVolumeDown.reSize = function (self)
-    self.pos = {x=self.parent.size.w-1,y=self.parent.pos.y+2}
-end]]
+local btnVolume, volumeSlider       -- Для широкого режима
+local btnVolumeUp, btnVolumeDown, volumeLabel -- Для узкого режима
 -----------------------------------------------------
 ------| СЕКЦИЯ ОБЪЯВЛЕНИЯ ФУНКЦИЙ ПРОГРАММЫ |--------
 local function format_time(sec)
@@ -237,9 +204,6 @@ local function play(self, path, start_chunk)
     for i = 1, total_chunks do
         timeLine.arr[i] = i
     end
-    --timeLine.slidePosition = 1
-    --timeLine.dirty = true
-    --textutils.slowPrint(path) os.sleep(1)
     start_chunk = start_chunk or 1
     local temp = self.filePath:match("([^/\\]+)$")
     totalTimeLabel:setText(cache[temp].time)
@@ -504,10 +468,6 @@ local function cacheUpdate()
         end
         cacheFile.write("return " .. textutils.serialise(cache))
         cacheFile.close()
-
-        -- 5. Перезагружаем модуль кеша, чтобы программа использовала актуальные данные
-        -- package.loaded["sbin/MPlayer/Data/cache"] = nil
-        -- cache = require("sbin/MPlayer/Data/cache")
     end
 end
 cacheUpdate()
@@ -552,6 +512,164 @@ for i,v in pairs(artistS) do
     end
     scrollArtist:addChild(buttonArtist)
 end]]
+
+local function clearVolumeWidgets()
+    -- Очистка широкого режима
+    if btnVolume then
+        box2:removeChild(btnVolume)
+        btnVolume = nil
+    end
+    if volumeSlider then
+        box2:removeChild(volumeSlider)
+        volumeSlider = nil
+    end
+
+    -- Очистка узкого режима
+    if btnVolumeUp then
+        box2:removeChild(btnVolumeUp)
+        btnVolumeUp = nil
+    end
+    if btnVolumeDown then
+        box2:removeChild(btnVolumeDown)
+        btnVolumeDown = nil
+    end
+    if volumeLabel then
+        box2:removeChild(volumeLabel)
+        volumeLabel = nil
+    end
+end
+
+local function initWideMode(width)
+    -- Если уже созданы, просто обновляем позиции
+    if btnVolume and volumeSlider then
+        btnVolume.local_x = width - 13
+        volumeSlider.local_x = width - 10
+        return
+    end
+
+    -- Если нет - очищаем старое и создаем новое
+    clearVolumeWidgets()
+
+    -- 1. Создаем кнопку Mute
+    btnVolume = UI.New_Button(width - 13, 2, 3, 1, "", _, box2.color_bg, colors.white)
+    btnVolume.PrevStatus = 1
+
+    -- Логика отрисовки
+    btnVolume.draw = function (self)
+        c.write(string_char(145), self.x, self.y, self.color_txt, self.color_bg)
+        if conf["volume"] ~= 0 then
+            c.write(string_char(157), self.x + 1, self.y, self.color_txt, self.color_bg)
+            c.write(string_char(132), self.x + 2, self.y, self.color_bg, self.color_txt)
+        else
+            c.write("x ", self.x + 1, self.y, self.parent.color_bg, self.color_txt)
+        end
+    end
+
+    -- Логика нажатия
+    btnVolume.pressed = function (self)
+        if conf["volume"] == 0 then
+            conf["volume"] = self.PrevStatus
+            -- Восстанавливаем позицию слайдера по значению
+            for i, v in pairs(volumes) do
+                if v == conf["volume"] then
+                    if volumeSlider then volumeSlider.slidePosition = i end
+                    break
+                end
+            end
+            volume = self.PrevStatus
+        else
+            self.PrevStatus = conf["volume"]
+            conf["volume"] = 0
+            volume = 0
+            if volumeSlider then volumeSlider.slidePosition = 1 end
+        end
+        c.saveConf(confPath, conf)
+        self.dirty = true
+        if volumeSlider then volumeSlider.dirty = true end
+    end
+
+    -- 2. Создаем Слайдер
+    -- Находим текущую позицию для слайдера
+    local currentIdx = 1
+    for i, v in pairs(volumes) do
+        if v == conf["volume"] then currentIdx = i break end
+    end
+
+    volumeSlider = UI.New_Slider(width - 10, 2, 10, volumes, currentIdx, colors.lightGray, box2.color_bg, colors.white)
+
+    volumeSlider.pressed = function (self, btn, x, y)
+        volume = self.arr[self.slidePosition]
+        conf["volume"] = volume
+        c.saveConf(confPath, conf)
+        if btnVolume then btnVolume.dirty = true end
+    end
+
+    -- Добавляем в box2
+    box2:addChild(btnVolume)
+    box2:addChild(volumeSlider)
+end
+
+-- Функция инициализации УЗКОГО режима (<= 41)
+local function initNarrowMode(width)
+    -- Если уже созданы, обновляем позиции
+    if btnVolumeUp and volumeLabel then
+        local volX = width - 2
+        btnVolumeUp.local_x = volX
+        volumeLabel.local_x = volX
+        btnVolumeDown.local_x = volX
+        return
+    end
+
+    clearVolumeWidgets()
+
+    local volX = width - 2
+
+    -- Находим текущий индекс громкости для отображения
+    local currentIdx = 1
+    for i, v in pairs(volumes) do
+        if v == conf["volume"] then currentIdx = i break end
+    end
+
+    -- 1. Кнопка Вверх
+    btnVolumeUp = UI.New_Button(volX, 1, 3, 1, string_char(30), _, box2.color_bg, colors.white)
+
+    -- 2. Лейбл
+    volumeLabel = UI.New_Label(volX, 2, 3, 1, tostring(currentIdx - 1), "center", box2.color_bg, colors.lightGray)
+
+    -- 3. Кнопка Вниз
+    btnVolumeDown = UI.New_Button(volX, 3, 3, 1, string_char(31), _, box2.color_bg, colors.white)
+
+    -- Логика кнопок
+    btnVolumeUp.pressed = function (self)
+        local cIdx = tonumber(volumeLabel.text) + 1 or 1
+        local nIdx = math_min(cIdx + 1, #volumes)
+        volume = volumes[nIdx]
+        conf["volume"] = volume
+        c.saveConf(confPath, conf)
+        volumeLabel:setText(tostring(nIdx - 1))
+    end
+
+    btnVolumeDown.pressed = function (self)
+        local cIdx = tonumber(volumeLabel.text) + 1 or 1
+        local nIdx = math_max(cIdx - 1, 1)
+        volume = volumes[nIdx]
+        conf["volume"] = volume
+        c.saveConf(confPath, conf)
+        volumeLabel:setText(tostring(nIdx - 1))
+    end
+
+    box2:addChild(btnVolumeUp)
+    box2:addChild(volumeLabel)
+    box2:addChild(btnVolumeDown)
+end
+
+local compact = box2.w > 41
+
+if compact then
+    initWideMode(box2.w)
+else
+    initNarrowMode(box2.w)
+end
 -----------------------------------------------------
 --| СЕКЦИЯ ПЕРЕОПРЕДЕЛЕНИЯ ФУНКЦИОНАЛЬНЫХ МЕТОДОВ |--
 btnAll.pressed = function (self)
@@ -608,35 +726,6 @@ btnPrev.pressed = function (self)
     os.queueEvent("play_music", prevPath, 1, prevIndex)
 end
 
-volumeSlider.pressed = function (self, btn, x, y)
-    volume = self.arr[self.slidePosition]
-    conf["volume"] = volume
-    c.saveConf(confPath, conf)
-    btnVolume.dirty = true
-    --volumeLabel:setText(tostring(self.slidePosition))
-end
-
-btnVolume.pressed = function (self)
-    if conf["volume"] == 0 then
-        conf["volume"] = self.PrevStatus
-        for i, v in pairs(volumes) do
-            if v == conf["volume"] then
-                volumeSlider.slidePosition = i
-                break
-            end
-            volume = self.PrevStatus
-        end
-    else
-        self.PrevStatus = conf["volume"]
-        conf["volume"] = 0
-        volume = 0
-        volumeSlider.slidePosition = 1
-    end
-    c.saveConf(confPath, conf)
-    self.dirty = true
-    volumeSlider.dirty = true
-end
-
 btnOptionAutoNext.pressed = function (self)
     if conf["play_next"] == true then
         conf["play_next"] = false
@@ -647,24 +736,6 @@ btnOptionAutoNext.pressed = function (self)
     end
     c.saveConf(confPath, conf)
 end
-
---[[btnVolumeUp.pressed = function (self)
-    local temp = math_min(tonumber(volumeLabel.text)+1,10)
-    volume = volumes[temp]
-    conf["volume"] = volume
-    c.saveConf(confPath, conf)
-    volumeLabel:setText(tostring(temp))
-    volumeSlider.slidePosition = temp
-end
-
-btnVolumeDown.pressed = function (self)
-    local temp = math_max(tonumber(volumeLabel.text)-1,1)
-    volume = volumes[temp]
-    conf["volume"] = volume
-    c.saveConf(confPath, conf)
-    volumeLabel:setText(tostring(temp))
-    volumeSlider.slidePosition = temp
-end]]
 
 timeLine.pressed = function (self, btn, x, y)
     local new_pos = math_max(1, math_min(#self.arr, math_floor((x - self.x + 1) / self.w * #self.arr)))
@@ -680,7 +751,12 @@ boxAll.onResize = function (width, height)
 end
 
 box2.onResize = function (width, height)
-    local compact = width > 41 and true or false
+    compact = width > 41
+    if compact then
+        initWideMode(width)
+    else
+        initNarrowMode(width)
+    end
     AN_X = compact and 10 or 2
     TL_X = compact and 16 or 8
     pause.local_x = math_floor((width - 2) / 2) + 1
@@ -692,8 +768,6 @@ box2.onResize = function (width, height)
     currentTimeLabel.local_x = compact and 10 or 2
     totalTimeLabel.local_x = compact and width - 11 or width - 5
     timeLine.local_x, timeLine.w = TL_X, totalTimeLabel.local_x - TL_X - 1
-    btnVolume.local_x = width - 13
-    volumeSlider.local_x = width - 10
 end
 
 surface.onResize = function (width, height)
