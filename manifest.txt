@@ -10,7 +10,7 @@ a63818cabc44cb04270e6d1380508070   lib/cfunc.lua
 cc72e992343aeb53f6b1dc0d55e152c2   lib/deskManager.lua
 916edb95e57cc65c7090dcee6352b973   lib/events
 0e8430925597fb135103b506fe2c669f   lib/palette
-535f0f1df17dd82edb2d67c11b0e0303   lib/ui.lua
+ed09583eb0ac92917d94125d47f1da8e   lib/ui.lua
 d41d8cd98f00b204e9800998ecf8427e   new_manifest.txt
 89b0b700ec66f8f1128e5783e1d32e86   sbin/Calculator/icon.ico
 900b79c52bda8e43d8452b92ea65294a   sbin/Calculator/main.lua
@@ -25,7 +25,7 @@ ffc00e10ce6a18d9ca71f9307568c4db   sbin/Messenger/Data/register.lua
 ebb330dff0d5bc39947333f19801d47f   sbin/Messenger/main.lua
 1205163802cd5037e398c45487b45e2e   sbin/Polygon/main.lua
 bbbb8a0f7aab18dc6179ff64a6dae421   sbin/Settings/icon.ico
-c8062465cadf020bb78aa8f8dfedd589   sbin/Settings/main.lua
+58fd1a588336e7b7f31f700368cbf25e   sbin/Settings/main.lua
 6bacd99cdcd6a49fdbd4efab032efee4   sbin/Shell/icon.ico
 4be76586ea71b0c1268e49ac5f824aeb   sbin/Shell/main.lua
 d85ee7513ea6d48e84ddb2323ef64052   sbin/icon_default.ico
