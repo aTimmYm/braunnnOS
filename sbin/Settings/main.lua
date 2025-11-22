@@ -211,22 +211,25 @@ local function createPage4()
     local versionLabel = UI.New_Label(2, braunnnOS.y + 1, 12, 1, "Version "..version, _, page.color_bg, colors.lightGray)
     page:addChild(versionLabel)
 
-    local buttonCheckUpdate = UI.New_Button(2, versionLabel.y + 1, 19, 1, "(CHECK FOR UPDATES)", _, page.color_bg, colors.white)
+    local buttonCheckUpdate = UI.New_Button(2, versionLabel.y + 1, 19, 1, "(CHECK FOR UPDATES)", "center", page.color_bg, colors.white)
     page:addChild(buttonCheckUpdate)
+
+    local loadingBar = UI.New_LoadingBar(buttonCheckUpdate.x, buttonCheckUpdate.y + 1, buttonCheckUpdate.w, page.color_bg, colors.blue, page.color_bg, "top")
+    page:addChild(loadingBar)
 
     buttonCheckUpdate.pressed = function(self)
         self:setText("(CHECKING)")
-        self.w = #self.text
         local response, err = http.get("https://raw.githubusercontent.com/aTimmYm/braunnnOS/refs/heads/dev/manifest.txt")
         local manifest = response.readAll()
         response.close()
         if response then
             if checkUpdates(manifest) then
-                for _,v in pairs(files_to_update) do
+                for i, v in pairs(files_to_update) do
                     local request = http.get("https://raw.githubusercontent.com/aTimmYm/braunnnOS/refs/heads/dev/"..v)
                     if request then
                         write_file(v,request.readAll())
                         request.close()
+                        loadingBar:setValue(i/#files_to_update)
                     end
                 end
                 local file = fs.open("manifest.txt","w")
@@ -236,7 +239,6 @@ local function createPage4()
             else
                 self:setText("(NO UPDATES)")
             end
-            self.w = #self.text
             surface:onLayout()
         end
     end

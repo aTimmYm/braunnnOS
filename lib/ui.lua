@@ -407,7 +407,6 @@ end
 
 local function Label_setText(self, text)
     self.text = text
-    --self.w = #text
     self.dirty = true
 end
 
@@ -1246,6 +1245,50 @@ local function Clock_onEvent(self, evt)
     end
     onEvent(self, evt)
 end
+
+local function LoadingBar_setValue(self, value)
+    if value > 1 or value < 0 then return error("Value may be between 0 and 1 (1 = 100%)") end
+    self.value = value
+    self.dirty = true
+    self:draw()
+end
+
+local function LoadingBar_draw(self)
+    local LoadX = math.floor(self.value * self.w)
+    if self.orientation == "top" then
+        c.write(string_rep(string_char(131), LoadX), self.x, self.y, self.color_bg, self.color_Loading)
+        c.write(string_rep(string_char(131), self.w - LoadX), self.x + LoadX, self.y, self.color_bg, self.color_NotLoaded)
+    elseif self.orientation == "center"  then
+        c.write(string_rep(string_char(140), LoadX), self.x, self.y, self.color_bg, self.color_Loading)
+        c.write(string_rep(string_char(140), self.w - LoadX), self.x + LoadX, self.y, self.color_bg, self.color_NotLoaded)
+    elseif self.orientation == "bottom"  then
+        c.write(string_rep(string_char(143), LoadX), self.x, self.y, self.color_Loading, self.color_bg)
+        c.write(string_rep(string_char(143), self.w - LoadX), self.x + LoadX, self.y, self.color_NotLoaded, self.color_bg)
+    elseif self.orientation == "filled"  then
+        c.write(string_rep(" ", LoadX), self.x, self.y, self.color_Loading, self.color_bg)
+        c.write(string_rep(" ", self.w - LoadX), self.x + LoadX, self.y, self.color_NotLoaded, self.color_bg)
+    end
+    --131, 140, 143(inverted)
+end
+
+function UI.New_LoadingBar(x, y, w, color_bg, color_Loading, color_NotLoaded, orientation, defaultValue)
+    expect(1, x, "number")
+    expect(2, y, "number")
+    expect(3, w, "number")
+    --...
+    local instance = New_Widget(x, y, w, 1, color_bg, color_txt)
+    instance.orientation = orientation or "center"
+    instance.color_bg = color_bg or colors.black
+    instance.color_Loading = color_Loading or colors.white
+    instance.color_NotLoaded = color_NotLoaded or colors.gray
+    instance.value = defaultValue or 0
+
+    instance.draw = LoadingBar_draw
+    instance.setValue = LoadingBar_setValue
+
+    return instance
+end
+
 
 ---Creating new *object* of *class*
 ---@param x number
