@@ -25,7 +25,7 @@ ffc00e10ce6a18d9ca71f9307568c4db   sbin/Messenger/Data/register.lua
 ebb330dff0d5bc39947333f19801d47f   sbin/Messenger/main.lua
 1205163802cd5037e398c45487b45e2e   sbin/Polygon/main.lua
 bbbb8a0f7aab18dc6179ff64a6dae421   sbin/Settings/icon.ico
-b4d829dd21654a217357d24512414c1c   sbin/Settings/main.lua
+1049261934ea483f4f24f4f98f562a32   sbin/Settings/main.lua
 6bacd99cdcd6a49fdbd4efab032efee4   sbin/Shell/icon.ico
 4be76586ea71b0c1268e49ac5f824aeb   sbin/Shell/main.lua
 d85ee7513ea6d48e84ddb2323ef64052   sbin/icon_default.ico
