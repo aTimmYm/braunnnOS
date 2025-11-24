@@ -73,6 +73,11 @@ function _system.dekstop_manager()
     end
 end
 
+function _system.call_dialWin(title, msg)
+    local addWin = UI.New_DialWin()
+    addWin:callWin(title, msg)
+end
+
 function _system.add_window(mode, color_bg, title)
     local window
     if mode == "Titled" then

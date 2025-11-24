@@ -13,9 +13,24 @@ local math_floor = math.floor
 --lib/ui.lua v0.4.0
 local UI = {}
 
+local EVENTS = {
+    TOP = {
+        ["mouse_click"] = true,
+        ["mouse_scroll"] = true,
+    },
+    FOCUS = {
+        ["mouse_up"] = true,
+        ["mouse_drag"] = true,
+        ["char"] = true,
+        ["key"] = true,
+        ["key_up"] = true,
+        ["paste"] = true,
+        ["term_resize"] = true,
+    }
+}
+
 local c = require("cfunc")
 local expect = require("cc.expect")
-local EVENTS = require("events")
 local blittle = require("blittle_extended")
 
 local function check(self,x,y)
@@ -534,7 +549,7 @@ local function Shortcut_pressed(self)
         local ret, exec_err = pcall(func)
         if not ret then
             print(exec_err)
-            read()
+            os.pullEvent("key")
         end
     end
 end
@@ -1539,11 +1554,15 @@ local function Container_addChild(self, child)
     if not child.local_y then child.local_y = child.y end
     child.parent = self
     table_insert(self.children, child)
-    child.dirty = true
+    --child.dirty = true
     return true
 end
 
 local function Container_removeChild(self, child)
+    if child == true then
+        self.children = {}
+        return
+    end
     for i, v in ipairs(self.children) do
         if v == child then
             child.parent = nil
@@ -1621,7 +1640,7 @@ local function MsgWin_draw(self)
     c.write(self.title, math_floor((self.w - #self.title)/2) + self.x, self.y, self.color_bg, self.color_txt)
 end
 
-local function MsgWin_callWin(self,title,msg)
+local function MsgWin_callWin(self, title, msg)
     self.root.modal = self
     self.root.focus = self
     self.title = title
@@ -1716,40 +1735,27 @@ end
 ---Creating new *object* of *class*
 ---@param root table
 ---@return table object DialWin
-function UI.New_DialWin(root)
-    expect(1, root, "table")
+function UI.New_DialWin()
+    --expect(1, root, "table")
+    local root = UI.New_Root()
 
-    local instance = UI.New_Container(root)
+    local instance = UI.New_Container(10, 10, 10, 10, colors.black)
     instance.title = " Title "
     instance.msg = ""
-    local label = UI.New_Label(root,instance.msg,instance.color_bg,instance.color_txt,"left")
-    label.reSize = function (self)
-        self.pos = {x=self.parent.pos.x+1,y=self.parent.pos.y+1}
-        self.w = self.parent.size.w-2
-    end
+    local label = UI.New_Label(2, 2, instance.w - 2, 1, instance.msg, "left", instance.color_bg, instance.color_txt)
     instance:addChild(label)
 
-    local textfield = UI.New_Textfield(root,instance.color_bg,instance.color_txt)
-    textfield.reSize = function (self)
-        self.pos = {x=label.pos.x,y=label.pos.y+1}
-        self.w = self.parent.size.w-2
-    end
+    local textfield = UI.New_Textfield(label.x, label.y + 1, instance.w - 2, 1, "", false, instance.color_bg, instance.color_txt)
     instance:addChild(textfield)
 
-    instance.btnOK = UI.New_Button(root," OK ")
-    instance.btnOK.reSize = function (self)
-        self.pos = {x=math_floor((self.parent.size.w)/2-#self.text-1)+self.parent.pos.x,y=self.parent.size.h+self.parent.pos.y-1}
-    end
+    instance.btnOK = UI.New_Button(math_floor((instance.w)/2 - 4 - 1) + instance.x, instance.h + instance.y - 1, 4, 1, " OK ", _, instance.color_bg, instance.color_txt)
     instance:addChild(instance.btnOK)
 
-    local btnCANCEL = UI.New_Button(root," CANCEL ")
-    btnCANCEL.reSize = function (self)
-        self.pos = {x=math_floor(self.parent.size.w/2)+self.parent.pos.x,y=self.parent.size.h+self.parent.pos.y-1}
-    end
+    local btnCANCEL = UI.New_Button(math_floor(instance.w/2) + instance.x, instance.h + instance.y - 1, 8, 1, " CANCEL ", _, instance.color_bg, instance.color_txt)
     instance:addChild(btnCANCEL)
 
     btnCANCEL.pressed = function (self)
-        self.parent:removeWin()
+        MsgWin_removeWin(self.parent)
     end
 
     instance.draw = DialWin_draw

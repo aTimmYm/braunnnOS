@@ -112,7 +112,6 @@ local function createPage1()
     local dropdown = UI.New_Dropdown(page.w - 4, dropdownLabel.y, {"0.5","1","1.5","2","2.5","3","3.5","4","4.5","5"}, tostring(conf["monitorScale"]), _, _, colors.white, colors.black)
     page:addChild(dropdown)
 
-    -- Подписываем события
     monitorTumbler.pressed = function(self)
         conf["isMonitor"] = not self.on
         c.saveConf(settingsPath, conf)
@@ -247,20 +246,17 @@ local function createPage4()
 end
 
 local function setPage(creatorFunc)
-    if pageBuffer then
-        surface:removeChild(pageBuffer)  -- выгружаем старую
+    if pageBuffer and pageBuffer.creator ~= creatorFunc then
+        surface:removeChild(pageBuffer)
     end
 
-    -- Если это тот же самый creator — просто возвращаем текущую (уже есть)
     if pageBuffer and pageBuffer.creator == creatorFunc then
         surface:addChild(pageBuffer)
-        surface:onLayout()
         return
     end
 
-    -- Создаём новую страницу (только сейчас!)
     local newPage = creatorFunc()
-    newPage.creator = creatorFunc  -- запоминаем, чтобы понимать, что это та же страница
+    newPage.creator = creatorFunc
     surface:addChild(newPage)
     pageBuffer = newPage
     surface:onLayout()
@@ -272,4 +268,4 @@ buttonTIME.pressed    = function() setPage(createPage2) end
 buttonCOLORS.pressed  = function() setPage(createPage3) end
 buttonAbout.pressed   = function() setPage(createPage4) end
 -----------------------------------------------------
-setPage(createPage4)  -- открываем "About" при старте
+setPage(createPage4)
