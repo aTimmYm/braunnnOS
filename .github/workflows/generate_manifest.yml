@@ -4,7 +4,7 @@ on:
   push:
     paths-ignore: ['manifest.txt']
     branches:
-      - '**' # Для любых веток
+      - '**'
 
 permissions:
   contents: write
@@ -12,18 +12,49 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Generate new manifest with MD5 hashes
+      - name: Generate new manifest (respect .gitignore and optional manifest.ignore)
+        shell: bash
         run: |
-          git ls-files -z \
-            | xargs -0 md5sum \
-            | sed 's|  |  |' \
-            | sort -k2 > new_manifest.txt
+          set -euo pipefail
+          # тимчасовий файл для списку tracked
+          tmp_tracked=$(mktemp)
+          git ls-files -z > "$tmp_tracked"
+
+          # підготуємо associative array з manifest.ignore (якщо є)
+          declare -A MANIFEST_IGNORE
+          if [ -f manifest.ignore ]; then
+            while IFS= read -r line || [ -n "$line" ]; do
+              # пропускаємо порожні рядки і коментарі
+              [[ -z "${line// }" ]] && continue
+              [[ "${line:0:1}" == "#" ]] && continue
+              MANIFEST_IGNORE["$line"]=1
+            done < manifest.ignore
+          fi
+
+          # Пройдемо по всіх tracked файлах, викинемо ті, що під .gitignore або manifest.ignore
+          # і виведемо нуль-термінований список таких файлів для md5sum.
+          {
+            while IFS= read -r -d '' f; do
+              # Якщо підпадає під .gitignore -> пропускаємо
+              if git check-ignore -q -- "$f"; then
+                continue
+              fi
+              # Якщо явно в manifest.ignore -> пропускаємо
+              if [ "${MANIFEST_IGNORE[$f]+set}" = "set" ]; then
+                continue
+              fi
+              printf '%s\0' "$f"
+            done < "$tmp_tracked"
+          } | xargs -0 md5sum | sort -k2 > new_manifest.txt
+
+          rm -f "$tmp_tracked"
 
       - name: Check for changes
         id: diff
@@ -41,6 +72,6 @@ jobs:
         run: |
           git config --global user.name 'GitHub Actions Bot'
           git config --global user.email 'actions@github.com'
-          git add --force manifest.txt
+          git add manifest.txt
           git commit -m "Auto: Update manifest.txt with MD5 hashes"
           git push
