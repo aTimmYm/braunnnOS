@@ -19,7 +19,7 @@ f420705bb6aeced24f1e2dcdbc818ff0   sbin/Explorer/icon.ico
 22b8b48e5600d9073054d8f003e3c832   sbin/MPlayer/icon.ico
 5a0305e793bbb887634b222e838a1401   sbin/MPlayer/main.lua
 117de29ab363f7522b3bbbd0d133235d   sbin/Messenger/icon.ico
-d30a6bd0006d1967e1a2abfd8108a9b5   sbin/Messenger/main.lua
+65247ee20fd5e0f8bd216cc9569eaf76   sbin/Messenger/main.lua
 cfc667c34447f8c9192a2cf1e581db8d   sbin/Polygon/main.lua
 bbbb8a0f7aab18dc6179ff64a6dae421   sbin/Settings/icon.ico
 736e8e1b1a6c38e5d99b64623246b8be   sbin/Settings/main.lua
