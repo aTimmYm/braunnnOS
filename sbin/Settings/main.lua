@@ -15,7 +15,7 @@ local pageBuffer = nil
 local settingsPath = "usr/settings.conf"
 local conf = c.readConf(settingsPath)
 local PALETTE = require("palette")
-local version = "0.1"
+local version = "0.2 DEV"
 local files_to_update = {}
 
 local dropdownChooseArr = {}
@@ -207,7 +207,7 @@ local function createPage4()
     local braunnnOS = UI.New_Label(2, 2, 9, 1, string_char(223).."raunnnOS", _, page.color_bg, colors.white)
     page:addChild(braunnnOS)
 
-    local versionLabel = UI.New_Label(2, braunnnOS.y + 1, 12, 1, "Version "..version, _, page.color_bg, colors.lightGray)
+    local versionLabel = UI.New_Label(2, braunnnOS.y + 1, 19, 1, "Version "..version, "left", page.color_bg, colors.lightGray)
     page:addChild(versionLabel)
 
     local buttonCheckUpdate = UI.New_Button(2, versionLabel.y + 1, 19, 1, "(CHECK FOR UPDATES)", "center", page.color_bg, colors.white)
