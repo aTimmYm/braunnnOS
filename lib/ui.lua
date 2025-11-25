@@ -582,7 +582,7 @@ function UI.New_Shortcut(x, y, w, h, text, filepath, icopath, color_bg, color_tx
     else
         instance.icoPath = "sbin/icon_default.ico"
     end]]
-    instance.icoPath = icopath and fs.exists(icopath) and icopath or "sbin/icon_default.ico"
+    instance.icoPath = icopath and fs.exists(icopath) and icopath or "usr/icon_default.ico"
     instance.needArgs = {}
     instance.filePath = filepath
     instance.blittle_img = blittle.load(instance.icoPath)
