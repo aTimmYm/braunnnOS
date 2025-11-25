@@ -1446,7 +1446,7 @@ local function Slider_draw(self)
     -- Calculate thumb position if N > 0
     if N > 0 then
         local i = self.slidePosition
-        local offset = (N == 1) and 0 or math_floor((i - 1) / (N - 1) * (W - 1))
+        local offset = (N == 1) and 0 or math_min(math_floor((i - 1) / (N - 1) * (W - 1)), self.w - 1)
         local thumb_x = self.x + offset
         -- Overlay thumb (use a different char, e.g., █ or slider thumb equivalent)
         c.write(" ", thumb_x, self.y, self.color_txt, self.color_bg)

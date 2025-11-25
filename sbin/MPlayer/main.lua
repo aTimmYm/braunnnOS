@@ -199,25 +199,19 @@ end
 local function play_at_chunk(start_chunk)
     if start_chunk then
         local start_pos = (start_chunk - 1) * CHUNK_SIZE
-        if start_pos < window.data_end then
-            window.music_file.seek("set", start_pos)
-        else
-            return
-        end
+        window.music_file.seek("set", start_pos)
+        window.current_chunk = start_chunk
     end
-    window.current_chunk = start_chunk
 end
 
-local function play(self, path, start_chunk)
+local function play(self, path)
     if not checkSpeaker() then return end
     self.filePath = path or self.filePath
-    --if not self.filePath then return end
     local total_chunks = getTotalChunks(self.filePath)
     timeLine.arr = {}
     for i = 1, total_chunks do
         timeLine.arr[i] = i
     end
-    --start_chunk = start_chunk or 1
     local temp = self.filePath:match("([^/\\]+)$")
     totalTimeLabel:setText(cache[temp].time)
 
