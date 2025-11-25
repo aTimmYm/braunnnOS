@@ -197,11 +197,9 @@ local function checkSpeaker()
 end
 
 local function play_at_chunk(start_chunk)
-    if start_chunk then
-        local start_pos = (start_chunk - 1) * CHUNK_SIZE
-        window.music_file.seek("set", start_pos)
-        window.current_chunk = start_chunk
-    end
+    local start_pos = (start_chunk - 1) * CHUNK_SIZE
+    window.music_file.seek("set", start_pos)
+    window.current_chunk = start_chunk
 end
 
 local function play(self, path)
@@ -216,7 +214,6 @@ local function play(self, path)
     totalTimeLabel:setText(cache[temp].time)
 
     -- Update UI labels with parsed metadata (if available)
-
     ArtistName:setText(cache[temp].artist)
     local Title = cache[temp].title
     if Title ~= "Unknown" then
@@ -236,7 +233,6 @@ local function play(self, path)
         self.data_end = cache[temp].meta_start - 1
     end
 
-    self.current_chunk = 1
     play_at_chunk(1)
     self:play_next_chunk()
 end
@@ -260,7 +256,7 @@ local function play_next_chunk(self)
     bOS.speaker.playAudio(buffer, volume)
     self.current_chunk = self.current_chunk + 1
     timeLine.slidePosition = self.current_chunk
-    timeLine.dirty = true
+    timeLine:draw()
     local time_per_chunk = CHUNK_SIZE * SAMPLES_PER_BYTE / SAMPLE_RATE
     local current_sec = (self.current_chunk - 1) * time_per_chunk
     currentTimeLabel:setText(format_time(current_sec))
@@ -305,23 +301,22 @@ local function onEvent(self, evt)
     local event = evt[1]
     if event == "speaker_audio_empty" and not self.pause then
         self:play_next_chunk()
-        -- set_pause(false)
         return true
     elseif event == "unpause_music" then
         local cur_pos = self.music_file.seek("cur")
         set_pause(false)
         if cur_pos >= self.data_end then
-            self:play(_, 1)
+            self:play()
             return true
         end
         self:play_next_chunk()
         return true
     elseif event == "play_music" then
-        local trackIdx = evt[4]
+        local trackIdx = evt[3]
         if trackIdx then
             updateTrackIcons(trackIdx)
         end
-        self:play(evt[2], evt[3])
+        self:play(evt[2])
         set_pause(false)
         return true
     elseif event == "pause_music" then
@@ -496,7 +491,7 @@ for i,v in pairs(sortedCache) do
         c.write(" "..text.." ", self.x, self.y, color_bg, color_txt)
     end
     trackPlay.pressed = function (self)
-        os.queueEvent("play_music", Path..v, 1, i)
+        os.queueEvent("play_music", Path..v, i)
     end
     boxAll:addChild(trackPlay)
     table_insert(trackButtons, trackPlay)
@@ -706,7 +701,7 @@ btnNext.pressed = function (self)
 
     local nextPath = Path .. sortedCache[nextIndex]
 
-    os.queueEvent("play_music", nextPath, 1, nextIndex)
+    os.queueEvent("play_music", nextPath, nextIndex)
 end
 
 btnPrev.pressed = function (self)
@@ -719,7 +714,7 @@ btnPrev.pressed = function (self)
 
     local prevPath = Path .. sortedCache[prevIndex]
 
-    os.queueEvent("play_music", prevPath, 1, prevIndex)
+    os.queueEvent("play_music", prevPath, prevIndex)
 end
 
 btnOptionAutoNext.pressed = function (self)
@@ -739,11 +734,10 @@ timeLine.pressed = function (self, btn, x, y)
     local width_range = math_max(1, self.w - 1)
     local percentage = relative_x / width_range
     local total_chunks = #self.arr
-    local exact_pos = 1 + (percentage * (total_chunks - 1))
+    local exact_pos = percentage * total_chunks + 1
     local new_pos = math_floor(exact_pos + 0.5)
     new_pos = math_max(1, math_min(total_chunks, new_pos))
     self.slidePosition = new_pos
-    --os.queueEvent("play_music", _, new_pos)
     play_at_chunk(new_pos)
 end
 
