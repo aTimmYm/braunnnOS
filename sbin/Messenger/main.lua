@@ -32,7 +32,7 @@ local serverID = 10--rednet.lookup(protocol, "messenger_main")
 ----------| СЕКЦИЯ ИНИЦИАЛИЗАЦИИ ОБЪЕКТОВ |----------
 local window, surface = system.add_window("Titled", colors.black, "Messenger")
 
-local usersList, msgScrollBox, textOut, msgLabel
+local usersList, msgScrollBox, textOut, msgLabel, timer
 -----------------------------------------------------
 ------| СЕКЦИЯ ОБЪЯВЛЕНИЯ ФУНКЦИЙ ПРОГРАММЫ |--------
 if bOS.modem then rednet.open(peripheral.getName(bOS.modem)) end
@@ -132,12 +132,16 @@ local function initAuthUI()
     surface:addChild(buttonLogin)
 
     buttonLogin.pressed = function (self)
-    rednet.send(serverID, {cType = "login", login = textfieldLogin.text, password = textfieldPassword.text}, protocol)
+        if textfieldLogin.text == "" then msgLabel:setText("The login field is empty") return end
+        if textfieldPassword.text == "" then msgLabel:setText("The password field is empty") return end
+        rednet.send(serverID, {cType = "login", login = textfieldLogin.text, password = textfieldPassword.text}, protocol)
         if not timer then timer = os.startTimer(5) end
     end
 
-    buttonRegister.pressed = function(self)
-    rednet.send(serverID, {cType = "registration", login = textfieldLogin.text, password = textfieldPassword.text}, protocol)
+    buttonRegister.pressed = function (self)
+        if textfieldLogin.text == "" then msgLabel:setText("The login field is empty") return end
+        if textfieldPassword.text == "" then msgLabel:setText("The password field is empty") return end
+        rednet.send(serverID, {cType = "registration", login = textfieldLogin.text, password = textfieldPassword.text}, protocol)
         if not timer then timer = os.startTimer(5) end
     end
 
@@ -276,6 +280,7 @@ window.onEvent = function (self, evt)
             return
         end
     end
+    if msgLabel and evt[1] == "timer" and evt[2] == timer then msgLabel:setText("Server do not response.") end
     --print(textutils.serialise(evt))
     return temp_onEvent(self, evt)
 end

@@ -730,6 +730,7 @@ btnOptionAutoNext.pressed = function (self)
 end
 
 timeLine.pressed = function (self, btn, x, y)
+    if not window.music_file then return end
     local new_pos = math_max(1, math_min(#self.arr, math_floor((x - self.x + 1) / self.w * #self.arr)))
     self.slidePosition = new_pos
     os.queueEvent("play_music", _, new_pos)
