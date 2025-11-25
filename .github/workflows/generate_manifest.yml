@@ -25,6 +25,7 @@ jobs:
             -not -path "./.github/*" \
             -not -name ".gitignore" \
             -not -name "manifest.txt" \
+            -not -name "new_manifest.txt" \
             -not -name "README.md" \
             -not -name "installer_dev.lua" \
             -not -name "installer_release.lua" \
