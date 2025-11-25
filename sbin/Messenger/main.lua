@@ -158,6 +158,9 @@ local function initMainUI()
     local buttonAddFriend = UI.New_Button(1, 1, 1, 1, "+", _, window.color_bg, colors.black)
     window:addChild(buttonAddFriend)
 
+    local myKey = UI.New_Button(2, 1, 1, 1, "?", _, window.color_bg, colors.black)
+    window:addChild(myKey)
+
     usersList = UI.New_ScrollBox(1,1, math_ceil(surface.w/4), surface.h, surface.color_bg)
     surface:addChild(usersList)
 
@@ -166,13 +169,12 @@ local function initMainUI()
     textOut = UI.New_Textfield(msgScrollBox.x, surface.h, msgScrollBox.w, 1, "Type message", _, colors.black, colors.white)
 
     buttonAddFriend.pressed = function (self)
-        --[[system.call_dialWin("Add a friends", "Type user identifier")
-        local addWin = UI.New_DialWin(root)
-        addWin:callWin("Add a friends","Type user identifier")
-        function addWin.btnOK:pressed()
-            rednet.send(serverID,{cType = "user_add", user = account_key, added_user = addWin.child[2].text},protocol)
-            addWin:removeWin()
-        end]]
+        local friend = UI.New_DialWin(" Add a friend ", "Type user identifier")
+        if friend then rednet.send(serverID,{cType = "user_add", user = account_key, added_user = addWin.child[2].text},protocol) end
+    end
+
+    myKey.pressed = function (self)
+        UI.New_MsgWin("INFO", " Your identificator ", account_key)
     end
 
     textOut.pressed = function (self)

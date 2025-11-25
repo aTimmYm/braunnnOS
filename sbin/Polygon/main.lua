@@ -83,18 +83,10 @@ scrollBox:addChild(slider)
 -----------------------------------------------------
 --| СЕКЦИЯ ПЕРЕОПРЕДЕЛЕНИЯ ФУНКЦИОНАЛЬНЫХ МЕТОДОВ |--
 buttonInfo.pressed = function (self)
-    -- local infoWin = UI.New_MsgWin(root,"INFO")
-    -- infoWin:callWin(" INFO ","This is a polygon. A test file that displays all interface elements except shortcuts, as they are represented on the desktop you accessed (most likely).")
-    if surface:removeChild(list) then
-        surface:onLayout()
-    else
-        surface:addChild(list)
-    end
-
+    UI.New_MsgWin("INFO", " INFO ", "This is a polygon. A test file that displays all interface elements except shortcuts, as they are represented on the desktop you accessed (most likely).")
 end
 
 buttonError.pressed = function (self)
-    if self.text == "-" then self:setText("+") else self:setText("-") end
     error("This is critical polygon error which closes it")
 end
 
@@ -123,11 +115,11 @@ checkbox.pressed = function (self)
 end
 
 surface.onResize = function (width, height)
-    list.local_x, list.local_y, list.w, list.h = math.ceil(surface.w/2), 2, math.floor(surface.w/2) - 1, surface.h - 2
+    list.local_x, list.local_y, list.w, list.h = math.ceil(width/2), 2, math.floor(width/2) - 1, height - 2
     label.w = list.local_x - label.local_x - 1
     clock.local_x, clock.local_y = list.local_x, 1
     textfield.w = list.local_x - textfield.local_x - 1
-    scrollBox.w, scrollBox.h = list.local_x - 4, surface.h - 6
+    scrollBox.w, scrollBox.h = list.local_x - 4, height - 6
     radioButton_horizontal.local_x, radioButton_horizontal.local_y = scrollBox.w - 9, radioButton.local_y
     radioLabel.local_x, radioLabel.local_y = radioButton_horizontal.local_x, radioButton_horizontal.local_y + 1
     checkbox.local_x, checkbox.local_y = scrollBox.w - 4, tumbler.local_y

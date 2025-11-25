@@ -1634,80 +1634,64 @@ local function MsgWin_draw(self)
     c.write(self.title, math_floor((self.w - #self.title)/2) + self.x, self.y, self.color_bg, self.color_txt)
 end
 
-local function MsgWin_callWin(self, title, msg)
-    self.root.modal = self
-    self.root.focus = self
-    self.title = title
-    self.children[1]:setText(msg)
-    self.root:addChild(self)
-    self:onLayout()
-end
-
-local function MsgWin_removeWin(self)
-    self.root.modal = nil
-    self.root.focus = nil
-    self.root:removeChild(self)
-    self.root:onLayout()
-end
-
-local function MsgWin_reSize(self)
-    self.pos = {x=self.root.pos.x+3,y=self.root.pos.y+2}
-    self.size = {w=self.root.size.w-self.x-2,h=self.root.size.h-self.y-2}
-end
-
 local function MsgWin_onLayout(self)
     self.dirty = true
     Container_onLayout(self)
 end
 
 ---Creating new *object* of *class*
----@param root table
----@param string string
----@return table object MsgWin
-function UI.New_MsgWin(root,string)
-    expect(1, root, "table")
-    expect(2, string, "string")
+---@param mode string "INFO" or "YES,NO"
+---@return boolean object true or false
+function UI.New_MsgWin(mode, title, msg)
+    local root = UI.New_Root()
 
-    local instance = UI.New_Container(root)
-    instance.title = " Error "
-    instance.msg = ""
-    local label = UI.New_Label(root,instance.msg,instance.color_bg,instance.color_txt)
-    label.reSize = function (self)
-        self.pos = {x=self.parent.pos.x+1,y=self.parent.pos.y+1}
-        self.size = {w=self.parent.size.w-2,h=self.parent.size.h-self.parent.pos.y+1}
-    end
+    local instance = UI.New_Container(math.floor(root.w*0.2 + 0.5), math.floor(root.h*0.2  + 0.5), math.floor(root.w*0.65  + 0.5), math.floor(root.h*0.65  + 0.5), colors.black)
+    instance.title = title or " Error "
+    instance.draw = MsgWin_draw
+    instance.onLayout = MsgWin_onLayout
+
+    local ok = false
+    local label = UI.New_Label(2, 2, instance.w - 2, instance.h - 2, msg or "Message", "center", instance.color_bg, instance.color_txt)
     instance:addChild(label)
-    local btnOK
-    if string == "INFO" then
-        btnOK = UI.New_Button(root," OK ")
-        btnOK.reSize = function (self)
-            self.pos = {x=math_floor((self.parent.size.w-self.w)/2)+self.parent.pos.x,y=self.parent.size.h+self.parent.pos.y-1}
-        end
+    local btnOK, btnYES
+    if mode == "INFO" then
+        btnOK = UI.New_Button(math_floor((instance.w - 4)/2)+1, instance.h, 4, 1," OK ")
         instance:addChild(btnOK)
-    elseif string == "YES,NO" then
-        instance.btnYES = UI.New_Button(root," YES ")
-        instance.btnYES.reSize = function (self)
-            self.pos = {x=math_floor((self.parent.size.w)/2)-self.w+self.parent.pos.x,y=self.parent.size.h+self.parent.pos.y-1}
-        end
-        instance:addChild(instance.btnYES)
-        btnOK = UI.New_Button(root," NO ")
-        btnOK.reSize = function (self)
-            self.pos = {x=math_floor((self.parent.size.w)/2)+1+self.parent.pos.x,y=self.parent.size.h+self.parent.pos.y-1}
-        end
+    elseif mode == "YES,NO" then
+        btnYES = UI.New_Button(math_floor((instance.w - 5)/2) - 2, instance.h, 5, 1," YES ")
+        instance:addChild(btnYES)
+        btnOK = UI.New_Button(math_floor((instance.w + 4)/2), instance.h, 4, 1, " NO ")
         instance:addChild(btnOK)
+
+        btnYES.pressed = function (self)
+            table.remove(root.children, 1)
+            root.running_program = false
+            ok = true
+        end
     end
 
     btnOK.pressed = function (self)
-        self.parent:removeWin()
+        table.remove(root.children, 1)
+        root.running_program = false
     end
 
-    instance.draw = MsgWin_draw
-    instance.callWin = MsgWin_callWin
-    instance.removeWin = MsgWin_removeWin
-    instance.reSize = MsgWin_reSize
-    instance.onLayout = MsgWin_onLayout
+    instance.onResize = function (width, height)
+        instance.local_x, instance.local_y = math.floor(width*0.2 + 0.5), math.floor(height*0.2  + 0.5)
+        instance.w,  instance.h = math.floor(width*0.65  + 0.5), math.floor(height*0.65  + 0.5)
+        label.w, label.h = instance.w - 2, instance.h - 2
+        if mode == "INFO" then
+            btnOK.local_x, btnOK.local_y = math_floor((instance.w - 4)/2), instance.h
+        elseif mode == "YES,NO" then
+            btnYES.local_x, btnYES.local_y = math_floor((instance.w - 5)/2) - 2, instance.h
+            btnOK.local_x, btnOK.local_y = math_floor((instance.w + 4)/2), instance.h
+        end
+    end
 
-    return instance
+    root:addChild(instance)
+    root:mainloop()
+    os.queueEvent("term_resize")
+
+    return ok
 end
 
 local function DialWin_draw(self)
@@ -1721,44 +1705,49 @@ local function DialWin_draw(self)
     c.write(self.title, math_floor((self.w - #self.title)/2) + self.x, self.y, self.color_bg, self.color_txt)
 end
 
-local function DialWin_reSize(self)
-    self.size = {w=24,h=4}
-    self.pos = {x=math_floor((self.root.size.w-self.w)/2),y=math_floor((self.root.size.h-self.h)/2)}
-end
-
 ---Creating new *object* of *class*
----@param root table
----@return table object DialWin
-function UI.New_DialWin()
-    --expect(1, root, "table")
+--@return table|nil object DialWin
+function UI.New_DialWin(title, msg)
     local root = UI.New_Root()
 
-    local instance = UI.New_Container(10, 10, 10, 10, colors.black)
-    instance.title = " Title "
-    instance.msg = ""
-    local label = UI.New_Label(2, 2, instance.w - 2, 1, instance.msg, "left", instance.color_bg, instance.color_txt)
+    local instance = UI.New_Container(math_floor((root.w-24)/2), math_floor((root.h-4)/2), 24, 4, colors.black)
+    instance.title = title or " Title "
+    instance.draw = DialWin_draw
+    instance.onLayout = MsgWin_onLayout
+
+    local label = UI.New_Label(2, 2, instance.w - 2, 1, msg or "", "left", instance.color_bg, instance.color_txt)
     instance:addChild(label)
 
-    local textfield = UI.New_Textfield(label.x, label.y + 1, instance.w - 2, 1, "", false, instance.color_bg, instance.color_txt)
+    local textfield = UI.New_Textfield(label.local_x, label.local_y + 1, instance.w - 2, 1, "", false, colors.gray--[[instance.color_bg]], instance.color_txt)
     instance:addChild(textfield)
 
-    instance.btnOK = UI.New_Button(math_floor((instance.w)/2 - 4 - 1) + instance.x, instance.h + instance.y - 1, 4, 1, " OK ", _, instance.color_bg, instance.color_txt)
-    instance:addChild(instance.btnOK)
+    local btnOK = UI.New_Button(math_floor(instance.w/2 - 4 - 1), instance.h, 4, 1, " OK ", _, instance.color_bg, instance.color_txt)
+    instance:addChild(btnOK)
+    local ok = nil
 
-    local btnCANCEL = UI.New_Button(math_floor(instance.w/2) + instance.x, instance.h + instance.y - 1, 8, 1, " CANCEL ", _, instance.color_bg, instance.color_txt)
+    btnOK.pressed = function (self)
+        table.remove(root.children, 1)
+        root.running_program = false
+        ok = true
+    end
+
+    local btnCANCEL = UI.New_Button(math_floor(instance.w/2), instance.h, 8, 1, " CANCEL ", _, instance.color_bg, instance.color_txt)
     instance:addChild(btnCANCEL)
 
     btnCANCEL.pressed = function (self)
-        MsgWin_removeWin(self.parent)
+        table.remove(root.children, 1)
+        root.running_program = false
     end
 
-    instance.draw = DialWin_draw
-    instance.callWin = MsgWin_callWin
-    instance.removeWin = MsgWin_removeWin
-    instance.reSize = DialWin_reSize
-    instance.onLayout = MsgWin_onLayout
+    instance.onResize = function (width, height)
+        instance.local_x, instance.local_y = math_floor((width - 24)/2), math_floor((height - 4)/2)
+    end
 
-    return instance
+    root:addChild(instance)
+    root.focus = textfield
+    root:mainloop()
+    os.queueEvent("term_resize")
+    if ok then return textfield.text end
 end
 
 local function KeyButton_pressed(self)
@@ -2134,7 +2123,7 @@ function UI.New_ScrollBox(x, y, w, h, color_bg)
 end
 
 local function Root_show(self)
-    c.termClear(self.color_bg)
+    --c.termClear(self.color_bg)
     self:onLayout()
     self:redraw()
 end
@@ -2184,7 +2173,7 @@ local function Root_mainloop(self)
         end
         self:onEvent(evt)
     end
-    c.termClear()
+    --c.termClear()
 end
 
 ---Creating new *object* of *class* root - event handler, to use root:mainloop()

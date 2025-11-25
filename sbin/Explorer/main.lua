@@ -40,11 +40,11 @@ surface:addChild(scrollbar)
 -----------------------------------------------------
 ------| СЕКЦИЯ ОБЪЯВЛЕНИЯ ФУНКЦИЙ ПРОГРАММЫ |--------
 local extensions = {
-    [".txt"] = function (item,fullPath)
+    [".txt"] = function (item, fullPath)
         c.openFile(root,shell.resolveProgram("edit"),item)
         return true
     end,
-    [".lua"] = function (item,fullPath)
+    [".lua"] = function (item, fullPath)
         local protected_dirs = {"sbin", "lib"--[[, "usr"]]}
         local is_protected = false
         for _, dir in pairs(protected_dirs) do
@@ -53,15 +53,15 @@ local extensions = {
                 break
             end
         end
-        if not is_protected then c.openFile(root,"sbin/Shell/main.lua",fullPath) end
+        if not is_protected then c.openFile(root,"sbin/Shell/main.lua", fullPath) end
         return true
     end,
-    [".conf"] = function (item,fullPath)
-        c.openFile(root,"sbin/Shell/main.lua","edit "..item)
+    [".conf"] = function (item, fullPath)
+        c.openFile(root, "sbin/Shell/main.lua","edit "..item)
         return true
     end,
-    [".nfp"] = function (item,fullPath)
-        c.openFile(root,shell.resolveProgram("paint"),item)
+    [".nfp"] = function (item, fullPath)
+        c.openFile(root,shell.resolveProgram("paint"), item)
         return true
     end
 }
@@ -113,19 +113,14 @@ list:updateArr(fslist)
 --| СЕКЦИЯ ПЕРЕОПРЕДЕЛЕНИЯ ФУНКЦИОНАЛЬНЫХ МЕТОДОВ |--
 buttonAdd.pressed = function (self)
     if mode == "delete" then return end
-    local dialWin = UI.New_DialWin(root)
-    dialWin:callWin(" Creating directory ","Enter the directory name")
-    dialWin.btnOK.pressed = function (self)
-        if dialWin.child[2].text == "" then
-            local infoWin = UI.New_MsgWin(root,"INFO")
-            infoWin:callWin(" ERROR ","Invalid directory name")
-        else
-            fs.makeDir(shell.resolve(dialWin.child[2].text))
-            fslist = fs.list(shell.dir())
-            sort()
-            list:updateArr(fslist)
-        end
-        dialWin:removeWin()
+    local text = UI.New_DialWin(" Creating directory ", "Enter the directory name")
+    if text and text == "" then
+        UI.New_MsgWin("INFO", " ERROR ","Invalid directory name")
+    elseif text and text ~= "" then
+        fs.makeDir(shell.resolve(text))
+        fslist = fs.list(shell.dir())
+        sort()
+        list:updateArr(fslist)
     end
 end
 
@@ -153,8 +148,7 @@ list.pressed = function (self)
         if extensions[extension] then
             extensions[extension](list.item,fullPath)
         else
-            local msgWin = UI.New_MsgWin(root, "INFO")
-            msgWin:callWin(" ERROR ", "Can't open current file extension.")
+            UI.New_MsgWin("INFO", " ERROR ", "Can't open current file extension.")
         end
     end
 end
@@ -182,20 +176,18 @@ buttonDelete.pressed = function (self)
             if string_find(v, string_char(4)) then table_insert(toDel, string_sub(v, 2, #v)) end
         end
         if toDel and #toDel > 0 then
-            local questionWin = UI.New_MsgWin(root,"YES,NO")
-            questionWin:callWin(" DELETE ","Are you sure?")
-            questionWin.btnYES.pressed = function (self)
-                for _,v in pairs(toDel) do
+            local bool = UI.New_MsgWin("YES,NO", " DELETE ", "Are you sure?")
+            if bool then
+                for _, v in pairs(toDel) do
                     fs.delete(shell.resolve(v))
                 end
                 fslist = fs.list(shell.dir())
                 sort()
                 list:updateArr(fslist)
-                questionWin:removeWin()
-                label:setText("Explorer")
+                window.label:setText("Explorer")
                 mode = ""
+                goto finish
             end
-            goto finish
         end
         fslist = fs.list(shell.dir())
         sort()
@@ -222,29 +214,27 @@ buttonMove.pressed = function (self)
             if string_find(v, string_char(4)) then table_insert(moveBuffer, string_sub(v, 2, #v)) end
         end
         if moveBuffer and #moveBuffer > 0 then
-            local dialWin = UI.New_DialWin(root)
-            dialWin:callWin(" MOVE ","Write a path to move")
-            dialWin.btnOK.pressed = function (self)
+            local text = UI.New_DialWin(" MOVE ", "Write a path to move")
+            if text then
                 for _,v in pairs(moveBuffer) do
-                    fs.move(shell.resolve(v),dialWin.child[2].text.."/"..v)
+                    fs.move(shell.resolve(v),text.."/"..v)
                 end
                 fslist = fs.list(shell.dir())
                 sort()
                 list:updateArr(fslist)
-                dialWin:removeWin()
-                label:setText("Explorer")
+                window.label:setText("Explorer")
                 mode = ""
+                goto finish
             end
-            goto finish
         end
         fslist = fs.list(shell.dir())
         sort()
         list:updateArr(fslist)
-        label:setText("Explorer")
+        window.label:setText("Explorer")
         mode = ""
     elseif mode == "" then
         mode = "move"
-        label:setText("MOVE MODE")
+        window.label:setText("MOVE MODE")
         for i,_ in pairs(list.array) do
             list.array[i] = " "..list.array[i]
         end
