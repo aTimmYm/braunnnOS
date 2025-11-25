@@ -196,15 +196,28 @@ local function checkSpeaker()
     return false
 end
 
+local function play_at_chunk(start_chunk)
+    if start_chunk then
+        local start_pos = (start_chunk - 1) * CHUNK_SIZE
+        if start_pos < window.data_end then
+            window.music_file.seek("set", start_pos)
+        else
+            return
+        end
+    end
+    window.current_chunk = start_chunk
+end
+
 local function play(self, path, start_chunk)
     if not checkSpeaker() then return end
     self.filePath = path or self.filePath
+    --if not self.filePath then return end
     local total_chunks = getTotalChunks(self.filePath)
     timeLine.arr = {}
     for i = 1, total_chunks do
         timeLine.arr[i] = i
     end
-    start_chunk = start_chunk or 1
+    --start_chunk = start_chunk or 1
     local temp = self.filePath:match("([^/\\]+)$")
     totalTimeLabel:setText(cache[temp].time)
 
@@ -229,33 +242,20 @@ local function play(self, path, start_chunk)
         self.data_end = cache[temp].meta_start - 1
     end
 
-    -- Seek to requested start_chunk
-    if start_chunk > 1 then
-        local start_pos = (start_chunk - 1) * CHUNK_SIZE
-        if start_pos < self.data_end then
-            self.music_file.seek("set", start_pos)
-        else
-            -- start beyond data; nothing to play
-            self.music_file.close()
-            return
-        end
-    else
-        self.music_file.seek("set", 0)
-    end
-    self.current_chunk = start_chunk
-
+    self.current_chunk = 1
+    play_at_chunk(1)
     self:play_next_chunk()
 end
 
 local function play_next_chunk(self)
-    local cur_pos = self.music_file.seek("cur") or 0
+    local cur_pos = self.music_file.seek("cur")
     if cur_pos >= self.data_end then
         if conf["play_next"] then
             os.queueEvent("play_next")
+            self.music_file.close()
             return
         end
-        self.music_file.close()
-        self.music_file = nil
+        os.queueEvent("pause_music")
         return
     end
     local to_read = math_min(CHUNK_SIZE, self.data_end - cur_pos)
@@ -273,10 +273,10 @@ local function play_next_chunk(self)
 end
 
 local function set_pause(bool)
-    if pause.play == bool then return end
-    pause.play = bool
+    if window.pause == bool then return end
+    window.pause = bool
+    pause.play = not bool
     pause.dirty = true
-    window.pause = not bool
 end
 
 local function updateTrackIcons(newIndex)
@@ -309,9 +309,18 @@ end
 local temp_onEvent = window.onEvent
 local function onEvent(self, evt)
     local event = evt[1]
-    if event == "speaker_audio_empty" and not self.pause or event == "unpause_music" then
+    if event == "speaker_audio_empty" and not self.pause then
         self:play_next_chunk()
-        set_pause(true)
+        -- set_pause(false)
+        return true
+    elseif event == "unpause_music" then
+        local cur_pos = self.music_file.seek("cur")
+        set_pause(false)
+        if cur_pos >= self.data_end then
+            self:play(_, 1)
+            return true
+        end
+        self:play_next_chunk()
         return true
     elseif event == "play_music" then
         local trackIdx = evt[4]
@@ -319,13 +328,14 @@ local function onEvent(self, evt)
             updateTrackIcons(trackIdx)
         end
         self:play(evt[2], evt[3])
-        set_pause(true)
+        set_pause(false)
         return true
     elseif event == "pause_music" then
-        set_pause(false)
+        set_pause(true)
         return true
     elseif event == "play_next" then
         btnNext:pressed()
+        return true
     end
     return temp_onEvent(self, evt)
 end
@@ -731,9 +741,16 @@ end
 
 timeLine.pressed = function (self, btn, x, y)
     if not window.music_file then return end
-    local new_pos = math_max(1, math_min(#self.arr, math_floor((x - self.x + 1) / self.w * #self.arr)))
+    local relative_x = x - self.x
+    local width_range = math_max(1, self.w - 1)
+    local percentage = relative_x / width_range
+    local total_chunks = #self.arr
+    local exact_pos = 1 + (percentage * (total_chunks - 1))
+    local new_pos = math_floor(exact_pos + 0.5)
+    new_pos = math_max(1, math_min(total_chunks, new_pos))
     self.slidePosition = new_pos
-    os.queueEvent("play_music", _, new_pos)
+    --os.queueEvent("play_music", _, new_pos)
+    play_at_chunk(new_pos)
 end
 
 boxAll.onResize = function (width, height)
