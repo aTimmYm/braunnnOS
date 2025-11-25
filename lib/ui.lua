@@ -779,23 +779,6 @@ local function Scrollbar_getTrackHeight(self)
     return self.h - 2
 end
 
-local function Scrollbar_getSliderHeight(self)
-    local track_height = self:getTrackHeight()
-    local total_items = self.obj.len or #self.obj.array
-    local visible_items = self.obj.h
-    return math_max(1, c.round(track_height * (visible_items / total_items)))
-end
-
-local function Scrollbar_getMaxSliderOffset(self)
-    return math_max(0, self:getTrackHeight() - self:getSliderHeight())
-end
-
-local function Scrollbar_getSliderOffset(self)
-    local max_offset = self:getMaxSliderOffset()
-    local scroll_fraction = (self.obj.scrollpos - 1) / math_max(1, self.obj.scrollmax - 1)
-    return c.round(scroll_fraction * max_offset)
-end
-
 local function Scrollbar_checkIn(self,btn, x, y)
     if y == self.y then
         self.held = 1  -- Up arrow
@@ -812,44 +795,6 @@ local function Scrollbar_isOnSlider(self,y)
     local slider_height = self:getSliderHeight()
     local slider_y_start = self.y + 1 + slider_offset
     return y >= slider_y_start and y <= slider_y_start + slider_height - 1
-end
-
-local function Scrollbar_onMouseDown(self,btn, x, y)
-    if not self:check(x, y) then return false end
-    if self:checkIn(btn, x, y) then
-        -- Стрелки held set в checkIn
-    elseif self:isOnSlider(y) then
-        self.held = 2
-        local slider_offset = self:getSliderOffset()
-        local slider_y_start = self.y + 1 + slider_offset
-        self.drag_offset = y - slider_y_start
-    else
-        -- Клик на трек: jump to position
-        local track_y = y - (self.y + 1)
-        local track_height = self:getTrackHeight()
-        local adj_denominator = track_height > 0 and (track_height - 1) or 1
-        local scroll_fraction = track_y / adj_denominator
-        local new_scrollpos = math_floor(scroll_fraction * (self.obj.scrollmax - 1)) + 1
-        self.obj.scrollpos = math_max(1, math_min(new_scrollpos, self.obj.scrollmax))
-        self.obj.dirty = true
-    end
-    self.dirty = true
-    return true
-end
-
-local function Scrollbar_onMouseDrag(self,btn, x, y)
-    if self.held ~= 2 then return false end
-    local max_offset = self:getMaxSliderOffset()
-    if max_offset == 0 then return true end
-    local track_height = self:getTrackHeight()
-    local adj_denominator = track_height > 0 and (track_height - 1) or 1
-    local relative_y = y - (self.y + 1) - self.drag_offset
-    local scroll_fraction = relative_y / adj_denominator
-    local new_scrollpos = math_floor(scroll_fraction * (self.obj.scrollmax - 1)) + 1
-    self.obj.scrollpos = math_max(1, math_min(new_scrollpos, self.obj.scrollmax))
-    self.obj:onLayout()
-    self.dirty = true
-    return true
 end
 
 local function Scrollbar_onMouseUp(self,btn, x, y)
@@ -871,6 +816,125 @@ local function Scrollbar_onMouseScroll(self,dir, x, y)
         return true
     end
     return false
+end
+
+local function clamp(val, a, b) return math_max(a, math_min(b, val)) end
+
+local function Scrollbar_getSliderHeight(self)
+    local track_height = self:getTrackHeight()
+    if track_height <= 0 then return 0 end
+
+    local total_items = self.obj.len or #(self.obj.array or {})
+    local visible_items = self.obj.h or 0
+
+    if total_items <= 0 then
+        return track_height
+    end
+
+    if visible_items >= total_items then
+        return track_height
+    end
+
+    local raw = (visible_items * track_height) / total_items
+    local h = math.floor(raw + 0.5)
+    if h < 1 then h = 1 end
+    if h > track_height then h = track_height end
+    return h
+end
+
+local function Scrollbar_getMaxSliderOffset(self)
+    local track_height = self:getTrackHeight()
+    if track_height <= 0 then return 0 end
+    local slider_height = self:getSliderHeight()
+    return math_max(0, track_height - slider_height)
+end
+
+local function Scrollbar_getSliderOffset(self)
+    local max_offset = self:getMaxSliderOffset()
+    if max_offset == 0 then return 0 end
+
+    local scrollmax = self.obj.scrollmax or 1
+    if scrollmax <= 1 then return 0 end
+
+    local pos = (self.obj.scrollpos or 1) - 1
+    pos = clamp(pos, 0, scrollmax - 1)
+    local frac = pos / (scrollmax - 1)
+    return clamp(math_floor(frac * max_offset + 0.5), 0, max_offset)
+end
+
+local function Scrollbar_onMouseDown(self,btn, x, y)
+    if not self:check(x, y) then return false end
+
+    if self:checkIn(btn, x, y) then
+        self.dirty = true
+        return true
+    end
+
+    if self:isOnSlider(y) then
+        self.held = 2
+        local slider_offset = self:getSliderOffset()
+        local slider_y_start = self.y + 1 + slider_offset
+        self.drag_offset = y - slider_y_start
+        self.dirty = true
+        return true
+    end
+
+    local track_top = self.y + 1
+    local track_height = self:getTrackHeight()
+    if track_height <= 0 then return true end
+
+    local slider_height = self:getSliderHeight()
+    local max_offset = self:getMaxSliderOffset()
+    local scrollmax = self.obj.scrollmax or 1
+
+    if scrollmax <= 1 or max_offset == 0 then
+        return true
+    end
+
+    local click_rel = clamp(y - track_top, 0, track_height - 1)
+
+    -- Центруємо: ставимо центр слайдера на місце кліка
+    local half = (slider_height - 1) / 2        -- може бути .5 для парної висоти
+    local desired_offset_f = click_rel - half  -- дробовий бажаний offset
+    local desired_offset = math_floor(desired_offset_f + 0.5) -- округлюємо до найближчого
+    desired_offset = clamp(desired_offset, 0, max_offset)
+
+    local frac = 0
+    if max_offset > 0 then
+        frac = desired_offset / max_offset
+    end
+    local pos = math_floor(frac * (scrollmax - 1) + 0.5)
+    local new_pos = clamp(pos + 1, 1, scrollmax)
+
+    self.obj.scrollpos = new_pos
+    self.obj.dirty = true
+    self.dirty = true
+    return true
+end
+
+local function Scrollbar_onMouseDrag(self,btn, x, y)
+    if self.held ~= 2 then return false end
+
+    local track_top = self.y + 1
+    local max_offset = self:getMaxSliderOffset()
+    local scrollmax = self.obj.scrollmax or 1
+    if max_offset == 0 or scrollmax <= 1 then return true end
+
+    local desired_offset = math.floor((y - track_top) - self.drag_offset + 0.5)
+    desired_offset = clamp(desired_offset, 0, max_offset)
+
+    local frac = desired_offset / max_offset
+    local pos = math_floor(frac * (scrollmax - 1) + 0.5)
+    local new_pos = clamp(pos + 1, 1, scrollmax)
+
+    if self.obj.scrollpos ~= new_pos then
+        self.obj.scrollpos = new_pos
+        if self.obj.onLayout then self.obj:onLayout() end
+        self.obj.dirty = true
+        self.dirty = true
+    end
+
+    return true
 end
 
 ---Creating new *object* of *class* "scrollbar" which connected at another *object*
