@@ -18,7 +18,7 @@ bbbebcddc2e828fe192688059590b545   sbin/Explorer/main.lua
 7e554e61628f2c4328fbffc85cd20e8f   sbin/MPlayer/Data/MusicAlbum.ico
 4461760019647e8a2ddf428b038b5fa8   sbin/MPlayer/Data/volume.ico
 22b8b48e5600d9073054d8f003e3c832   sbin/MPlayer/icon.ico
-6331507933b1ecebc6f16d6b4bf33e38   sbin/MPlayer/main.lua
+3decc836952a0118d0816cfa80f8abed   sbin/MPlayer/main.lua
 117de29ab363f7522b3bbbd0d133235d   sbin/Messenger/icon.ico
 f5c353d06eef1e6bab85ab802542e430   sbin/Messenger/main.lua
 1205163802cd5037e398c45487b45e2e   sbin/Polygon/main.lua
