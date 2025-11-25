@@ -1689,7 +1689,7 @@ function UI.New_MsgWin(mode, title, msg)
 
     root:addChild(instance)
     root:mainloop()
-    os.queueEvent("term_resize")
+    --os.queueEvent("term_resize")
 
     return ok
 end
@@ -1746,7 +1746,7 @@ function UI.New_DialWin(title, msg)
     root:addChild(instance)
     root.focus = textfield
     root:mainloop()
-    os.queueEvent("term_resize")
+    --os.queueEvent("term_resize")
     if ok then return textfield.text end
 end
 

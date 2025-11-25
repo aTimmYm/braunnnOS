@@ -170,7 +170,9 @@ local function initMainUI()
 
     buttonAddFriend.pressed = function (self)
         local friend = UI.New_DialWin(" Add a friend ", "Type user identifier")
-        if friend then rednet.send(serverID,{cType = "user_add", user = account_key, added_user = friend},protocol) end
+        surface:onLayout()
+        if friend then rednet.send(serverID, {cType = "user_add", user = account_key, added_user = friend}, protocol) end
+        --rednet.send(serverID, {cType = "user_add", user = account_key, added_user = "7zxyLl"}, protocol)
     end
 
     myKey.pressed = function (self)
@@ -240,7 +242,7 @@ local client_handler = {
             print(response.error)
         elseif response.add == "success" then
             friends[response.username] = response.key
-            local friendsFile = fs.open("sbin/Messenger/Data/friends","w")
+            local friendsFile = fs.open("sbin/Messenger/Data/friends", "w")
             friendsFile.write("return "..textutils.serialize(friends))
             friendsFile.close()
             drawFriendsButtons()
@@ -276,6 +278,7 @@ local client_handler = {
 local temp_onEvent = window.onEvent
 window.onEvent = function (self, evt)
     if evt[1] == "rednet_message" then
+        --print(textutils.serialise(evt))
         local sType = evt[3].sType
         if client_handler[sType] then
             client_handler[sType](evt[3], evt[2])
@@ -283,7 +286,6 @@ window.onEvent = function (self, evt)
         end
     end
     if msgLabel and evt[1] == "timer" and evt[2] == timer then msgLabel:setText("Server do not response.") end
-    --print(textutils.serialise(evt))
     return temp_onEvent(self, evt)
 end
 
