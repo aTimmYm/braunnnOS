@@ -4,6 +4,8 @@ ca6a0a27c9e2032daebb53d238ff5511   home/Games/Chess/Chess_Data/cfunc.lua
 d05119ae7307b31058fed885744757ee   home/Games/Chess/Chess_Data/interface_classes.lua
 a65296abd8f0d4b19bf3f0c331045603   home/Games/Chess/Chess_Data/obj_classes
 51450dd3b4ec8cad9aca02b0d63f517c   init.lua
+bb54bb58a807f76a9d3fd289c826b280   installer_dev.lua
+3803b4784f00bd7ed65ace1f0305ff06   installer_release.lua
 47b6c38d73ff7dd093fd28717dcd98bf   lib/blittle_extended
 0b57106e2c5f53269970ed8b9bc04cd0   lib/braunnnsys.lua
 a63818cabc44cb04270e6d1380508070   lib/cfunc.lua
