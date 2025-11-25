@@ -577,16 +577,10 @@ function UI.New_Shortcut(x, y, w, h, text, filepath, icopath, color_bg, color_tx
     expect(9, color_txt, "number", "nil")
 
     local instance = UI.New_Button(x, y, w, h, text, _, color_bg, color_txt)
-    --[[if icopath and fs.exists(icopath) then
-        instance.icoPath = icopath
-    else
-        instance.icoPath = "sbin/icon_default.ico"
-    end]]
     instance.icoPath = icopath and fs.exists(icopath) and icopath or "usr/icon_default.ico"
     instance.needArgs = {}
     instance.filePath = filepath
     instance.blittle_img = blittle.load(instance.icoPath)
-    --instance.w, instance.h = instance.blittle_img.width, instance.blittle_img.height
 
     instance.draw = Shortcut_draw
     instance.pressed = Shortcut_pressed
@@ -1081,11 +1075,11 @@ local function Textfield_onMouseUp(self,btn,x,y)
 end
 
 local function Textfield_onFocus(self,focused)
-    if focused and bOS.monitor[1] and bOS.monitor[2] then
+    --[[if focused and bOS.monitor[1] and bOS.monitor[2] then
         if self.root:addChild(self.root.keyboard) then self.root:onLayout() end
     elseif not focused and bOS.monitor[1] and bOS.monitor[2] then
         if self.root:removeChild(self.root.keyboard) then self.root:onLayout() end
-    end
+    end]]
     term.setCursorBlink(focused)
     local bX = self.x+self.offset-self.writePos-1
     term.setCursorPos(bX,self.y)
