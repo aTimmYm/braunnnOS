@@ -9,7 +9,7 @@ a65296abd8f0d4b19bf3f0c331045603   home/Games/Chess/Chess_Data/obj_classes
 a63818cabc44cb04270e6d1380508070   lib/cfunc.lua
 cc72e992343aeb53f6b1dc0d55e152c2   lib/deskManager.lua
 0e8430925597fb135103b506fe2c669f   lib/palette
-7a689c8d536286df995de9cad7d5f4d9   lib/ui.lua
+92f7b9a921f956d8d48ce95e8b702074   lib/ui.lua
 89b0b700ec66f8f1128e5783e1d32e86   sbin/Calculator/icon.ico
 900b79c52bda8e43d8452b92ea65294a   sbin/Calculator/main.lua
 f420705bb6aeced24f1e2dcdbc818ff0   sbin/Explorer/icon.ico
@@ -19,7 +19,7 @@ f420705bb6aeced24f1e2dcdbc818ff0   sbin/Explorer/icon.ico
 22b8b48e5600d9073054d8f003e3c832   sbin/MPlayer/icon.ico
 5a0305e793bbb887634b222e838a1401   sbin/MPlayer/main.lua
 117de29ab363f7522b3bbbd0d133235d   sbin/Messenger/icon.ico
-65247ee20fd5e0f8bd216cc9569eaf76   sbin/Messenger/main.lua
+15268301a420c6f1c2cfdaf8010e87e3   sbin/Messenger/main.lua
 cfc667c34447f8c9192a2cf1e581db8d   sbin/Polygon/main.lua
 bbbb8a0f7aab18dc6179ff64a6dae421   sbin/Settings/icon.ico
 736e8e1b1a6c38e5d99b64623246b8be   sbin/Settings/main.lua
