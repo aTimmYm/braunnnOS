@@ -20,16 +20,10 @@ jobs:
 
       - name: Generate new manifest with MD5 hashes
         run: |
-          find . -type f \
-            -not -path "./.git/*" \
-            -not -path "./.github/*" \
-            -not -name ".gitignore" \
-            -not -name "manifest.txt" \
-            -not -name "new_manifest.txt" \
-            -not -name "README.md" \
-            -not -name "installer_dev.lua" \
-            -not -name "installer_release.lua" \
-            -exec md5sum {} + | sed 's| \./|  |' | sort -k2 > new_manifest.txt
+          git ls-files -z \
+            | xargs -0 md5sum \
+            | sed 's|  |  |' \
+            | sort -k2 > new_manifest.txt
 
       - name: Check for changes
         id: diff
