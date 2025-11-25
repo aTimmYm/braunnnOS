@@ -170,7 +170,7 @@ local function initMainUI()
 
     buttonAddFriend.pressed = function (self)
         local friend = UI.New_DialWin(" Add a friend ", "Type user identifier")
-        if friend then rednet.send(serverID,{cType = "user_add", user = account_key, added_user = addWin.child[2].text},protocol) end
+        if friend then rednet.send(serverID,{cType = "user_add", user = account_key, added_user = friend},protocol) end
     end
 
     myKey.pressed = function (self)
