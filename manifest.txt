@@ -9,7 +9,7 @@ a65296abd8f0d4b19bf3f0c331045603   home/Games/Chess/Chess_Data/obj_classes
 a63818cabc44cb04270e6d1380508070   lib/cfunc.lua
 cc72e992343aeb53f6b1dc0d55e152c2   lib/deskManager.lua
 0e8430925597fb135103b506fe2c669f   lib/palette
-5d4b6888cb3af525bc002f79b4a5ac84   lib/ui.lua
+06119fdb52609c1355c2f7fcfb347172   lib/ui.lua
 89b0b700ec66f8f1128e5783e1d32e86   sbin/Calculator/icon.ico
 900b79c52bda8e43d8452b92ea65294a   sbin/Calculator/main.lua
 f420705bb6aeced24f1e2dcdbc818ff0   sbin/Explorer/icon.ico
