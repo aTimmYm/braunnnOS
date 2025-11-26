@@ -1,4 +1,3 @@
-643787de9eb6a958f84f2e5edda3b712   converter_main.lua
 60c2c30e32d3de4d180cf6ebe7edda65   home/Games/Chess/Chess.lua
 ca6a0a27c9e2032daebb53d238ff5511   home/Games/Chess/Chess_Data/cfunc.lua
 d05119ae7307b31058fed885744757ee   home/Games/Chess/Chess_Data/interface_classes.lua
@@ -8,10 +7,14 @@ a65296abd8f0d4b19bf3f0c331045603   home/Games/Chess/Chess_Data/obj_classes
 0b57106e2c5f53269970ed8b9bc04cd0   lib/braunnnsys.lua
 a63818cabc44cb04270e6d1380508070   lib/cfunc.lua
 cc72e992343aeb53f6b1dc0d55e152c2   lib/deskManager.lua
+df4bccffc73641b79da08106856799fa   lib/id3_meta.lua
+6b9e55f28cd0f62163904e7bec81352a   lib/mp4_meta
 0e8430925597fb135103b506fe2c669f   lib/palette
+914e77e5a6c186c459a010ae7733358a   lib/translit.lua
 06119fdb52609c1355c2f7fcfb347172   lib/ui.lua
 89b0b700ec66f8f1128e5783e1d32e86   sbin/Calculator/icon.ico
-900b79c52bda8e43d8452b92ea65294a   sbin/Calculator/main.lua
+0af158bbd2e3fce3eaeb50508bea6eab   sbin/Calculator/main.lua
+47e4892c0915cdff2a2cb7b8edde4497   sbin/Converter/main.lua
 f420705bb6aeced24f1e2dcdbc818ff0   sbin/Explorer/icon.ico
 1ce43ac1a4f9d0ab63c17a156f6eedeb   sbin/Explorer/main.lua
 7e554e61628f2c4328fbffc85cd20e8f   sbin/MPlayer/Data/MusicAlbum.ico
