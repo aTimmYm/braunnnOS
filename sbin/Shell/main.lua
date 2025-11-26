@@ -7,9 +7,11 @@ local coroutine_create = coroutine.create
 local coroutine_status = coroutine.status
 -----------------------------------------------------
 -------| СЕКЦИЯ ПОДКЛЮЧЕНИЯ БИБЛИОТЕК И ROOT |-------
+local system = require("braunnnsys")
 local UI = require("ui")
 local c = require("cfunc")
 local root = UI.New_Root()
+root.keyboard = system.get_keyboard()
 -----------------------------------------------------
 -----| СЕКЦИЯ ОБЪЯВЛЕНИЯ ПЕРЕМЕННЫХ ПРОГРАММЫ |------
 local args = {...}
@@ -52,10 +54,14 @@ buttonClose.pressed = function (self)
     self.root.running_program = false
 end
 
+local keyboard_bool = false
 buttonKeyboard.pressed = function (self)
-    if self.root:removeChild(self.root.keyboard) then shell_window.redraw() return end
-    self.root:addChild(self.root.keyboard)
-    self.root.keyboard:onLayout()
+    -- if self.root:removeChild(self.root.keyboard) then shell_window.redraw() return end
+    -- self.root:addChild(self.root.keyboard)
+    -- self.root.keyboard:onLayout()
+    if not keyboard_bool then system.call_keyboard(root) end
+    if keyboard_bool then system.remove_keyboard(root) shell_window.redraw() end
+    keyboard_bool = not keyboard_bool
 end
 
 surface.onResize = function (width, height)
@@ -63,15 +69,9 @@ surface.onResize = function (width, height)
     buttonClose.local_x = width
 end
 
+local temp_tResize = root.tResize
 root.tResize = function (self)
-    c.termClear(self.bg)
-    self.w, self.h = term.getSize()
-    for _, child in ipairs(self.children) do
-        if child.onResize then
-            child.onResize(self.w, self.h)
-        end
-    end
-    self:onLayout()
+    temp_tResize(self)
     shell_window.reposition(1, 2, self.w, self.h - 1)
     shell_window.redraw()
 end
@@ -87,6 +87,7 @@ root.mainloop = function (self)
             self.running_program = false
         end
         self:onEvent(evt)
+        self.keyboard:onLayout()
     end
 end
 -----------------------------------------------------

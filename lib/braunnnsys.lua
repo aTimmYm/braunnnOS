@@ -2,10 +2,43 @@ local UI = require("ui")
 local dM = require("deskManager")
 local _system = {}
 
+local keyboard
 local root
 
 function _system.set_root(r)
     root = r
+end
+
+function _system.set_keyboard(k)
+    keyboard = k
+end
+
+function _system.get_keyboard()
+    return keyboard
+end
+
+function _system.call_keyboard(r)
+    r = r or root
+    r:addChild(keyboard)
+    keyboard:onLayout()
+end
+
+function _system.remove_keyboard(r)
+    r = r or root
+    r:removeChild(keyboard)
+end
+
+function _system.execute(path, ...)
+    local func, load_err = loadfile(path, _ENV)  -- "t" для text, или "bt" если нужно
+    if not func then
+        print(load_err) os.sleep(2)
+    else
+        local ret, exec_err = pcall(func, ...)
+        if not ret then
+            print(exec_err)
+            os.pullEvent("key")
+        end
+    end
 end
 
 function _system.dekstop_manager()

@@ -30,6 +30,7 @@ local EVENTS = {
     }
 }
 
+--local system = require("braunnnsys")
 local c = require("cfunc")
 local expect = require("cc.expect")
 local blittle = require("blittle_extended")
@@ -589,8 +590,7 @@ function UI.New_Shortcut(x, y, w, h, text, filepath, icopath, color_bg, color_tx
     return instance
 end
 
-local function Running_Label_draw(self,bg_override, txtcol_override)
-    if self.root.modal then return end
+local function Running_Label_draw(self, bg_override, txtcol_override)
     bg_override = bg_override or self.color_bg
     txtcol_override = txtcol_override or self.color_txt
     self:checkScrolling()
@@ -1103,21 +1103,21 @@ local function Textfield_draw(self)
     if self.hidden == true then
         text = string_rep("*", #self.text)
     end
-    local bX = self.x+self.offset-self.writePos-1
+    local bX = self.x + self.offset - self.writePos - 1
     if self.root.focus ~= self and #self.text == 0 and #self.hint <= self.w then
-        c.write(self.hint..string_rep(" ",self.w-#self.hint),self.x,self.y,self.color_bg,colors.lightGray)
+        c.write(self.hint..string_rep(" ", self.w - #self.hint), self.x, self.y, self.color_bg, colors.lightGray)
     else
-        term.setCursorPos(bX,self.y)
-        c.write(string_sub(text, self.writePos + 1, math_min(#self.text,self.writePos+self.w))..string_rep(" ",self.w-#self.text+self.writePos),self.x,self.y,self.color_bg,self.color_txt)
+        term.setCursorPos(bX, self.y)
+        c.write(string_sub(text, self.writePos + 1, math_min(#self.text, self.writePos + self.w))..string_rep(" ", self.w - #self.text + self.writePos), self.x, self.y, self.color_bg, self.color_txt)
     end
-    if bX < self.x or bX > self.x+self.w-1 then term.setCursorBlink(false)
+    if bX < self.x or bX > self.x + self.w - 1 then term.setCursorBlink(false)
     elseif self.root.focus == self then
         term.setCursorBlink(true)
     end
 end
 
-local function Textfield_moveCursorPos(self,pos)
-    self.offset = math_min(math_max(pos,1),#self.text+1)
+local function Textfield_moveCursorPos(self, pos)
+    self.offset = math_min(math_max(pos, 1), #self.text + 1)
     if self.offset - self.writePos > self.w then
         self.writePos = self.offset - self.w
     elseif self.offset - self.writePos < 1 then
@@ -1125,64 +1125,65 @@ local function Textfield_moveCursorPos(self,pos)
     end
 end
 
-local function Textfield_onMouseScroll(self,btn,x,y)
-    self.writePos = math_min(math_max(self.writePos - btn,0), #self.text-self.w+1)
+local function Textfield_onMouseScroll(self, btn, x, y)
+    self.writePos = math_min(math_max(self.writePos - btn,0), #self.text - self.w + 1)
     self.dirty = true
     return true
 end
 
-local function Textfield_onMouseUp(self,btn,x,y)
-    if not self:check(x,y) then
+local function Textfield_onMouseUp(self, btn, x, y)
+    if not self:check(x, y) then
         self.dirty = true
     end
     return true
 end
 
-local function Textfield_onFocus(self,focused)
-    --[[if focused and bOS.monitor[1] and bOS.monitor[2] then
-        if self.root:addChild(self.root.keyboard) then self.root:onLayout() end
+local function Textfield_onFocus(self, focused)
+    if focused and bOS.monitor[1] and bOS.monitor[2] then
+        self.root:addChild(self.root.keyboard)
+        self.root.keyboard:onLayout()
     elseif not focused and bOS.monitor[1] and bOS.monitor[2] then
-        if self.root:removeChild(self.root.keyboard) then self.root:onLayout() end
-    end]]
+        self.root:removeChild(self.root.keyboard)
+    end
     term.setCursorBlink(focused)
-    local bX = self.x+self.offset-self.writePos-1
-    term.setCursorPos(bX,self.y)
+    local bX = self.x + self.offset - self.writePos - 1
+    term.setCursorPos(bX, self.y)
     self.dirty = true
     return true
 end
 
-local function Textfield_onMouseDown(self,btn,x,y)
-    self:moveCursorPos(x-self.x+1+self.writePos)
-    term.setCursorPos(self.x+self.offset-1,self.y)
+local function Textfield_onMouseDown(self, btn, x, y)
+    self:moveCursorPos(x - self.x + 1 + self.writePos)
+    term.setCursorPos(self.x + self.offset - 1, self.y)
     self.dirty = true
     return true
 end
 
-local function Textfield_onCharTyped(self,chr)
+local function Textfield_onCharTyped(self, chr)
     self.text = string_sub(self.text, 1, self.offset - 1)..chr..string_sub(self.text, self.offset, #self.text)
     self:moveCursorPos(self.offset + 1)
     self.dirty = true
     return true
 end
 
-local function Textfield_onPaste(self,text)
+local function Textfield_onPaste(self, text)
     self.text = string_sub(self.text, 1, self.offset - 1)..text..string_sub(self.text, self.offset, #self.text)
     self:moveCursorPos(self.offset + #text)
     self.dirty = true
     return true
 end
 
-local function Textfield_onKeyDown(self,key,held)
+local function Textfield_onKeyDown(self, key, held)
     if key == keys.backspace then
         self.text = string_sub(self.text, 1, math_max(self.offset - 2, 0))..string_sub(self.text, self.offset, #self.text)
-        self.writePos = math_max(self.writePos - 1,0)
-        self:moveCursorPos(self.offset-1)
+        self.writePos = math_max(self.writePos - 1, 0)
+        self:moveCursorPos(self.offset - 1)
     elseif key == keys.delete then
         self.text = string_sub(self.text, 1, self.offset - 1) .. string_sub(self.text, self.offset + 1, #self.text)
     elseif key == keys.left then
-        self:moveCursorPos(self.offset-1)
+        self:moveCursorPos(self.offset - 1)
     elseif key == keys.right then
-        self:moveCursorPos(self.offset+1)
+        self:moveCursorPos(self.offset + 1)
     elseif key == keys.enter then
         self:pressed()
     end
@@ -1214,7 +1215,7 @@ function UI.New_Textfield(x, y, w, h, hint, hidden, color_bg, color_txt)
     instance.writePos = 0
     instance.hint = hint or "Type here"
     instance.text = ""
-    instance.offset = #instance.text+1
+    instance.offset = #instance.text + 1
     instance.hidden = hidden or false
 
     instance.draw = Textfield_draw
@@ -1586,7 +1587,7 @@ end
 
 local function Container_onLayout(self)
     self:layoutChild()
-    for _, child in pairs(self.children) do
+    for _, child in ipairs(self.children) do
         child:onLayout()
     end
 end
@@ -1826,23 +1827,6 @@ local function KeyButton_pressed(self)
     end
 end
 
-local function KeyButton_onEvent(self,evt)
-    if evt[1] == "mouse_click" then
-        if self.parent then self.parent.focus = self end
-        return self:onMouseDown(evt[2], evt[3], evt[4])
-    end
-    return onEvent(self,evt)
-end
-
-function UI.New_KeyButton(root, text)
-    local instance = UI.New_Button(root, text)
-
-    instance.pressed = KeyButton_pressed
-    instance.onEvent = KeyButton_onEvent
-
-    return instance
-end
-
 local function Keyboard_draw(self)
     for i = 1, self.h-2 do
         c.write(string_char(149), self.w+self.x-1, self.y+i,self.color_txt, self.color_bg)
@@ -1851,11 +1835,6 @@ local function Keyboard_draw(self)
     c.write(string_char(151)..string_rep(string_char(131), self.w-2), self.x, self.y,self.color_bg, self.color_txt)
     c.write(string_char(148), self.w+self.x-1, self.y, self.color_txt,self.color_bg)
     c.write(string_char(138)..string_rep(string_char(143), self.w-2)..string_char(133), self.x, self.h+self.y-1, self.color_txt, self.color_bg)
-end
-
-local function Keyboard_reSize(self)
-    self.size = {w=21,h=7}
-    self.pos = {x=math_floor((self.root.size.w-self.w)/2)+1,y=self.root.size.h-self.h+1}
 end
 
 local function Keyboard_onEvent(self,evt)
@@ -1876,8 +1855,8 @@ local function Keyboard_onEvent(self,evt)
     return false
 end
 
-function UI.New_Keyboard(root)
-    local instance = UI.New_Container(root)
+function UI.New_Keyboard(width, height)
+    local instance = UI.New_Container(math_floor((width - 21)/2) + 1, height - 6, 21, 7, colors.black)
     instance.focus = nil
     -- Стани: 0=default, 1=shift, 2=caps, 3=smileys
     instance.upper = 0
@@ -1944,21 +1923,21 @@ function UI.New_Keyboard(root)
         { 47, 18, 5, "enter" },
     }
 
-    local function setKeyboardLayout(keyboard, layoutTable, newUpperState)
-        keyboard.upper = newUpperState
-        for k, child in pairs(keyboard.child) do
+    local function setKeyboardLayout(layoutTable, newUpperState)
+        instance.upper = newUpperState
+        for k, child in pairs(instance.children) do
             if layoutTable[k] then
                 child:setText(layoutTable[k])
             end
         end
         if newUpperState == 2 then
-            keyboard.child[30]:setText(string_char(23)..string_char(95))
+            instance.children[30]:setText(string_char(23)..string_char(95))
         end
-        if newUpperState == 3 then
-            keyboard.child[30].held = false
+        if newUpperState == 3 or newUpperState == 0 then
+            instance.children[30].held = false
         end
-        if keyboard.child[30] then keyboard.child[30].dirty = true end
-        if keyboard.child[39] then keyboard.child[39].dirty = true end
+        if instance.children[30] then instance.children[30].dirty = true end
+        if instance.children[39] then instance.children[39].dirty = true end
     end
 
     local specialActions = {
@@ -1985,25 +1964,23 @@ function UI.New_Keyboard(root)
         end,
 
         shift = function (self)
-            local keyboard = self.parent
-            if keyboard.upper == 0 then
-                setKeyboardLayout(keyboard, layout_shift, 1) -- Shift
-            elseif keyboard.upper == 1 then
-                setKeyboardLayout(keyboard, layout_shift, 2) -- Caps
-            elseif keyboard.upper == 2 then
-                setKeyboardLayout(keyboard, layout_default, 0)
-            elseif keyboard.upper == 3 then
+            if instance.upper == 0 then
+                setKeyboardLayout(layout_shift, 1) -- Shift
+            elseif instance.upper == 1 then
+                setKeyboardLayout(layout_shift, 2) -- Caps
+            elseif instance.upper == 2 then
+                setKeyboardLayout(layout_default, 0)
+            elseif instance.upper == 3 then
                 self.held = false
             end
         end,
 
         -- (ОНОВЛЕНО) Посилається на локальні layout_* таблиці
         smile = function (self)
-            local keyboard = self.parent
-            if keyboard.upper == 3 then
-                setKeyboardLayout(keyboard, layout_default, 0)
+            if instance.upper == 3 then
+                setKeyboardLayout(layout_default, 0)
             else
-                setKeyboardLayout(keyboard, layout_smile, 3)
+                setKeyboardLayout(layout_smile, 3)
             end
         end
     }
@@ -2015,10 +1992,19 @@ function UI.New_Keyboard(root)
         local actionName = keyDef[4]
 
         if layout_default[keyIndex] then
-            local btn = UI.New_KeyButton(root, layout_default[keyIndex])
-
-            btn.reSize = function (self)
-                self.pos = { x = self.parent.pos.x + relX, y = self.parent.pos.y + relY }
+            local btn = UI.New_Button(1 + relX, 1 + relY, #layout_default[keyIndex], 1, layout_default[keyIndex], "center", instance.color_bg, colors.white)
+            btn.pressed = function (self)
+                os.queueEvent("char", self.text)
+                if instance.upper == 1 then
+                    setKeyboardLayout(layout_default, 0)
+                end
+            end
+            btn.onEvent = function (self, evt)
+                if evt[1] == "mouse_click" then
+                    if self.parent then self.parent.focus = self end
+                    return self:onMouseDown(evt[2], evt[3], evt[4])
+                end
+                return onEvent(self, evt)
             end
 
             if actionName and specialActions[actionName] then
@@ -2039,9 +2025,11 @@ function UI.New_Keyboard(root)
     end
 
     instance.draw = Keyboard_draw
-    instance.reSize = Keyboard_reSize
     instance.onLayout = MsgWin_onLayout
     instance.onEvent = Keyboard_onEvent
+    instance.onResize = function (width, height)
+        instance.local_x, instance.local_y = math_floor((width - 21)/2) + 1, height - 6
+    end
 
     return instance
 end
@@ -2188,9 +2176,13 @@ local function Root_tResize(self)
     c.termClear(self.color_bg)
     self.w, self.h = term.getSize()
     for _, child in ipairs(self.children) do
-        if child.onResize then
+        if child.onResize and child ~= self.keyboard then
             child.onResize(self.w, self.h)
         end
+    end
+    if self.keyboard then  -- Добавьте этот блок: обновляем клавиатуру, даже если не child
+        self.keyboard.onResize(self.w, self.h)
+        self.keyboard.x, self.keyboard.y = self.x + self.keyboard.local_x - 1, self.y + self.keyboard.local_y - 1
     end
     self:onLayout()
 end
@@ -2199,7 +2191,7 @@ local function Root_onEvent(self,evt)
     local event = evt[1]
     local focus = self.focus
     local ret = Container_onEvent(self, evt)
-    if self.focus and EVENTS.FOCUS[event] and self.focus:onEvent(evt) then-- and self.keyboard:onEvent(evt) then
+    if self.focus and EVENTS.FOCUS[event] and self.focus:onEvent(evt) and self.keyboard:onEvent(evt) then
         ret = true
     end
     if event == "term_resize" then
@@ -2236,14 +2228,11 @@ end
 ---@return table object root
 function UI.New_Root()
 
-    local instance = UI.New_Container(1, 1, 1, 1)
+    local instance = UI.New_Container(1, 1, term.getSize())
     instance.focus = nil
     instance.running_program = true
     instance.modal = nil
-    instance.w, instance.h = term.getSize()
-    -- instance.keyboard = UI.New_Keyboard(instance)
 
-    -- instance.layoutChild = Root_layoutChild
     instance.show = Root_show
     instance.tResize = Root_tResize
     instance.onEvent = Root_onEvent

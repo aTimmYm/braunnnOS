@@ -13,6 +13,10 @@ dbg = c.DEBUG()
 local root = UI.New_Root()
 system.set_root(root)
 
+local keyboard = UI.New_Keyboard(root.w, root.h)
+system.set_keyboard(keyboard)
+root.keyboard = keyboard
+
 system.dekstop_manager()
 
 ---------| MAINLOOP И ДЕЙСТВИЯ ПОСЛЕ НЕГО |----------
