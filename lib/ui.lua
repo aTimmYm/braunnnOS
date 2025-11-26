@@ -906,7 +906,7 @@ local function Scrollbar_onMouseDown(self,btn, x, y)
     local new_pos = clamp(pos + 1, 1, scrollmax)
 
     self.obj.scrollpos = new_pos
-    self.obj.dirty = true
+    self.obj:onLayout()
     self.dirty = true
     return true
 end
