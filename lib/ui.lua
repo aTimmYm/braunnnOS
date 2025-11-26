@@ -8,6 +8,7 @@ local table_insert = table.insert
 local math_max = math.max
 local math_min = math.min
 local math_floor = math.floor
+local function clamp(val, a, b) return math_max(a, math_min(b, val)) end
 -----------------------------------------------------
 --CC:Tweaked Lua Minecraft CraftOS bOS™
 --lib/ui.lua v0.4.0
@@ -818,8 +819,6 @@ local function Scrollbar_onMouseScroll(self,dir, x, y)
     return false
 end
 
-local function clamp(val, a, b) return math_max(a, math_min(b, val)) end
-
 local function Scrollbar_getSliderHeight(self)
     local track_height = self:getTrackHeight()
     if track_height <= 0 then return 0 end
@@ -994,9 +993,9 @@ local function List_updateArr(self, array)
 end
 
 local function List_onMouseScroll(self, dir, x, y)
-    local MinMax = math_min(math_max(self.scrollpos + dir, 1), self.scrollmax)
-    if self.scrollpos ~= MinMax then
-        self.scrollpos = MinMax
+    local scroll = clamp(self.scrollpos + dir * self.sensivity, 1, self.scrollmax)
+    if self.scrollpos ~= scroll then
+        self.scrollpos = scroll
         self:updateDirty()
     end
     return true
@@ -1084,6 +1083,7 @@ function UI.New_List(x, y, w, h, array, color_bg, color_txt)
     instance.item_index = nil
     instance.scrollpos = 1
     instance.scrollmax = 0
+    instance.sensivity = 3
 
     instance.draw = List_draw
     instance.updateArr = List_updateArr
@@ -2138,15 +2138,6 @@ local function ScrollBox_onLayout(self)
     self.len = self.scrollmax + self.h - 1
 end
 
-local function ScrollBox_onMouseScroll(self, dir, x, y)
-    local MinMax = math_min(math_max(self.scrollpos + dir, 1), self.scrollmax)
-    if self.scrollpos ~= MinMax then
-        self.scrollpos = MinMax
-        self:updateDirty()
-    end
-    return true
-end
-
 local function ScrollBox_updateDirty(self)
     if self.scrollbar then
         self.scrollbar.dirty = true
@@ -2176,11 +2167,12 @@ function UI.New_ScrollBox(x, y, w, h, color_bg)
     instance.scrollmax = 1
     instance.len = 1
     instance.visibleChild = {}
+    instance.sensivity = 3
 
     instance.draw = ScrollBox_draw
     instance.redraw = ScrollBox_redraw
     instance.onLayout = ScrollBox_onLayout
-    instance.onMouseScroll = ScrollBox_onMouseScroll
+    instance.onMouseScroll = List_onMouseScroll
     instance.updateDirty = ScrollBox_updateDirty
 
     return instance
