@@ -58,7 +58,7 @@ for row = 1, #btnTexts do
 		local w = math.floor((surface.w - (totalCols - 1)) / totalCols)
 		local h = math.floor((surface.h - 3)/5)
 		local x = surface.x + (col - 1) * (w + padX) + 1
-		local y = surface.y + display.h + (row - 1) * (h + padY) + 1
+		local y = display.h + (row - 1) * (h + padY) + 1
 
 		local btn = UI.New_Button(x, y, w, h, txt)
 
