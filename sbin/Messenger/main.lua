@@ -170,13 +170,13 @@ local function initMainUI()
 
     buttonAddFriend.pressed = function (self)
         local friend = UI.New_DialWin(" Add a friend ", "Type user identifier")
-        surface:onLayout()
+        window:onLayout()
         if friend then rednet.send(serverID, {cType = "user_add", user = account_key, added_user = friend}, protocol) end
-        --rednet.send(serverID, {cType = "user_add", user = account_key, added_user = "7zxyLl"}, protocol)
     end
 
     myKey.pressed = function (self)
         UI.New_MsgWin("INFO", " Your identificator ", account_key)
+        window:onLayout()
     end
 
     textOut.pressed = function (self)

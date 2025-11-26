@@ -84,6 +84,7 @@ scrollBox:addChild(slider)
 --| СЕКЦИЯ ПЕРЕОПРЕДЕЛЕНИЯ ФУНКЦИОНАЛЬНЫХ МЕТОДОВ |--
 buttonInfo.pressed = function (self)
     UI.New_MsgWin("INFO", " INFO ", "This is a polygon. A test file that displays all interface elements except shortcuts, as they are represented on the desktop you accessed (most likely).")
+    window:onLayout()
 end
 
 buttonError.pressed = function (self)

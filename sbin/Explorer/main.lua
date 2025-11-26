@@ -114,8 +114,10 @@ list:updateArr(fslist)
 buttonAdd.pressed = function (self)
     if mode == "delete" then return end
     local text = UI.New_DialWin(" Creating directory ", "Enter the directory name")
+    window:onLayout()
     if text and text == "" then
         UI.New_MsgWin("INFO", " ERROR ","Invalid directory name")
+        window:onLayout()
     elseif text and text ~= "" then
         fs.makeDir(shell.resolve(text))
         fslist = fs.list(shell.dir())
@@ -149,6 +151,7 @@ list.pressed = function (self)
             extensions[extension](list.item,fullPath)
         else
             UI.New_MsgWin("INFO", " ERROR ", "Can't open current file extension.")
+            window:onLayout()
         end
     end
 end
@@ -177,6 +180,7 @@ buttonDelete.pressed = function (self)
         end
         if toDel and #toDel > 0 then
             local bool = UI.New_MsgWin("YES,NO", " DELETE ", "Are you sure?")
+            window:onLayout()
             if bool then
                 for _, v in pairs(toDel) do
                     fs.delete(shell.resolve(v))
@@ -215,6 +219,7 @@ buttonMove.pressed = function (self)
         end
         if moveBuffer and #moveBuffer > 0 then
             local text = UI.New_DialWin(" MOVE ", "Write a path to move")
+            window:onLayout()
             if text then
                 for _,v in pairs(moveBuffer) do
                     fs.move(shell.resolve(v),text.."/"..v)
