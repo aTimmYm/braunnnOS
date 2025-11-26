@@ -1,3 +1,4 @@
+if bOS.modem then rednet.open(peripheral.getName(bOS.modem)) end
 ------------| СЕКЦИЯ ЛОКАЛИЗАЦИИ ФУНКЦИЙ |-----------
 local string_sub = string.sub
 local string_gmatch = string.gmatch
@@ -14,12 +15,12 @@ local UI = require("ui")
 -----| СЕКЦИЯ ОБЪЯВЛЕНИЯ ПЕРЕМЕННЫХ ПРОГРАММЫ |------
 local currentChatHeight = 1
 if not fs.exists("sbin/Messenger/Data/account_key") then
-    local file = fs.open("sbin/Messenger/Data/account_key","w")
+    local file = fs.open("sbin/Messenger/Data/account_key", "w")
     file.close()
 end
 local account_key = c.readFile("sbin/Messenger/Data/account_key")
 if not fs.exists("sbin/Messenger/Data/friends") then
-    local file = fs.open("sbin/Messenger/Data/friends","w")
+    local file = fs.open("sbin/Messenger/Data/friends", "w")
     file.write("return {}")
     file.close()
 end
@@ -27,7 +28,7 @@ local friends = require("sbin.Messenger.Data.friends")
 local protocol = "messenger"
 local friendsSort = {}
 local selectedFriend = {}
-local serverID = 10--rednet.lookup(protocol, "messenger_main")
+local serverID = rednet.lookup(protocol, "messenger_main")
 -----------------------------------------------------
 ----------| СЕКЦИЯ ИНИЦИАЛИЗАЦИИ ОБЪЕКТОВ |----------
 local window, surface = system.add_window("Titled", colors.black, "Messenger")
@@ -35,8 +36,6 @@ local window, surface = system.add_window("Titled", colors.black, "Messenger")
 local usersList, msgScrollBox, textOut, msgLabel, timer
 -----------------------------------------------------
 ------| СЕКЦИЯ ОБЪЯВЛЕНИЯ ФУНКЦИЙ ПРОГРАММЫ |--------
-if bOS.modem then rednet.open(peripheral.getName(bOS.modem)) end
-
 local function drawMessage(msg, direction)
     if not selectedFriend[2] then return end
     local isRight = (direction == "right")
@@ -175,7 +174,7 @@ local function initMainUI()
     end
 
     myKey.pressed = function (self)
-        UI.New_MsgWin("INFO", " Your identificator ", account_key)
+        UI.New_MsgWin("INFO", " Your identificator ", account_key.." "..serverID)
         window:onLayout()
     end
 
@@ -220,7 +219,7 @@ end
 local client_handler = {
     ["login"] = function (response)
         if response.login == "success" then
-            local account_key_file = fs.open("sbin/Messenger/Data/account_key","w")
+            local account_key_file = fs.open("sbin/Messenger/Data/account_key", "w")
             account_key_file.write(response.key)
             account_key_file.close()
             account_key = response.key
@@ -259,7 +258,7 @@ local client_handler = {
         end
     end,
     ["get_friends"] = function (response)
-        local friendsFile = fs.open("sbin/Messenger/Data/friends","w")
+        local friendsFile = fs.open("sbin/Messenger/Data/friends", "w")
         friendsFile.write("return "..textutils.serialize(response.friends))
         friendsFile.close()
         friends = response.friends
@@ -268,7 +267,7 @@ local client_handler = {
     ["send"] = function (response)
         drawMessage(response.message,"left")
     end,
-    ["lookup"] = function (response,sId)
+    ["lookup"] = function (response, sId)
         if response.sProtocol ~= protocol then return end
         if serverID ~= sId then serverID = sId end
     end
