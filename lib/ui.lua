@@ -1345,17 +1345,19 @@ local function LoadingBar_draw(self)
     --131, 140, 143(inverted)
 end
 
+---@param orientation "center"|"top"|"bottom"|"filled"
 function UI.New_LoadingBar(x, y, w, color_bg, color_Loading, color_NotLoaded, orientation, defaultValue)
     expect(1, x, "number")
     expect(2, y, "number")
     expect(3, w, "number")
-    --...
+    assert(defaultValue and defaultValue >= 0 and defaultValue <= 1, "expecteded argument #6 in range 0-1")
+
     local instance = New_Widget(x, y, w, 1, color_bg, color_txt)
     instance.orientation = orientation or "center"
     instance.color_bg = color_bg or colors.black
     instance.color_Loading = color_Loading or colors.white
     instance.color_NotLoaded = color_NotLoaded or colors.gray
-    instance.value = defaultValue or 0
+    instance.value = defaultValue
 
     instance.draw = LoadingBar_draw
     instance.setValue = LoadingBar_setValue
@@ -1775,7 +1777,7 @@ end
 function UI.New_DialWin(title, msg)
     local root = UI.New_Root()
 
-    local instance = UI.New_Container(math_floor((root.w-24)/2), math_floor((root.h-4)/2), 24, 4, colors.black)
+    local instance = UI.New_Container(math_floor((root.w - 24)/2) + 1, math_floor((root.h - 4)/2), 24, 4, colors.black)
     instance.title = title or " Title "
     instance.draw = DialWin_draw
     instance.onLayout = MsgWin_onLayout
@@ -1813,18 +1815,6 @@ function UI.New_DialWin(title, msg)
     root:mainloop()
     --os.queueEvent("term_resize")
     if ok then return textfield.text end
-end
-
-local function KeyButton_pressed(self)
-    os.queueEvent("char", self.text)
-    if self.parent.upper == 1 then
-        for i,child in pairs (self.parent.child) do
-            child:setText(EVENTS.KEYS[i])
-        end
-    self.parent.upper = 0
-    self.parent.child[30].held = false
-    self.parent.child[30].dirty = true
-    end
 end
 
 local function Keyboard_draw(self)
@@ -2180,18 +2170,19 @@ local function Root_tResize(self)
             child.onResize(self.w, self.h)
         end
     end
-    if self.keyboard then  -- Добавьте этот блок: обновляем клавиатуру, даже если не child
+    if self.keyboard then
         self.keyboard.onResize(self.w, self.h)
         self.keyboard.x, self.keyboard.y = self.x + self.keyboard.local_x - 1, self.y + self.keyboard.local_y - 1
     end
     self:onLayout()
 end
 
-local function Root_onEvent(self,evt)
+local function Root_onEvent(self, evt)
     local event = evt[1]
     local focus = self.focus
     local ret = Container_onEvent(self, evt)
-    if self.focus and EVENTS.FOCUS[event] and self.focus:onEvent(evt) and self.keyboard:onEvent(evt) then
+    if self.focus and EVENTS.FOCUS[event] and self.focus:onEvent(evt) then
+        if self.keyboard then self.keyboard:onEvent(evt) end
         ret = true
     end
     if event == "term_resize" then

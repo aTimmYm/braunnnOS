@@ -213,7 +213,7 @@ local function createPage4()
     local buttonCheckUpdate = UI.New_Button(2, versionLabel.y + 1, 19, 1, "(CHECK FOR UPDATES)", "center", page.color_bg, colors.white)
     page:addChild(buttonCheckUpdate)
 
-    local loadingBar = UI.New_LoadingBar(buttonCheckUpdate.x, buttonCheckUpdate.y + 1, buttonCheckUpdate.w, page.color_bg, colors.blue, page.color_bg, "top")
+    local loadingBar = UI.New_LoadingBar(buttonCheckUpdate.x, buttonCheckUpdate.y + 1, buttonCheckUpdate.w, page.color_bg, colors.blue, page.color_bg, "top", 0)
     page:addChild(loadingBar)
 
     buttonCheckUpdate.pressed = function(self)

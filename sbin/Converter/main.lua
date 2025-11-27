@@ -32,7 +32,7 @@ surface:addChild(btnConvert)
 local btnDef = UI.New_Button(17, 6, 7, 1, "DefPath", "center", colors.lightGray, colors.white)
 surface:addChild(btnDef)
 
-local progress_convert = UI.New_LoadingBar(2, 3, W, colors.black, colors.blue, colors.black, "center", _)
+local progress_convert = UI.New_LoadingBar(2, 3, W, colors.black, colors.blue, colors.black, "center", 0)
 surface:addChild(progress_convert)
 
 btnConvert.pressed = function (self)

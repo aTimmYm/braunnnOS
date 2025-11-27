@@ -56,9 +56,6 @@ end
 
 local keyboard_bool = false
 buttonKeyboard.pressed = function (self)
-    -- if self.root:removeChild(self.root.keyboard) then shell_window.redraw() return end
-    -- self.root:addChild(self.root.keyboard)
-    -- self.root.keyboard:onLayout()
     if not keyboard_bool then system.call_keyboard(root) end
     if keyboard_bool then system.remove_keyboard(root) shell_window.redraw() end
     keyboard_bool = not keyboard_bool
@@ -78,7 +75,7 @@ end
 
 root.mainloop = function (self)
     self:show()
-    resume_coroutine(self.coroutine,table_unpack(args))
+    resume_coroutine(self.coroutine, table_unpack(args))
     while self.running_program do
         local evt = {os.pullEventRaw()}
         resume_coroutine(self.coroutine, table_unpack(evt))
