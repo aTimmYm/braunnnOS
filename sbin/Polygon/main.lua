@@ -8,7 +8,7 @@ local system = require("braunnnsys")
 local fslist = {} for i=1,64 do fslist[i]="Item - "..i end
 local conf = c.readConf("usr/settings.conf")
 local dropdown_array = {
-    "One","Two","Three","Four", "Five", "Six"
+    "One","Two","Three","Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven"
 }
 -----------------------------------------------------
 ----------| СЕКЦИЯ ИНИЦИАЛИЗАЦИИ ОБЪЕКТОВ |----------
@@ -41,17 +41,10 @@ surface:addChild(scrollBox)
 local scrollbarBox = UI.New_Scrollbar(scrollBox)
 surface:addChild(scrollbarBox)
 
--- local scrollbar2 = UI.New_Scrollbar(scrollBox)
--- scrollbar2.reSize = function (self)
---     self.pos = {x = self.obj.pos.x + self.obj.size.w, y = self.obj.pos.y}
---     self.size.h = self.obj.size.h
--- end
--- surface:addChild(scrollbar2)
-
 local radioButton = UI.New_RadioButton(1, 1, _, {"CAT","DOG"}, scrollBox.color_bg)
 scrollBox:addChild(radioButton)
 
-local radioButton_horizontal = UI.New_RadioButton_horizontal(scrollBox.w - 9, radioButton.y, 10, scrollBox.color_bg)
+local radioButton_horizontal = UI.New_RadioButton_horizontal(scrollBox.w - 9, 1, 10, scrollBox.color_bg)
 scrollBox:addChild(radioButton_horizontal)
 
 local radioLabel = UI.New_Label(radioButton_horizontal.x, radioButton_horizontal.y + 1, radioButton_horizontal.w, 1, tostring(radioButton_horizontal.item), _, colors.white, colors.black)
@@ -63,20 +56,20 @@ scrollBox:addChild(tumbler)
 local tumblerLabel = UI.New_Label(tumbler.x + tumbler.w + 1, tumbler.y, 3, 1, "ON", _, scrollBox.color_bg)
 scrollBox:addChild(tumblerLabel)
 
-local checkbox = UI.New_Checkbox(list.x - 7, tumbler.y, true, colors.black)
+local checkbox = UI.New_Checkbox(list.x - 7, radioLabel.y + 2, true, colors.black)
 scrollBox:addChild(checkbox)
 
 local checkboxLabel = UI.New_Label(checkbox.x + checkbox.w + 1, checkbox.y, 3, 1, "ON", _, scrollBox.color_bg)
 scrollBox:addChild(checkboxLabel)
 
-local dropdown = UI.New_Dropdown(tumbler.x, tumbler.y + 2, dropdown_array, _, _, _, colors.white, colors.black)
-scrollBox:addChild(dropdown)
-
-local running_label = UI.New_Running_Label(list.x - 7, dropdown.y, 5, 1, "Some text here ")
+local running_label = UI.New_Running_Label(list.x - 7, checkbox.y + 2, 5, 1, "Some text here ")
 scrollBox:addChild(running_label)
 
-local slider = UI.New_Slider(dropdown.x, dropdown.y + 2, list.x - 3, {1,2,3,4,5,6,7,8,9,10}, 5, colors.red, scrollBox.color_bg, colors.white)
+local slider = UI.New_Slider(1, running_label.y + 2, scrollBox.w, {1,2,3,4,5,6,7,8,9,10}, 5, colors.red, scrollBox.color_bg, colors.white)
 scrollBox:addChild(slider)
+
+local dropdown = UI.New_Dropdown(1, tumbler.y + 2, dropdown_array, _, _, _, colors.white, colors.black)
+scrollBox:addChild(dropdown)
 -----------------------------------------------------
 ------| СЕКЦИЯ ОБЪЯВЛЕНИЯ ФУНКЦИЙ ПРОГРАММЫ |--------
 

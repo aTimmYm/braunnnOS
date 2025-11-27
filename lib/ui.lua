@@ -31,6 +31,7 @@ local EVENTS = {
 }
 
 --local system = require("braunnnsys")
+local render = require("Render")
 local c = require("cfunc")
 local expect = require("cc.expect")
 local blittle = require("blittle_extended")
@@ -114,7 +115,7 @@ local function Tumbler_draw(self)
     local frame = self.animation_frames[self.current_frame]
     for i = 1, 2 do
         local p = frame[i]
-        c.write(p.char, self.x + i - 1, self.y, p.bgcol, p.txtcol)
+        render.write(p.char, self.x + i - 1, self.y, p.bgcol, p.txtcol)
     end
 end
 
@@ -224,9 +225,9 @@ end
 local function RadioButton_horizontal_draw(self)
     for i = 1, self.count do
         if self.item == i then
-            c.write(string_char(7), self.x + i - 1, self.y, self.color_bg, self.color_txt)
+            render.write(string_char(7), self.x + i - 1, self.y, self.color_bg, self.color_txt)
         else
-            c.write(string_char(7), self.x + i - 1, self.y, self.color_bg, colors.gray)
+            render.write(string_char(7), self.x + i - 1, self.y, self.color_bg, colors.gray)
         end
     end
 end
@@ -276,11 +277,11 @@ end
 local function RadioButton_draw(self)
     for i,v in ipairs(self.text) do
         if self.item == i then
-            c.write(string_char(7), self.x, self.y + i - 1, self.color_bg, self.color_txt)
-            c.write(string_rep(" ", math_min(#v, 1))..v, self.x + 1, self.y + i - 1, self.color_bg, self.color_txt)
+            render.write(string_char(7), self.x, self.y + i - 1, self.color_bg, self.color_txt)
+            render.write(string_rep(" ", math_min(#v, 1))..v, self.x + 1, self.y + i - 1, self.color_bg, self.color_txt)
         else
-            c.write(string_char(7), self.x, self.y + i - 1, self.color_bg, colors.gray)
-            c.write(string_rep(" ", math_min(#v, 1))..v, self.x + 1, self.y + i - 1, self.color_bg, self.color_txt)
+            render.write(string_char(7), self.x, self.y + i - 1, self.color_bg, colors.gray)
+            render.write(string_rep(" ", math_min(#v, 1))..v, self.x + 1, self.y + i - 1, self.color_bg, self.color_txt)
         end
     end
 end
@@ -396,7 +397,7 @@ local function Label_draw(self, bg_override, txtcol_override)
     start_y = math_max(start_y, self.y)
 
     for i = self.y, start_y - 1 do
-        c.write(string_rep(" ", self.w), self.x, i, bg_override, txtcol_override)
+        render.write(string_rep(" ", self.w), self.x, i, bg_override, txtcol_override)
     end
 
     for j = 1, num_lines do
@@ -413,12 +414,12 @@ local function Label_draw(self, bg_override, txtcol_override)
         local left_pad = string_rep(" ", x_pos - self.x)
         local right_pad = string_rep(" ", self.w - (x_pos - self.x + line_len))
         local full_line = left_pad .. line .. right_pad
-        c.write(full_line, self.x, start_y + j - 1, bg_override, txtcol_override)
+        render.write(full_line, self.x, start_y + j - 1, bg_override, txtcol_override)
     end
 
     local end_y = start_y + num_lines - 1
     for i = end_y + 1, self.y + self.h - 1 do
-        c.write(string_rep(" ", self.w), self.x, i, bg_override, txtcol_override)
+        render.write(string_rep(" ", self.w), self.x, i, bg_override, txtcol_override)
     end
 end
 
@@ -511,17 +512,17 @@ function UI.New_Button(x, y, w, h, text, align, color_bg, color_txt)
 end
 
 local function Shortcut_draw(self)
-    c.drawFilledBox(self.x, self.y, self.w + self.x - 1, self.h + self.y - 1, self.color_bg)
+    render.drawRectangle(self.x, self.y, self.w, self.h, self.color_bg)
 
     local dX = math_floor((self.w - self.blittle_img.width)/2) + self.x
     local dY = math_floor((self.h - 1 - self.blittle_img.height)/2) + self.y
-    blittle.draw(self.blittle_img, dX, dY)
+    render.blittle_draw(self.blittle_img, dX, dY)
     local txtcol_override = self.held and colors.lightGray or self.color_txt
     if #self.text >= self.w then
-        c.write(string_sub(self.text, 1, self.w - 2).."..",
+        render.write(string_sub(self.text, 1, self.w - 2).."..",
         self.x, dY + self.blittle_img.height, self.color_bg, txtcol_override)
     else
-        c.write(string_rep(" ",math_floor((self.w - #self.text)/2))..self.text..
+        render.write(string_rep(" ",math_floor((self.w - #self.text)/2))..self.text..
         string_rep(" ", self.w - (math_floor((self.w - #self.text)/2) + self.x + #self.text)),
         self.x, dY + self.blittle_img.height, self.color_bg, txtcol_override)
     end
@@ -604,7 +605,7 @@ local function Running_Label_draw(self, bg_override, txtcol_override)
     local cycle_len = #segment
     if cycle_len == 0 then
         local visible_text = string_rep(" ", self.w)
-        c.write(visible_text, self.x, self.y, bg_override, txtcol_override)
+        render.write(visible_text, self.x, self.y, bg_override, txtcol_override)
         return
     end
 
@@ -640,11 +641,11 @@ local function Running_Label_draw(self, bg_override, txtcol_override)
     local right_pad = string_rep(" ", self.w - (x_pos - self.x + #visible_text))
     local full_line = left_pad .. visible_text .. right_pad
 
-    c.write(full_line, self.x, self.y, bg_override, txtcol_override)
+    render.write(full_line, self.x, self.y, bg_override, txtcol_override)
 
     -- Очистка остальных строк, если h > 1 (хотя для бегущей строки обычно h=1)
     for i = self.y + 1, self.y + self.h - 1 do
-        c.write(string_rep(" ", self.w), self.x, i, bg_override, txtcol_override)
+        render.write(string_rep(" ", self.w), self.x, i, bg_override, txtcol_override)
     end
 end
 
@@ -749,23 +750,23 @@ local function Scrollbar_draw(self)
 
     -- Фон трека
     for y = self.y + 1, slider_y_start - 1 do
-        c.write(" ", self.x, y, self.color_bg, self.color_bg)
+        render.write(" ", self.x, y, self.color_bg, self.color_bg)
     end
     for y = slider_y_start + slider_height, self.y + self.h - 2 do
-        c.write(" ", self.x, y, self.color_bg, self.color_bg)
+        render.write(" ", self.x, y, self.color_bg, self.color_bg)
     end
 
     -- Стрелка вверх
     local up_bg, up_fg = (self.held == 1 and self.color_txt or self.color_bg), (self.held == 1 and self.color_bg or self.color_txt)
-    c.write(string_char(30), self.x, self.y, up_bg, up_fg)
+    render.write(string_char(30), self.x, self.y, up_bg, up_fg)
 
     -- Стрелка вниз
     local down_bg, down_fg = (self.held == 3 and self.color_txt or self.color_bg), (self.held == 3 and self.color_bg or self.color_txt)
-    c.write(string_char(31), self.x, self.y + self.h - 1, down_bg, down_fg)
+    render.write(string_char(31), self.x, self.y + self.h - 1, down_bg, down_fg)
 
     -- Ползунок
     for y = slider_y_start, math_min(slider_y_start + slider_height - 1, self.y + self.h - 2) do
-        c.write(" ", self.x, y, self.color_txt, self.color_txt)  -- Filled pixel
+        render.write(" ", self.x, y, self.color_txt, self.color_txt)  -- Filled pixel
     end
 end
 
@@ -971,16 +972,16 @@ local function List_draw(self)
     self.scrollpos = math_max(1, math_min(self.scrollpos, self.scrollmax))
     for i = self.scrollpos, math_min(self.h + self.scrollpos - 1, #self.array) do
         local index_arr = self.array[i]
-        c.write(string_sub(index_arr..string_rep(" ", self.w - #index_arr), 1, self.w), self.x, (i - self.scrollpos) + self.y, self.color_bg, self.color_txt)
+        render.write(string_sub(index_arr..string_rep(" ", self.w - #index_arr), 1, self.w), self.x, (i - self.scrollpos) + self.y, self.color_bg, self.color_txt)
     end
     if self.item and self.item_index then
         if (self.y + self.item_index - self.scrollpos) >= self.y and (self.y + self.item_index - self.scrollpos) <= (self.h + self.y - 1) then
-            c.write(string_sub(self.item..string_rep(" ",self.w - #self.item), 1, self.w), self.x, self.y + self.item_index - self.scrollpos, self.color_txt, self.color_bg)
+            render.write(string_sub(self.item..string_rep(" ",self.w - #self.item), 1, self.w), self.x, self.y + self.item_index - self.scrollpos, self.color_txt, self.color_bg)
         end
     end
         if self.h > #self.array then
         for i = #self.array, self.h - 1 do
-            c.write(string_sub(string_rep(" ", self.w), 1, self.w), self.x, i + self.y, self.color_bg, self.color_txt)
+            render.write(string_sub(string_rep(" ", self.w), 1, self.w), self.x, i + self.y, self.color_bg, self.color_txt)
         end
     end
 end
@@ -1105,10 +1106,10 @@ local function Textfield_draw(self)
     end
     local bX = self.x + self.offset - self.writePos - 1
     if self.root.focus ~= self and #self.text == 0 and #self.hint <= self.w then
-        c.write(self.hint..string_rep(" ", self.w - #self.hint), self.x, self.y, self.color_bg, colors.lightGray)
+        render.write(self.hint..string_rep(" ", self.w - #self.hint), self.x, self.y, self.color_bg, colors.lightGray)
     else
         term.setCursorPos(bX, self.y)
-        c.write(string_sub(text, self.writePos + 1, math_min(#self.text, self.writePos + self.w))..string_rep(" ", self.w - #self.text + self.writePos), self.x, self.y, self.color_bg, self.color_txt)
+        render.write(string_sub(text, self.writePos + 1, math_min(#self.text, self.writePos + self.w))..string_rep(" ", self.w - #self.text + self.writePos), self.x, self.y, self.color_bg, self.color_txt)
     end
     if bX < self.x or bX > self.x + self.w - 1 then term.setCursorBlink(false)
     elseif self.root.focus == self then
@@ -1238,9 +1239,9 @@ local function Checkbox_draw(self)
         bg_override, txtcol_override = self.color_txt,self.color_bg
     end
     if self.on then
-        c.write("x", self.x, self.y, bg_override, txtcol_override)
+        render.write("x", self.x, self.y, bg_override, txtcol_override)
     else
-        c.write(" ", self.x, self.y, bg_override, txtcol_override)
+        render.write(" ", self.x, self.y, bg_override, txtcol_override)
     end
 end
 
@@ -1285,7 +1286,7 @@ local function Clock_updateSize(self)
 end
 
 local function Clock_draw(self)
-    c.write(self.time, self.x, self.y, self.color_bg, self.color_txt)
+    render.write(self.time, self.x, self.y, self.color_bg, self.color_txt)
 end
 
 local function Clock_updateTime(self)
@@ -1330,17 +1331,17 @@ end
 local function LoadingBar_draw(self)
     local LoadX = math.floor(self.value * self.w)
     if self.orientation == "top" then
-        c.write(string_rep(string_char(131), LoadX), self.x, self.y, self.color_bg, self.color_Loading)
-        c.write(string_rep(string_char(131), self.w - LoadX), self.x + LoadX, self.y, self.color_bg, self.color_NotLoaded)
+        render.write(string_rep(string_char(131), LoadX), self.x, self.y, self.color_bg, self.color_Loading)
+        render.write(string_rep(string_char(131), self.w - LoadX), self.x + LoadX, self.y, self.color_bg, self.color_NotLoaded)
     elseif self.orientation == "center"  then
-        c.write(string_rep(string_char(140), LoadX), self.x, self.y, self.color_bg, self.color_Loading)
-        c.write(string_rep(string_char(140), self.w - LoadX), self.x + LoadX, self.y, self.color_bg, self.color_NotLoaded)
+        render.write(string_rep(string_char(140), LoadX), self.x, self.y, self.color_bg, self.color_Loading)
+        render.write(string_rep(string_char(140), self.w - LoadX), self.x + LoadX, self.y, self.color_bg, self.color_NotLoaded)
     elseif self.orientation == "bottom"  then
-        c.write(string_rep(string_char(143), LoadX), self.x, self.y, self.color_Loading, self.color_bg)
-        c.write(string_rep(string_char(143), self.w - LoadX), self.x + LoadX, self.y, self.color_NotLoaded, self.color_bg)
+        render.write(string_rep(string_char(143), LoadX), self.x, self.y, self.color_Loading, self.color_bg)
+        render.write(string_rep(string_char(143), self.w - LoadX), self.x + LoadX, self.y, self.color_NotLoaded, self.color_bg)
     elseif self.orientation == "filled"  then
-        c.write(string_rep(" ", LoadX), self.x, self.y, self.color_Loading, self.color_bg)
-        c.write(string_rep(" ", self.w - LoadX), self.x + LoadX, self.y, self.color_NotLoaded, self.color_bg)
+        render.write(string_rep(" ", LoadX), self.x, self.y, self.color_Loading, self.color_bg)
+        render.write(string_rep(" ", self.w - LoadX), self.x + LoadX, self.y, self.color_NotLoaded, self.color_bg)
     end
     --131, 140, 143(inverted)
 end
@@ -1413,23 +1414,23 @@ end
 local function Dropdown_draw(self)
     local index_arr = self.array[self.item_index]
     if self.orientation == "left" then
-        c.write(string_sub((index_arr), 1, self.w - 1)..string_rep(" ", self.w - 1 - #index_arr)..string_char(31), self.x, self.y, self.color_bg, self.color_txt)
+        render.write(string_sub((index_arr), 1, self.w - 1)..string_rep(" ", self.w - 1 - #index_arr)..string_char(31), self.x, self.y, self.color_bg, self.color_txt)
         if self.expanded then
             for i, v in pairs(self.array) do
-                c.write(string_sub((v..string_rep(" ", self.w - #v)), 1, self.w), self.x, self.y + i, self.color_bg, self.color_txt)
+                render.write(string_sub((v..string_rep(" ", self.w - #v)), 1, self.w), self.x, self.y + i, self.color_bg, self.color_txt)
             end
-            c.write(string_sub((index_arr), 1, self.w - 1)..string_rep(" ", self.w - 1 - #index_arr)..string_char(30), self.x, self.y, self.color_bg, self.color_txt)
+            render.write(string_sub((index_arr), 1, self.w - 1)..string_rep(" ", self.w - 1 - #index_arr)..string_char(30), self.x, self.y, self.color_bg, self.color_txt)
             self.h = #self.array + 1
         else
             self.h = 1
         end
     elseif self.orientation == "right" then
-        c.write(string_sub(index_arr..string_rep(" ", self.w - 1 - #index_arr)..string_char(30), 1, self.w), self.x, self.y, self.color_bg, self.color_txt)
+        render.write(string_sub(index_arr..string_rep(" ", self.w - 1 - #index_arr)..string_char(30), 1, self.w), self.x, self.y, self.color_bg, self.color_txt)
         if self.expanded then
             for i, v in pairs(self.array) do
-                c.write(string_sub(string_rep(" ", self.w - #v)..v, 1, self.w), self.x, self.y + i, self.color_bg, self.color_txt)
+                render.write(string_sub(string_rep(" ", self.w - #v)..v, 1, self.w), self.x, self.y + i, self.color_bg, self.color_txt)
             end
-            c.write(string_sub(index_arr, 1, self.w - 1)..string_rep(" ", self.w - 1 - #index_arr)..string_char(31), self.x, self.y, self.color_bg, self.color_txt)
+            render.write(string_sub(index_arr, 1, self.w - 1)..string_rep(" ", self.w - 1 - #index_arr)..string_char(31), self.x, self.y, self.color_bg, self.color_txt)
             self.h = #self.array + 1
         else
             self.h = 1
@@ -1448,7 +1449,7 @@ local function Dropdown_onFocus(self,focused)
     return true
 end
 
-local function Dropdown_onMouseDown(self,btn, x, y)
+local function Dropdown_onMouseDown(self, btn, x, y)
     if (y - self.y) > 0 then self.item_index = math_min(math_max(y - self.y, 1), #self.array) end
     self.expanded = not self.expanded
     if self.expanded == false then self.parent:onLayout() else self.dirty = true end
@@ -1510,11 +1511,11 @@ local function Slider_draw(self)
         local offset = (N == 1) and 0 or math_min(math_floor((i - 1) / (N - 1) * (W - 1)), self.w - 1)
         local thumb_x = self.x + offset
         -- Overlay thumb (use a different char, e.g., █ or slider thumb equivalent)
-        c.write(" ", thumb_x, self.y, self.color_txt, self.color_bg)
-        c.write(string_rep(string_char(140), offset), self.x, self.y, self.color_bg, self.color_txt2)
-        c.write(string_rep(string_char(140), self.w - offset - 1), thumb_x + 1, self.y, self.color_bg, self.color_txt)
+        render.write(" ", thumb_x, self.y, self.color_txt, self.color_bg)
+        render.write(string_rep(string_char(140), offset), self.x, self.y, self.color_bg, self.color_txt2)
+        render.write(string_rep(string_char(140), self.w - offset - 1), thumb_x + 1, self.y, self.color_bg, self.color_txt)
     else
-        c.write(string_rep(string_char(140), W), self.x, self.y, self.color_bg, self.color_txt)
+        render.write(string_rep(string_char(140), W), self.x, self.y, self.color_bg, self.color_txt)
     end
 end
 
@@ -1692,13 +1693,13 @@ end
 
 local function MsgWin_draw(self)
     for i = 1, self.h - 2 do
-        c.write(string_rep(" ", self.w - 2)..string_char(149), self.x + 1, self.y + i, self.color_bg, self.color_txt)
-        c.write(string_char(149), self.x, self.y + i, self.color_txt, self.color_bg)
+        render.write(string_rep(" ", self.w - 2)..string_char(149), self.x + 1, self.y + i, self.color_bg, self.color_txt)
+        render.write(string_char(149), self.x, self.y + i, self.color_txt, self.color_bg)
     end
-    c.write(string_rep(string_char(140), self.w - 2)..string_char(148), self.x + 1, self.y, self.color_bg, self.color_txt)
-    c.write(string_char(151), self.x, self.y, self.color_txt, self.color_bg)
-    c.write(string_char(138)..string_rep(string_char(140), self.w - 2)..string_char(133), self.x, self.h + self.y - 1, self.color_bg, self.color_txt)
-    c.write(self.title, math_floor((self.w - #self.title)/2) + self.x, self.y, self.color_bg, self.color_txt)
+    render.write(string_rep(string_char(140), self.w - 2)..string_char(148), self.x + 1, self.y, self.color_bg, self.color_txt)
+    render.write(string_char(151), self.x, self.y, self.color_txt, self.color_bg)
+    render.write(string_char(138)..string_rep(string_char(140), self.w - 2)..string_char(133), self.x, self.h + self.y - 1, self.color_bg, self.color_txt)
+    render.write(self.title, math_floor((self.w - #self.title)/2) + self.x, self.y, self.color_bg, self.color_txt)
 end
 
 local function MsgWin_onLayout(self)
@@ -1763,13 +1764,13 @@ end
 
 local function DialWin_draw(self)
     for i = 1, self.h - 2 do
-        c.write(string_rep(" ", self.w - 2)..string_char(149), self.x + 1, self.y + i, self.color_bg, self.color_txt)
-        c.write(string_char(149), self.x, self.y + i, self.color_txt, self.color_bg)
+        render.write(string_rep(" ", self.w - 2)..string_char(149), self.x + 1, self.y + i, self.color_bg, self.color_txt)
+        render.write(string_char(149), self.x, self.y + i, self.color_txt, self.color_bg)
     end
-    c.write(string_rep(string_char(140), self.w - 2)..string_char(148), self.x + 1, self.y, self.color_bg, self.color_txt)
-    c.write(string_char(151), self.x, self.y, self.color_txt, self.color_bg)
-    c.write(string_char(138)..string_rep(string_char(140), self.w - 2)..string_char(133), self.x, self.h + self.y - 1, self.color_bg, self.color_txt)
-    c.write(self.title, math_floor((self.w - #self.title)/2) + self.x, self.y, self.color_bg, self.color_txt)
+    render.write(string_rep(string_char(140), self.w - 2)..string_char(148), self.x + 1, self.y, self.color_bg, self.color_txt)
+    render.write(string_char(151), self.x, self.y, self.color_txt, self.color_bg)
+    render.write(string_char(138)..string_rep(string_char(140), self.w - 2)..string_char(133), self.x, self.h + self.y - 1, self.color_bg, self.color_txt)
+    render.write(self.title, math_floor((self.w - #self.title)/2) + self.x, self.y, self.color_bg, self.color_txt)
 end
 
 ---Creating new *object* of *class*
@@ -1819,12 +1820,12 @@ end
 
 local function Keyboard_draw(self)
     for i = 1, self.h-2 do
-        c.write(string_char(149), self.w+self.x-1, self.y+i,self.color_txt, self.color_bg)
-        c.write(string_char(149)..string_rep(" ",self.w-2), self.x, self.y+i, self.color_bg, self.color_txt)
+        render.write(string_char(149), self.w+self.x-1, self.y+i,self.color_txt, self.color_bg)
+        render.write(string_char(149)..string_rep(" ",self.w-2), self.x, self.y+i, self.color_bg, self.color_txt)
     end
-    c.write(string_char(151)..string_rep(string_char(131), self.w-2), self.x, self.y,self.color_bg, self.color_txt)
-    c.write(string_char(148), self.w+self.x-1, self.y, self.color_txt,self.color_bg)
-    c.write(string_char(138)..string_rep(string_char(143), self.w-2)..string_char(133), self.x, self.h+self.y-1, self.color_txt, self.color_bg)
+    render.write(string_char(151)..string_rep(string_char(131), self.w-2), self.x, self.y,self.color_bg, self.color_txt)
+    render.write(string_char(148), self.w+self.x-1, self.y, self.color_txt,self.color_bg)
+    render.write(string_char(138)..string_rep(string_char(143), self.w-2)..string_char(133), self.x, self.h+self.y-1, self.color_txt, self.color_bg)
 end
 
 local function Keyboard_onEvent(self,evt)
@@ -2052,7 +2053,7 @@ function UI.New_Window(x, y, w, h, color_bg, title)
 end
 
 local function Box_draw(self)
-    c.drawFilledBox(self.x, self.y, self.w + self.x - 1, self.h + self.y - 1, self.color_bg)
+    render.drawRectangle(self.x, self.y, self.w + self.x - 1, self.h + self.y - 1, self.color_bg)
 end
 
 ---Creating new *object* of *class*
@@ -2078,31 +2079,34 @@ function UI.New_Box(x, y, w, h, color_bg)
 end
 
 local function ScrollBox_draw(self)
-    c.drawFilledBox(1, 1, self.x + self.w - 1, self.y + self.h - 1, self.color_bg)
-    self.win.redraw()
+    render.drawRectangle(self.x, self.y, self.w, self.h, self.color_bg)
+    --self.win.redraw()
 end
 
 local function ScrollBox_redraw(self)
-    local OldCurPos = {term.getCursorPos()}
-    term.redirect(self.win)
-    term.setTextColor(self.term.getTextColor())
-    term.setBackgroundColor(self.term.getBackgroundColor())
-    term.setCursorBlink(self.term.getCursorBlink())
+    render.setClip(self.x, self.y, self.w, self.h)
+
     if self.dirty then self:draw() self.dirty = false end
+
     for _, child in ipairs(self.visibleChild) do
-        local tempX, tempY = child.x, child.y
-        child.x, child.y = child.local_x, child.local_y - (self.scrollpos - 1)
+        --local tempX, tempY = child.x, child.y
+        -- Сдвигаем координаты ребенка
+        --child.x, child.y = child.local_x, child.local_y - (self.scrollpos - 2)
+
+        -- Рисуем. Теперь render.write сам обрежет лишнее, если child.y уйдет в минус
         child:redraw()
-        child.x, child.y = tempX, tempY
+
+        --child.x, child.y = tempX, tempY
     end
-    term.redirect(self.term)
-    term.setCursorPos(OldCurPos[1], OldCurPos[2])
+
+    -- Снимаем ограничение, чтобы остальные элементы рисовались нормально
+    render.removeClip()
 end
 
 local function ScrollBox_onLayout(self)
-    if self.win then
+    --[[if self.win then
         self.win.reposition(self.x, self.y, self.w, self.h)
-    end
+    end]]
     self.visibleChild = {}
     self.dirty = true
     Container_onLayout(self)
@@ -2140,7 +2144,7 @@ function UI.New_ScrollBox(x, y, w, h, color_bg)
 
     local instance = UI.New_Container(x, y, w, h, color_bg)
     instance.term = term.current()
-    instance.win = window.create(instance.term, instance.x, instance.y, instance.w, instance.h, true)
+    --instance.win = window.create(instance.term, instance.x, instance.y, instance.w, instance.h, true)
     instance.scrollpos = 1
     instance.scrollmax = 1
     instance.len = 1
@@ -2160,6 +2164,7 @@ local function Root_show(self)
     --c.termClear(self.color_bg)
     self:onLayout()
     self:redraw()
+    render.draw()
 end
 
 local function Root_tResize(self)
@@ -2211,6 +2216,7 @@ local function Root_mainloop(self)
             self.running_program = false
         end
         self:onEvent(evt)
+        render.draw()
     end
     --c.termClear()
 end
@@ -2222,7 +2228,7 @@ function UI.New_Root()
     local instance = UI.New_Container(1, 1, term.getSize())
     instance.focus = nil
     instance.running_program = true
-    instance.modal = nil
+    --instance.modal = nil
 
     instance.show = Root_show
     instance.tResize = Root_tResize

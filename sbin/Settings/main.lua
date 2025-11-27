@@ -6,6 +6,7 @@ local string_gmatch = string.gmatch
 local table_insert = table.insert
 -----------------------------------------------------
 -------| СЕКЦИЯ ПОДКЛЮЧЕНИЯ БИБЛИОТЕК И ROOT |-------
+local render = require("Render")
 local c = require("cfunc")
 local UI = require("ui")
 local system = require("braunnnsys")
@@ -28,10 +29,10 @@ local window, surface = system.add_window("Titled", colors.black, "Settings")
 
 local box = UI.New_Box(1, 1, 11, surface.h, colors.black)
 box.draw = function (self)
-    c.drawFilledBox(self.x, self.y, self.w + self.x - 1, self.h + self.y - 1, self.color_bg)
+    c.drawFilledBox(self.x, self.y, self.w, self.h, self.color_bg)
     for i = self.y, self.h + self.y - 1 do
-        c.write("|", self.x, i, self.color_bg, self.color_txt)
-        c.write("|", self.w + self.x - 1, i, self.color_bg, self.color_txt)
+        render.write("|", self.x, i, self.color_bg, self.color_txt)
+        render.write("|", self.w + self.x - 1, i, self.color_bg, self.color_txt)
     end
 end
 surface:addChild(box)
@@ -168,19 +169,19 @@ local function createPage3()
 
     local currCols = UI.New_Label(labelCurrCols.x + labelCurrCols.w + 1, labelCurrCols.y, 4, 1)
     currCols.draw = function(self) -- твой кастомный draw
-        c.write(" ", self.x, self.y, colors.black)
-        c.write(" ", self.x + 1, self.y, colors.white)
-        c.write(" ", self.x + 2, self.y, colors.lightGray)
-        c.write(" ", self.x + 3, self.y, colors.gray)
+        render.write(" ", self.x, self.y, colors.black)
+        render.write(" ", self.x + 1, self.y, colors.white)
+        render.write(" ", self.x + 2, self.y, colors.lightGray)
+        render.write(" ", self.x + 3, self.y, colors.gray)
         -- ... остальной твой красивый драв
-        c.write(string_char(149), self.x - 1, self.y, colors.red, colors.black)
-        c.write(string_char(149), self.x + 4, self.y, colors.black, colors.red)
-        c.write(string_char(144), self.x + 4, self.y - 1, colors.black, colors.red)
-        c.write(string_char(129), self.x + 4, self.y + 1, colors.black, colors.red)
-        c.write(string_char(159), self.x - 1, self.y - 1, colors.red, colors.black)
-        c.write(string_char(130), self.x - 1, self.y + 1, colors.black, colors.red)
-        c.write(string_rep(string_char(143), 4), self.x, self.y - 1, colors.red, colors.black)
-        c.write(string_rep(string_char(131), 4), self.x, self.y + 1, colors.black, colors.red)
+        render.write(string_char(149), self.x - 1, self.y, colors.red, colors.black)
+        render.write(string_char(149), self.x + 4, self.y, colors.black, colors.red)
+        render.write(string_char(144), self.x + 4, self.y - 1, colors.black, colors.red)
+        render.write(string_char(129), self.x + 4, self.y + 1, colors.black, colors.red)
+        render.write(string_char(159), self.x - 1, self.y - 1, colors.red, colors.black)
+        render.write(string_char(130), self.x - 1, self.y + 1, colors.black, colors.red)
+        render.write(string_rep(string_char(143), 4), self.x, self.y - 1, colors.red, colors.black)
+        render.write(string_rep(string_char(131), 4), self.x, self.y + 1, colors.black, colors.red)
     end
     page:addChild(currCols)
 

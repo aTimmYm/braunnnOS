@@ -10,6 +10,7 @@ local math_min = math.min
 local math_floor = math.floor
 -----------------------------------------------------
 -------| СЕКЦИЯ ПОДКЛЮЧЕНИЯ БИБЛИОТЕК И ROOT |-------
+local render = require("Render")
 local dfpwm = require("cc.audio.dfpwm")
 local system = require("braunnnsys")
 local blittle = require("blittle_extended")
@@ -56,7 +57,7 @@ local btnAll = UI.New_Button(1, 1, 3, 1, "All", _, colors.white, colors.black)
 window:addChild(btnAll)
 
 local btnAlbum = UI.New_Button(btnAll.x + btnAll.w + 1, 1, 5, 1, "Album", _, colors.white, colors.lightGray)
-surface:addChild(btnAlbum)
+window:addChild(btnAlbum)
 
 local boxAll = UI.New_ScrollBox(1, 1, surface.w - 1, surface.h - 5, colors.black)
 surface:addChild(boxAll)
@@ -74,7 +75,7 @@ local scrollboxAlbum = UI.New_ScrollBox(root)
 scrollboxAlbum.draw = function (self)
     c.drawFilledBox(1,1,self.size.w,self.size.h,self.bg)
     for i=1,self.size.h do
-        c.write("|",1,i,self.bg,self.txtcol)
+        render.write("|",1,i,self.bg,self.txtcol)
     end
 end
 scrollboxAlbum.reSize = function (self)
@@ -125,8 +126,8 @@ scrollboxAlbum:addChild(numCompose)
 
 local box2 = UI.New_Box(1, surface.h - 4, surface.w, 5, colors.gray)
 box2.draw = function (self)
-    c.drawFilledBox(self.x, self.y, self.x + self.w - 1, self.y + self.h - 1, self.color_bg)
-    if surface.w > 41 then blittle.draw(blittle.load("sbin/MPlayer/Data/MusicAlbum.ico"), self.x + 1, self.y) end
+    render.drawRectangle(self.x, self.y, self.x + self.w - 1, self.y + self.h - 1, self.color_bg)
+    if surface.w > 41 then render.blittle_draw(blittle.load("sbin/MPlayer/Data/MusicAlbum.ico"), self.x + 1, self.y) end
 end
 surface:addChild(box2)
 
@@ -142,7 +143,7 @@ pause.draw = function (self)
         color_txt = self.color_bg
         color_bg = self.color_txt
     end
-    c.write(text, self.x, self.y, color_bg, color_txt)
+    render.write(text, self.x, self.y, color_bg, color_txt)
 end
 box2:addChild(pause)
 
@@ -256,7 +257,7 @@ local function play_next_chunk(self)
     bOS.speaker.playAudio(buffer, volume)
     self.current_chunk = self.current_chunk + 1
     timeLine.slidePosition = self.current_chunk
-    timeLine:draw()
+    timeLine.dirty = true
     local time_per_chunk = CHUNK_SIZE * SAMPLES_PER_BYTE / SAMPLE_RATE
     local current_sec = (self.current_chunk - 1) * time_per_chunk
     currentTimeLabel:setText(format_time(current_sec))
@@ -481,14 +482,14 @@ end
 table_sort(sortedCache)
 table_sort(artistS)
 
-for i,v in pairs(sortedCache) do
-    local trackPlay = UI.New_Button(boxAll.x, boxAll.y + i, 3, 1, string_char(16), _, boxAll.color_bg, colors.white)
+for i, v in pairs(sortedCache) do
+    local trackPlay = UI.New_Button(1, 1 + i, 3, 1, string_char(16), _, boxAll.color_bg, colors.white)
     trackPlay.play = false
     trackPlay.draw = function (self)
         local color_bg, color_txt, text = self.color_bg, self.color_txt, string_char(16)
         if self.play then text = string_char(15) end
         if self.held then color_bg, color_txt = self.color_txt, self.color_bg end
-        c.write(" "..text.." ", self.x, self.y, color_bg, color_txt)
+        render.write(" "..text.." ", self.x, self.y, color_bg, color_txt)
     end
     trackPlay.pressed = function (self)
         os.queueEvent("play_music", Path..v, i)
@@ -555,12 +556,12 @@ local function initWideMode(width)
 
     -- Логика отрисовки
     btnVolume.draw = function (self)
-        c.write(string_char(145), self.x, self.y, self.color_txt, self.color_bg)
+        render.write(string_char(145), self.x, self.y, self.color_txt, self.color_bg)
         if conf["volume"] ~= 0 then
-            c.write(string_char(157), self.x + 1, self.y, self.color_txt, self.color_bg)
-            c.write(string_char(132), self.x + 2, self.y, self.color_bg, self.color_txt)
+            render.write(string_char(157), self.x + 1, self.y, self.color_txt, self.color_bg)
+            render.write(string_char(132), self.x + 2, self.y, self.color_bg, self.color_txt)
         else
-            c.write("x ", self.x + 1, self.y, self.parent.color_bg, self.color_txt)
+            render.write("x ", self.x + 1, self.y, self.parent.color_bg, self.color_txt)
         end
     end
 
