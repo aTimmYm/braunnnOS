@@ -9,7 +9,7 @@ local math_ceil = math.ceil
 -----------------------------------------------------
 local dM = {} --deskManager
 
-local render = require("Render")
+local screen = require("Screen")
 local UI = require("ui")
 local c = require("cfunc")
 local shortcut_width = 15
@@ -100,13 +100,13 @@ function dM.makeDesktops()
                 temp = temp.."+"..string_rep("-", shortcut_width)
             end
             for i = 1, maxRows-1 do
-                render.write(temp, self.x, shortcut_height * i + spacing_y * (i-1) + self.y, self.color_bg, colors.lightGray)
+                screen.write(temp, self.x, shortcut_height * i + spacing_y * (i-1) + self.y, self.color_bg, colors.lightGray)
             end
             local d = 0
             for ci = 1, maxRows do
                 for b = 1, shortcut_height do
                     for j = 1, maxCols - 1 do
-                        render.write("|", shortcut_width * j + spacing_x * (j-1) + self.x,
+                        screen.write("|", shortcut_width * j + spacing_x * (j-1) + self.x,
                         d+b+(self.y-1)+shortcut_height*(ci-1),
                         self.color_bg, colors.lightGray)
                     end

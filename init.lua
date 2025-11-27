@@ -7,7 +7,7 @@ local UI = require("ui")
 local PALETTE = require("palette")
 local conf = c.readConf("usr/settings.conf")
 local dM = require("deskManager")
-local render = require("Render")
+local screen = require("Screen")
 local system = require("braunnnsys")
 
 dbg = c.DEBUG()

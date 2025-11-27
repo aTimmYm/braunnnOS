@@ -10,7 +10,7 @@ local math_min = math.min
 local math_floor = math.floor
 -----------------------------------------------------
 -------| СЕКЦИЯ ПОДКЛЮЧЕНИЯ БИБЛИОТЕК И ROOT |-------
-local render = require("Render")
+local screen = require("Screen")
 local dfpwm = require("cc.audio.dfpwm")
 local system = require("braunnnsys")
 local blittle = require("blittle_extended")
@@ -75,7 +75,7 @@ local scrollboxAlbum = UI.New_ScrollBox(root)
 scrollboxAlbum.draw = function (self)
     c.drawFilledBox(1,1,self.size.w,self.size.h,self.bg)
     for i=1,self.size.h do
-        render.write("|",1,i,self.bg,self.txtcol)
+        screen.write("|",1,i,self.bg,self.txtcol)
     end
 end
 scrollboxAlbum.reSize = function (self)
@@ -126,8 +126,8 @@ scrollboxAlbum:addChild(numCompose)
 
 local box2 = UI.New_Box(1, surface.h - 4, surface.w, 5, colors.gray)
 box2.draw = function (self)
-    render.drawRectangle(self.x, self.y, self.x + self.w - 1, self.y + self.h - 1, self.color_bg)
-    if surface.w > 41 then render.blittle_draw(blittle.load("sbin/MPlayer/Data/MusicAlbum.ico"), self.x + 1, self.y) end
+    screen.drawRectangle(self.x, self.y, self.x + self.w - 1, self.y + self.h - 1, self.color_bg)
+    if surface.w > 41 then screen.blittle_draw(blittle.load("sbin/MPlayer/Data/MusicAlbum.ico"), self.x + 1, self.y) end
 end
 surface:addChild(box2)
 
@@ -143,7 +143,7 @@ pause.draw = function (self)
         color_txt = self.color_bg
         color_bg = self.color_txt
     end
-    render.write(text, self.x, self.y, color_bg, color_txt)
+    screen.write(text, self.x, self.y, color_bg, color_txt)
 end
 box2:addChild(pause)
 
@@ -489,7 +489,7 @@ for i, v in pairs(sortedCache) do
         local color_bg, color_txt, text = self.color_bg, self.color_txt, string_char(16)
         if self.play then text = string_char(15) end
         if self.held then color_bg, color_txt = self.color_txt, self.color_bg end
-        render.write(" "..text.." ", self.x, self.y, color_bg, color_txt)
+        screen.write(" "..text.." ", self.x, self.y, color_bg, color_txt)
     end
     trackPlay.pressed = function (self)
         os.queueEvent("play_music", Path..v, i)
@@ -556,12 +556,12 @@ local function initWideMode(width)
 
     -- Логика отрисовки
     btnVolume.draw = function (self)
-        render.write(string_char(145), self.x, self.y, self.color_txt, self.color_bg)
+        screen.write(string_char(145), self.x, self.y, self.color_txt, self.color_bg)
         if conf["volume"] ~= 0 then
-            render.write(string_char(157), self.x + 1, self.y, self.color_txt, self.color_bg)
-            render.write(string_char(132), self.x + 2, self.y, self.color_bg, self.color_txt)
+            screen.write(string_char(157), self.x + 1, self.y, self.color_txt, self.color_bg)
+            screen.write(string_char(132), self.x + 2, self.y, self.color_bg, self.color_txt)
         else
-            render.write("x ", self.x + 1, self.y, self.parent.color_bg, self.color_txt)
+            screen.write("x ", self.x + 1, self.y, self.parent.color_bg, self.color_txt)
         end
     end
 
