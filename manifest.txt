@@ -11,10 +11,10 @@ df4bccffc73641b79da08106856799fa   lib/id3_meta.lua
 6b9e55f28cd0f62163904e7bec81352a   lib/mp4_meta
 0e8430925597fb135103b506fe2c669f   lib/palette
 914e77e5a6c186c459a010ae7733358a   lib/translit.lua
-3f017f112ad0077a0dd2a3d46af71861   lib/ui.lua
+0b300efe28aabac1215bb6087e983ec4   lib/ui.lua
 89b0b700ec66f8f1128e5783e1d32e86   sbin/Calculator/icon.ico
 0af158bbd2e3fce3eaeb50508bea6eab   sbin/Calculator/main.lua
-47e4892c0915cdff2a2cb7b8edde4497   sbin/Converter/main.lua
+920e095b774f4f8e2c2c59c405ef9d09   sbin/Converter/main.lua
 f420705bb6aeced24f1e2dcdbc818ff0   sbin/Explorer/icon.ico
 1ce43ac1a4f9d0ab63c17a156f6eedeb   sbin/Explorer/main.lua
 7e554e61628f2c4328fbffc85cd20e8f   sbin/MPlayer/Data/MusicAlbum.ico
@@ -25,9 +25,9 @@ f420705bb6aeced24f1e2dcdbc818ff0   sbin/Explorer/icon.ico
 30bc906c5cdfc0379210541f2c2cb73c   sbin/Messenger/main.lua
 833120b0dee04925b316738e8f2df805   sbin/Polygon/main.lua
 bbbb8a0f7aab18dc6179ff64a6dae421   sbin/Settings/icon.ico
-736e8e1b1a6c38e5d99b64623246b8be   sbin/Settings/main.lua
+f681847456b3dd70b09f0cb6792de917   sbin/Settings/main.lua
 6bacd99cdcd6a49fdbd4efab032efee4   sbin/Shell/icon.ico
-bd7dc012aa4a82e9ffeabc7315643459   sbin/Shell/main.lua
+59e11930ca44ac3c1368f3de7ffbdf36   sbin/Shell/main.lua
 4ba84fd1ff72b371d59bae83b0ecd3e0   startup.lua
 d85ee7513ea6d48e84ddb2323ef64052   usr/icon_default.ico
 7f194caa2df0ed1de926fd0ec26101e1   utility/ImageBLITTLE.lua
