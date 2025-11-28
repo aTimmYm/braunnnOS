@@ -29,7 +29,7 @@ local window, surface = system.add_window("Titled", colors.black, "Settings")
 
 local box = UI.New_Box(1, 1, 11, surface.h, colors.black)
 box.draw = function (self)
-    c.drawFilledBox(self.x, self.y, self.w, self.h, self.color_bg)
+    screen.draw_rectangle(self.x, self.y, self.w, self.h, self.color_bg)
     for i = self.y, self.h + self.y - 1 do
         screen.write("|", self.x, i, self.color_bg, self.color_txt)
         screen.write("|", self.w + self.x - 1, i, self.color_bg, self.color_txt)

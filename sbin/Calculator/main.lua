@@ -62,9 +62,6 @@ for row = 1, #btnTexts do
 
 		local btn = UI.New_Button(x, y, w, h, txt)
 
-		--btn.reSize = function(self)
-		--end
-
 		btn.pressed = function(self)
 			if txt == "C" then
 				expr = ""

@@ -126,8 +126,8 @@ scrollboxAlbum:addChild(numCompose)
 
 local box2 = UI.New_Box(1, surface.h - 4, surface.w, 5, colors.gray)
 box2.draw = function (self)
-    screen.drawRectangle(self.x, self.y, self.x + self.w - 1, self.y + self.h - 1, self.color_bg)
-    if surface.w > 41 then screen.blittle_draw(blittle.load("sbin/MPlayer/Data/MusicAlbum.ico"), self.x + 1, self.y) end
+    screen.draw_rectangle(self.x, self.y, self.x + self.w - 1, self.y + self.h - 1, self.color_bg)
+    if surface.w > 41 then screen.draw_blittle(blittle.load("sbin/MPlayer/Data/MusicAlbum.ico"), self.x + 1, self.y) end
 end
 surface:addChild(box2)
 

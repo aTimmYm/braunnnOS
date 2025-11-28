@@ -5,10 +5,10 @@ local string_find = string.find
 local string_char = string.char
 local string_gmatch = string.gmatch
 local table_insert = table.insert
-local math_max = math.max
-local math_min = math.min
+local _max = math.max
+local _min = math.min
 local math_floor = math.floor
-local function clamp(val, a, b) return math_max(a, math_min(b, val)) end
+local function clamp(val, a, b) return _max(a, _min(b, val)) end
 -----------------------------------------------------
 --CC:Tweaked Lua Minecraft CraftOS bOS™
 --lib/ui.lua v0.4.0
@@ -280,10 +280,10 @@ local function RadioButton_draw(self)
     for i,v in ipairs(self.text) do
         if self.item == i then
             screen.write(string_char(7), self.x, self.y + i - 1, self.color_bg, self.color_txt)
-            screen.write(_rep(" ", math_min(#v, 1))..v, self.x + 1, self.y + i - 1, self.color_bg, self.color_txt)
+            screen.write(_rep(" ", _min(#v, 1))..v, self.x + 1, self.y + i - 1, self.color_bg, self.color_txt)
         else
             screen.write(string_char(7), self.x, self.y + i - 1, self.color_bg, colors.gray)
-            screen.write(_rep(" ", math_min(#v, 1))..v, self.x + 1, self.y + i - 1, self.color_bg, self.color_txt)
+            screen.write(_rep(" ", _min(#v, 1))..v, self.x + 1, self.y + i - 1, self.color_bg, self.color_txt)
         end
     end
 end
@@ -396,7 +396,7 @@ local function Label_draw(self, bg_override, txtcol_override)
     else  -- center
         start_y = self.y + math_floor((self.h - num_lines) / 2)
     end
-    start_y = math_max(start_y, self.y)
+    start_y = _max(start_y, self.y)
 
     for i = self.y, start_y - 1 do
         screen.write(_rep(" ", self.w), self.x, i, bg_override, txtcol_override)
@@ -514,11 +514,11 @@ function UI.New_Button(x, y, w, h, text, align, color_bg, color_txt)
 end
 
 local function Shortcut_draw(self)
-    screen.drawRectangle(self.x, self.y, self.w, self.h, self.color_bg)
+    screen.draw_rectangle(self.x, self.y, self.w, self.h, self.color_bg)
 
     local dX = math_floor((self.w - self.blittle_img.width)/2) + self.x
     local dY = math_floor((self.h - 1 - self.blittle_img.height)/2) + self.y
-    screen.blittle_draw(self.blittle_img, dX, dY)
+    screen.draw_blittle(self.blittle_img, dX, dY)
     local txtcol_override = self.held and colors.lightGray or self.color_txt
     if #self.text >= self.w then
         screen.write(_sub(self.text, 1, self.w - 2).."..",
@@ -767,7 +767,7 @@ local function Scrollbar_draw(self)
     screen.write(string_char(31), self.x, self.y + self.h - 1, down_bg, down_fg)
 
     -- Ползунок
-    for y = slider_y_start, math_min(slider_y_start + slider_height - 1, self.y + self.h - 2) do
+    for y = slider_y_start, _min(slider_y_start + slider_height - 1, self.y + self.h - 2) do
         screen.write(" ", self.x, y, self.color_txt, self.color_txt)  -- Filled pixel
     end
 end
@@ -848,7 +848,7 @@ local function Scrollbar_getMaxSliderOffset(self)
     local track_height = self:getTrackHeight()
     if track_height <= 0 then return 0 end
     local slider_height = self:getSliderHeight()
-    return math_max(0, track_height - slider_height)
+    return _max(0, track_height - slider_height)
 end
 
 local function Scrollbar_getSliderOffset(self)
@@ -970,9 +970,9 @@ function UI.New_Scrollbar(obj)
 end
 
 local function List_draw(self)
-    self.scrollmax = math_max(1, #self.array - self.h + 1)
-    self.scrollpos = math_max(1, math_min(self.scrollpos, self.scrollmax))
-    for i = self.scrollpos, math_min(self.h + self.scrollpos - 1, #self.array) do
+    self.scrollmax = _max(1, #self.array - self.h + 1)
+    self.scrollpos = _max(1, _min(self.scrollpos, self.scrollmax))
+    for i = self.scrollpos, _min(self.h + self.scrollpos - 1, #self.array) do
         local index_arr = self.array[i]
         screen.write(_sub(index_arr.._rep(" ", self.w - #index_arr), 1, self.w), self.x, (i - self.scrollpos) + self.y, self.color_bg, self.color_txt)
     end
@@ -1030,15 +1030,15 @@ end
 local function List_onKeyDown(self, key, held)
     if self.item then
         if key == keys.up then
-            self.item_index = math_max(self.item_index - 1, 1)
+            self.item_index = _max(self.item_index - 1, 1)
             self.item = self.array[self.item_index]
         if self.item_index < self.scrollpos then
             self:onMouseScroll(1)
         end
         elseif key == keys.down then
-            self.item_index = math_min(self.item_index + 1, #self.array)
+            self.item_index = _min(self.item_index + 1, #self.array)
             self.item = self.array[self.item_index]
-        if self.item_index > math_min(self.h + self.scrollpos - 1, #self.array) then
+        if self.item_index > _min(self.h + self.scrollpos - 1, #self.array) then
             self:onMouseScroll(-1)
         end
         elseif key == keys.home then
@@ -1108,7 +1108,7 @@ local function Textfield_draw(self)
     if self.root.focus ~= self and #self.text == 0 and #self.hint <= self.w then
         screen.write(self.hint.._rep(" ", self.w - #self.hint), self.x, self.y, self.color_bg, colors.lightGray)
     else
-        screen.write(_sub(text, self.writePos + 1, math_min(#self.text, self.writePos + self.w)).._rep(" ", self.w - #self.text + self.writePos), self.x, self.y, self.color_bg, self.color_txt)
+        screen.write(_sub(text, self.writePos + 1, _min(#self.text, self.writePos + self.w)).._rep(" ", self.w - #self.text + self.writePos), self.x, self.y, self.color_bg, self.color_txt)
     end
 end
 
@@ -1119,7 +1119,7 @@ local function Textfield_focusPostDraw(self)
 end
 
 local function Textfield_moveCursorPos(self, pos)
-    self.offset = math_min(math_max(pos, 1), #self.text + 1)
+    self.offset = _min(_max(pos, 1), #self.text + 1)
     if self.offset - self.writePos > self.w then
         self.writePos = self.offset - self.w
     elseif self.offset - self.writePos < 1 then
@@ -1128,7 +1128,7 @@ local function Textfield_moveCursorPos(self, pos)
 end
 
 local function Textfield_onMouseScroll(self, btn, x, y)
-    self.writePos = math_min(math_max(self.writePos - btn,0), #self.text - self.w + 1)
+    self.writePos = _min(_max(self.writePos - btn,0), #self.text - self.w + 1)
     self.dirty = true
     return true
 end
@@ -1175,8 +1175,8 @@ end
 
 local function Textfield_onKeyDown(self, key, held)
     if key == keys.backspace then
-        self.text = _sub(self.text, 1, math_max(self.offset - 2, 0)).._sub(self.text, self.offset, #self.text)
-        self.writePos = math_max(self.writePos - 1, 0)
+        self.text = _sub(self.text, 1, _max(self.offset - 2, 0)).._sub(self.text, self.offset, #self.text)
+        self.writePos = _max(self.writePos - 1, 0)
         self:moveCursorPos(self.offset - 1)
     elseif key == keys.delete then
         self.text = _sub(self.text, 1, self.offset - 1) .. _sub(self.text, self.offset + 1, #self.text)
@@ -1450,7 +1450,7 @@ local function Dropdown_onFocus(self,focused)
 end
 
 local function Dropdown_onMouseDown(self, btn, x, y)
-    if (y - self.y) > 0 then self.item_index = math_min(math_max(y - self.y, 1), #self.array) end
+    if (y - self.y) > 0 then self.item_index = _min(_max(y - self.y, 1), #self.array) end
     self.expanded = not self.expanded
     if self.expanded == false then self.parent:onLayout() else self.dirty = true end
     self:pressed()
@@ -1508,7 +1508,7 @@ local function Slider_draw(self)
     -- Calculate thumb position if N > 0
     if N > 0 then
         local i = self.slidePosition
-        local offset = (N == 1) and 0 or math_min(math_floor((i - 1) / (N - 1) * (W - 1)), self.w - 1)
+        local offset = (N == 1) and 0 or _min(math_floor((i - 1) / (N - 1) * (W - 1)), self.w - 1)
         local thumb_x = self.x + offset
         -- Overlay thumb (use a different char, e.g., █ or slider thumb equivalent)
         screen.write(" ", thumb_x, self.y, self.color_txt, self.color_bg)
@@ -1525,7 +1525,7 @@ local function Slider_updatePos(self, x, y)
     if N > 0 and self.w > 1 then  -- Avoid div by zero
         local offset = x - self.x
         local raw_index = math_floor((offset / (self.w - 1) * (N - 1)) + 0.5) + 1
-        self.slidePosition = math_max(1, math_min(N, raw_index))
+        self.slidePosition = _max(1, _min(N, raw_index))
     end
     self.dirty = true
 end
@@ -2041,7 +2041,7 @@ function UI.New_Window(x, y, w, h, color_bg, title)
 end
 
 local function Box_draw(self)
-    screen.drawRectangle(self.x, self.y, self.w + self.x - 1, self.h + self.y - 1, self.color_bg)
+    screen.draw_rectangle(self.x, self.y, self.w + self.x - 1, self.h + self.y - 1, self.color_bg)
 end
 
 ---Creating new *object* of *class*
@@ -2067,30 +2067,27 @@ function UI.New_Box(x, y, w, h, color_bg)
 end
 
 local function ScrollBox_draw(self)
-    screen.drawRectangle(self.x, self.y, self.w, self.h, self.color_bg)
+    screen.draw_rectangle(self.x, self.y, self.w, self.h, self.color_bg)
 end
 
 local function ScrollBox_redraw(self)
-    screen.setClip(self.x, self.y, self.w, self.h)
+    screen.clip_set(self.x, self.y, self.w, self.h)
 
     if self.dirty then self:draw() self.dirty = false end
 
     for _, child in ipairs(self.visibleChild) do
         child:redraw()
     end
-    screen.removeClip()
+    screen.clip_remove()
 end
 
 local function ScrollBox_onLayout(self)
-    --[[if self.win then
-        self.win.reposition(self.x, self.y, self.w, self.h)
-    end]]
     self.visibleChild = {}
     self.dirty = true
     Container_onLayout(self)
     for _, child in pairs(self.children) do
         child.y = child.y - (self.scrollpos - 1)
-        self.scrollmax = math_max(math_max(self.scrollmax, child.local_y + child.h + 1) - self.h, 1)
+        self.scrollmax = _max(_max(self.scrollmax, child.local_y + child.h + 1) - self.h, 1)
         if child.y + child.h > self.y and child.y <= self.y + self.h - 1 then
             table_insert(self.visibleChild, child)
         end
@@ -2139,14 +2136,11 @@ function UI.New_ScrollBox(x, y, w, h, color_bg)
 end
 
 local function Root_show(self)
-    --c.termClear(self.color_bg)
     self:onLayout()
     self:redraw()
-    screen.draw()
 end
 
 local function Root_tResize(self)
-    c.termClear(self.color_bg)
     self.w, self.h = term.getSize()
     for _, child in ipairs(self.children) do
         if child.onResize and child ~= self.keyboard then
@@ -2158,12 +2152,12 @@ local function Root_tResize(self)
         self.keyboard.x, self.keyboard.y = self.x + self.keyboard.local_x - 1, self.y + self.keyboard.local_y - 1
     end
     self:onLayout()
-    screen.init()
+    screen.fill()
 end
 
 local function Root_redraw(self)
     Container_redraw(self)
-    screen.draw()
+    screen.update()
     if self.focus then
         self.focus:focusPostDraw()
     end
