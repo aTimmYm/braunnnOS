@@ -12,7 +12,7 @@ df4bccffc73641b79da08106856799fa   lib/id3_meta.lua
 6b9e55f28cd0f62163904e7bec81352a   lib/mp4_meta
 0e8430925597fb135103b506fe2c669f   lib/palette
 914e77e5a6c186c459a010ae7733358a   lib/translit.lua
-38802d8c6d87ab47ee257b0d78693ffb   lib/ui.lua
+b0b65d424cb8aa8374dfb7c7012884bd   lib/ui.lua
 89b0b700ec66f8f1128e5783e1d32e86   sbin/Calculator/icon.ico
 0af158bbd2e3fce3eaeb50508bea6eab   sbin/Calculator/main.lua
 920e095b774f4f8e2c2c59c405ef9d09   sbin/Converter/main.lua
