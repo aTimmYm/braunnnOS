@@ -1,6 +1,6 @@
 ------------| СЕКЦИЯ ЛОКАЛИЗАЦИИ ФУНКЦИЙ |-----------
-local string_rep = string.rep
-local string_sub = string.sub
+local _rep = string.rep
+local _sub = string.sub
 local string_find = string.find
 local string_char = string.char
 local string_gmatch = string.gmatch
@@ -49,6 +49,7 @@ local function onMouseUp(self,btn,x,y) return true end
 local function onMouseScroll(self,dir,x,y) return true end
 local function onMouseDrag(self,btn,x,y) return true end
 local function onFocus(self,focused) return true end
+local function focusPostDraw(self) end
 local function pressed(self) end
 local function onLayout(self) self.dirty = true end
 local function draw(self) end
@@ -104,6 +105,7 @@ local function New_Widget(x, y, w, h, color_bg, color_txt)
         onMouseScroll = onMouseScroll,
         onMouseDrag = onMouseDrag,
         onFocus = onFocus,
+        focusPostDraw = focusPostDraw,
         draw = draw,
         redraw = redraw,
         onLayout = onLayout,
@@ -278,10 +280,10 @@ local function RadioButton_draw(self)
     for i,v in ipairs(self.text) do
         if self.item == i then
             screen.write(string_char(7), self.x, self.y + i - 1, self.color_bg, self.color_txt)
-            screen.write(string_rep(" ", math_min(#v, 1))..v, self.x + 1, self.y + i - 1, self.color_bg, self.color_txt)
+            screen.write(_rep(" ", math_min(#v, 1))..v, self.x + 1, self.y + i - 1, self.color_bg, self.color_txt)
         else
             screen.write(string_char(7), self.x, self.y + i - 1, self.color_bg, colors.gray)
-            screen.write(string_rep(" ", math_min(#v, 1))..v, self.x + 1, self.y + i - 1, self.color_bg, self.color_txt)
+            screen.write(_rep(" ", math_min(#v, 1))..v, self.x + 1, self.y + i - 1, self.color_bg, self.color_txt)
         end
     end
 end
@@ -347,11 +349,11 @@ local function Label_draw(self, bg_override, txtcol_override)
         while i <= #mass do
             local word = mass[i]
             if #word > self.w then
-                local remainder = string_sub(word, self.w + 1)
+                local remainder = _sub(word, self.w + 1)
                 if remainder ~= "" then
                     table_insert(mass, i + 1, remainder)
                 end
-                mass[i] = string_sub(word, 1, self.w)
+                mass[i] = _sub(word, 1, self.w)
                 word = mass[i]
             end
             local space_len = (row_txt == "" and 0 or 1)
@@ -397,7 +399,7 @@ local function Label_draw(self, bg_override, txtcol_override)
     start_y = math_max(start_y, self.y)
 
     for i = self.y, start_y - 1 do
-        screen.write(string_rep(" ", self.w), self.x, i, bg_override, txtcol_override)
+        screen.write(_rep(" ", self.w), self.x, i, bg_override, txtcol_override)
     end
 
     for j = 1, num_lines do
@@ -411,15 +413,15 @@ local function Label_draw(self, bg_override, txtcol_override)
         else  -- center
             x_pos = self.x + math_floor((self.w - line_len) / 2)
         end
-        local left_pad = string_rep(" ", x_pos - self.x)
-        local right_pad = string_rep(" ", self.w - (x_pos - self.x + line_len))
+        local left_pad = _rep(" ", x_pos - self.x)
+        local right_pad = _rep(" ", self.w - (x_pos - self.x + line_len))
         local full_line = left_pad .. line .. right_pad
         screen.write(full_line, self.x, start_y + j - 1, bg_override, txtcol_override)
     end
 
     local end_y = start_y + num_lines - 1
     for i = end_y + 1, self.y + self.h - 1 do
-        screen.write(string_rep(" ", self.w), self.x, i, bg_override, txtcol_override)
+        screen.write(_rep(" ", self.w), self.x, i, bg_override, txtcol_override)
     end
 end
 
@@ -519,11 +521,11 @@ local function Shortcut_draw(self)
     screen.blittle_draw(self.blittle_img, dX, dY)
     local txtcol_override = self.held and colors.lightGray or self.color_txt
     if #self.text >= self.w then
-        screen.write(string_sub(self.text, 1, self.w - 2).."..",
+        screen.write(_sub(self.text, 1, self.w - 2).."..",
         self.x, dY + self.blittle_img.height, self.color_bg, txtcol_override)
     else
-        screen.write(string_rep(" ",math_floor((self.w - #self.text)/2))..self.text..
-        string_rep(" ", self.w - (math_floor((self.w - #self.text)/2) + self.x + #self.text)),
+        screen.write(_rep(" ",math_floor((self.w - #self.text)/2))..self.text..
+        _rep(" ", self.w - (math_floor((self.w - #self.text)/2) + self.x + #self.text)),
         self.x, dY + self.blittle_img.height, self.color_bg, txtcol_override)
     end
 end
@@ -604,7 +606,7 @@ local function Running_Label_draw(self, bg_override, txtcol_override)
     local segment = (self.text or "") .. (self.scroll_gap)
     local cycle_len = #segment
     if cycle_len == 0 then
-        local visible_text = string_rep(" ", self.w)
+        local visible_text = _rep(" ", self.w)
         screen.write(visible_text, self.x, self.y, bg_override, txtcol_override)
         return
     end
@@ -616,7 +618,7 @@ local function Running_Label_draw(self, bg_override, txtcol_override)
     local visible_chars = {}
     for i = 0, self.w - 1 do
         local idx = ((pos - 1 + i) % cycle_len) + 1
-        visible_chars[#visible_chars + 1] = string_sub(segment, idx, idx)
+        visible_chars[#visible_chars + 1] = _sub(segment, idx, idx)
     end
     local visible_text = table.concat(visible_chars)
 
@@ -637,15 +639,15 @@ local function Running_Label_draw(self, bg_override, txtcol_override)
         x_pos = self.x + math_floor((self.w - #visible_text) / 2)
     end
 
-    local left_pad = string_rep(" ", x_pos - self.x)
-    local right_pad = string_rep(" ", self.w - (x_pos - self.x + #visible_text))
+    local left_pad = _rep(" ", x_pos - self.x)
+    local right_pad = _rep(" ", self.w - (x_pos - self.x + #visible_text))
     local full_line = left_pad .. visible_text .. right_pad
 
     screen.write(full_line, self.x, self.y, bg_override, txtcol_override)
 
     -- Очистка остальных строк, если h > 1 (хотя для бегущей строки обычно h=1)
     for i = self.y + 1, self.y + self.h - 1 do
-        screen.write(string_rep(" ", self.w), self.x, i, bg_override, txtcol_override)
+        screen.write(_rep(" ", self.w), self.x, i, bg_override, txtcol_override)
     end
 end
 
@@ -730,7 +732,7 @@ function UI.New_Running_Label(x, y, w, h, text, align, scroll_speed, gap, color_
     instance.scroll_pos = 1
     instance.timer_id = nil
     instance.scrolling = false
-    instance.scroll_gap = gap or " " --string_rep(" ", instance.w)
+    instance.scroll_gap = gap or " " --_rep(" ", instance.w)
 
     instance.draw = Running_Label_draw
     instance.setText = Running_Label_setText
@@ -972,16 +974,16 @@ local function List_draw(self)
     self.scrollpos = math_max(1, math_min(self.scrollpos, self.scrollmax))
     for i = self.scrollpos, math_min(self.h + self.scrollpos - 1, #self.array) do
         local index_arr = self.array[i]
-        screen.write(string_sub(index_arr..string_rep(" ", self.w - #index_arr), 1, self.w), self.x, (i - self.scrollpos) + self.y, self.color_bg, self.color_txt)
+        screen.write(_sub(index_arr.._rep(" ", self.w - #index_arr), 1, self.w), self.x, (i - self.scrollpos) + self.y, self.color_bg, self.color_txt)
     end
     if self.item and self.item_index then
         if (self.y + self.item_index - self.scrollpos) >= self.y and (self.y + self.item_index - self.scrollpos) <= (self.h + self.y - 1) then
-            screen.write(string_sub(self.item..string_rep(" ",self.w - #self.item), 1, self.w), self.x, self.y + self.item_index - self.scrollpos, self.color_txt, self.color_bg)
+            screen.write(_sub(self.item.._rep(" ",self.w - #self.item), 1, self.w), self.x, self.y + self.item_index - self.scrollpos, self.color_txt, self.color_bg)
         end
     end
         if self.h > #self.array then
         for i = #self.array, self.h - 1 do
-            screen.write(string_sub(string_rep(" ", self.w), 1, self.w), self.x, i + self.y, self.color_bg, self.color_txt)
+            screen.write(_sub(_rep(" ", self.w), 1, self.w), self.x, i + self.y, self.color_bg, self.color_txt)
         end
     end
 end
@@ -1099,22 +1101,21 @@ function UI.New_List(x, y, w, h, array, color_bg, color_txt)
 end
 
 local function Textfield_draw(self)
-    term.setTextColor(colors.blue)
     local text = self.text
     if self.hidden == true then
-        text = string_rep("*", #self.text)
+        text = _rep("*", #self.text)
     end
-    local bX = self.x + self.offset - self.writePos - 1
     if self.root.focus ~= self and #self.text == 0 and #self.hint <= self.w then
-        screen.write(self.hint..string_rep(" ", self.w - #self.hint), self.x, self.y, self.color_bg, colors.lightGray)
+        screen.write(self.hint.._rep(" ", self.w - #self.hint), self.x, self.y, self.color_bg, colors.lightGray)
     else
-        term.setCursorPos(bX, self.y)
-        screen.write(string_sub(text, self.writePos + 1, math_min(#self.text, self.writePos + self.w))..string_rep(" ", self.w - #self.text + self.writePos), self.x, self.y, self.color_bg, self.color_txt)
+        screen.write(_sub(text, self.writePos + 1, math_min(#self.text, self.writePos + self.w)).._rep(" ", self.w - #self.text + self.writePos), self.x, self.y, self.color_bg, self.color_txt)
     end
-    if bX < self.x or bX > self.x + self.w - 1 then term.setCursorBlink(false)
-    elseif self.root.focus == self then
-        term.setCursorBlink(true)
-    end
+end
+
+local function Textfield_focusPostDraw(self)
+    term.setTextColor(colors.blue)
+    local bX = self.x + self.offset - self.writePos - 1
+    term.setCursorPos(bX, self.y)
 end
 
 local function Textfield_moveCursorPos(self, pos)
@@ -1147,8 +1148,6 @@ local function Textfield_onFocus(self, focused)
         self.root:removeChild(self.root.keyboard)
     end
     term.setCursorBlink(focused)
-    local bX = self.x + self.offset - self.writePos - 1
-    term.setCursorPos(bX, self.y)
     self.dirty = true
     return true
 end
@@ -1161,14 +1160,14 @@ local function Textfield_onMouseDown(self, btn, x, y)
 end
 
 local function Textfield_onCharTyped(self, chr)
-    self.text = string_sub(self.text, 1, self.offset - 1)..chr..string_sub(self.text, self.offset, #self.text)
+    self.text = _sub(self.text, 1, self.offset - 1)..chr.._sub(self.text, self.offset, #self.text)
     self:moveCursorPos(self.offset + 1)
     self.dirty = true
     return true
 end
 
 local function Textfield_onPaste(self, text)
-    self.text = string_sub(self.text, 1, self.offset - 1)..text..string_sub(self.text, self.offset, #self.text)
+    self.text = _sub(self.text, 1, self.offset - 1)..text.._sub(self.text, self.offset, #self.text)
     self:moveCursorPos(self.offset + #text)
     self.dirty = true
     return true
@@ -1176,11 +1175,11 @@ end
 
 local function Textfield_onKeyDown(self, key, held)
     if key == keys.backspace then
-        self.text = string_sub(self.text, 1, math_max(self.offset - 2, 0))..string_sub(self.text, self.offset, #self.text)
+        self.text = _sub(self.text, 1, math_max(self.offset - 2, 0)).._sub(self.text, self.offset, #self.text)
         self.writePos = math_max(self.writePos - 1, 0)
         self:moveCursorPos(self.offset - 1)
     elseif key == keys.delete then
-        self.text = string_sub(self.text, 1, self.offset - 1) .. string_sub(self.text, self.offset + 1, #self.text)
+        self.text = _sub(self.text, 1, self.offset - 1) .. _sub(self.text, self.offset + 1, #self.text)
     elseif key == keys.left then
         self:moveCursorPos(self.offset - 1)
     elseif key == keys.right then
@@ -1225,6 +1224,7 @@ function UI.New_Textfield(x, y, w, h, hint, hidden, color_bg, color_txt)
     instance.onMouseUp = Textfield_onMouseUp
     instance.onFocus = Textfield_onFocus
     instance.pressed = pressed
+    instance.focusPostDraw = Textfield_focusPostDraw
     instance.onMouseDown = Textfield_onMouseDown
     instance.onCharTyped = Textfield_onCharTyped
     instance.onPaste = Textfield_onPaste
@@ -1331,17 +1331,17 @@ end
 local function LoadingBar_draw(self)
     local LoadX = math.floor(self.value * self.w)
     if self.orientation == "top" then
-        screen.write(string_rep(string_char(131), LoadX), self.x, self.y, self.color_bg, self.color_Loading)
-        screen.write(string_rep(string_char(131), self.w - LoadX), self.x + LoadX, self.y, self.color_bg, self.color_NotLoaded)
+        screen.write(_rep(string_char(131), LoadX), self.x, self.y, self.color_bg, self.color_Loading)
+        screen.write(_rep(string_char(131), self.w - LoadX), self.x + LoadX, self.y, self.color_bg, self.color_NotLoaded)
     elseif self.orientation == "center"  then
-        screen.write(string_rep(string_char(140), LoadX), self.x, self.y, self.color_bg, self.color_Loading)
-        screen.write(string_rep(string_char(140), self.w - LoadX), self.x + LoadX, self.y, self.color_bg, self.color_NotLoaded)
+        screen.write(_rep(string_char(140), LoadX), self.x, self.y, self.color_bg, self.color_Loading)
+        screen.write(_rep(string_char(140), self.w - LoadX), self.x + LoadX, self.y, self.color_bg, self.color_NotLoaded)
     elseif self.orientation == "bottom"  then
-        screen.write(string_rep(string_char(143), LoadX), self.x, self.y, self.color_Loading, self.color_bg)
-        screen.write(string_rep(string_char(143), self.w - LoadX), self.x + LoadX, self.y, self.color_NotLoaded, self.color_bg)
+        screen.write(_rep(string_char(143), LoadX), self.x, self.y, self.color_Loading, self.color_bg)
+        screen.write(_rep(string_char(143), self.w - LoadX), self.x + LoadX, self.y, self.color_NotLoaded, self.color_bg)
     elseif self.orientation == "filled"  then
-        screen.write(string_rep(" ", LoadX), self.x, self.y, self.color_Loading, self.color_bg)
-        screen.write(string_rep(" ", self.w - LoadX), self.x + LoadX, self.y, self.color_NotLoaded, self.color_bg)
+        screen.write(_rep(" ", LoadX), self.x, self.y, self.color_Loading, self.color_bg)
+        screen.write(_rep(" ", self.w - LoadX), self.x + LoadX, self.y, self.color_NotLoaded, self.color_bg)
     end
     --131, 140, 143(inverted)
 end
@@ -1414,23 +1414,23 @@ end
 local function Dropdown_draw(self)
     local index_arr = self.array[self.item_index]
     if self.orientation == "left" then
-        screen.write(string_sub((index_arr), 1, self.w - 1)..string_rep(" ", self.w - 1 - #index_arr)..string_char(31), self.x, self.y, self.color_bg, self.color_txt)
+        screen.write(_sub((index_arr), 1, self.w - 1).._rep(" ", self.w - 1 - #index_arr)..string_char(31), self.x, self.y, self.color_bg, self.color_txt)
         if self.expanded then
             for i, v in pairs(self.array) do
-                screen.write(string_sub((v..string_rep(" ", self.w - #v)), 1, self.w), self.x, self.y + i, self.color_bg, self.color_txt)
+                screen.write(_sub((v.._rep(" ", self.w - #v)), 1, self.w), self.x, self.y + i, self.color_bg, self.color_txt)
             end
-            screen.write(string_sub((index_arr), 1, self.w - 1)..string_rep(" ", self.w - 1 - #index_arr)..string_char(30), self.x, self.y, self.color_bg, self.color_txt)
+            screen.write(_sub((index_arr), 1, self.w - 1).._rep(" ", self.w - 1 - #index_arr)..string_char(30), self.x, self.y, self.color_bg, self.color_txt)
             self.h = #self.array + 1
         else
             self.h = 1
         end
     elseif self.orientation == "right" then
-        screen.write(string_sub(index_arr..string_rep(" ", self.w - 1 - #index_arr)..string_char(30), 1, self.w), self.x, self.y, self.color_bg, self.color_txt)
+        screen.write(_sub(index_arr.._rep(" ", self.w - 1 - #index_arr)..string_char(30), 1, self.w), self.x, self.y, self.color_bg, self.color_txt)
         if self.expanded then
             for i, v in pairs(self.array) do
-                screen.write(string_sub(string_rep(" ", self.w - #v)..v, 1, self.w), self.x, self.y + i, self.color_bg, self.color_txt)
+                screen.write(_sub(_rep(" ", self.w - #v)..v, 1, self.w), self.x, self.y + i, self.color_bg, self.color_txt)
             end
-            screen.write(string_sub(index_arr, 1, self.w - 1)..string_rep(" ", self.w - 1 - #index_arr)..string_char(31), self.x, self.y, self.color_bg, self.color_txt)
+            screen.write(_sub(index_arr, 1, self.w - 1).._rep(" ", self.w - 1 - #index_arr)..string_char(31), self.x, self.y, self.color_bg, self.color_txt)
             self.h = #self.array + 1
         else
             self.h = 1
@@ -1512,10 +1512,10 @@ local function Slider_draw(self)
         local thumb_x = self.x + offset
         -- Overlay thumb (use a different char, e.g., █ or slider thumb equivalent)
         screen.write(" ", thumb_x, self.y, self.color_txt, self.color_bg)
-        screen.write(string_rep(string_char(140), offset), self.x, self.y, self.color_bg, self.color_txt2)
-        screen.write(string_rep(string_char(140), self.w - offset - 1), thumb_x + 1, self.y, self.color_bg, self.color_txt)
+        screen.write(_rep(string_char(140), offset), self.x, self.y, self.color_bg, self.color_txt2)
+        screen.write(_rep(string_char(140), self.w - offset - 1), thumb_x + 1, self.y, self.color_bg, self.color_txt)
     else
-        screen.write(string_rep(string_char(140), W), self.x, self.y, self.color_bg, self.color_txt)
+        screen.write(_rep(string_char(140), W), self.x, self.y, self.color_bg, self.color_txt)
     end
 end
 
@@ -1693,12 +1693,12 @@ end
 
 local function MsgWin_draw(self)
     for i = 1, self.h - 2 do
-        screen.write(string_rep(" ", self.w - 2)..string_char(149), self.x + 1, self.y + i, self.color_bg, self.color_txt)
+        screen.write(_rep(" ", self.w - 2)..string_char(149), self.x + 1, self.y + i, self.color_bg, self.color_txt)
         screen.write(string_char(149), self.x, self.y + i, self.color_txt, self.color_bg)
     end
-    screen.write(string_rep(string_char(140), self.w - 2)..string_char(148), self.x + 1, self.y, self.color_bg, self.color_txt)
+    screen.write(_rep(string_char(140), self.w - 2)..string_char(148), self.x + 1, self.y, self.color_bg, self.color_txt)
     screen.write(string_char(151), self.x, self.y, self.color_txt, self.color_bg)
-    screen.write(string_char(138)..string_rep(string_char(140), self.w - 2)..string_char(133), self.x, self.h + self.y - 1, self.color_bg, self.color_txt)
+    screen.write(string_char(138).._rep(string_char(140), self.w - 2)..string_char(133), self.x, self.h + self.y - 1, self.color_bg, self.color_txt)
     screen.write(self.title, math_floor((self.w - #self.title)/2) + self.x, self.y, self.color_bg, self.color_txt)
 end
 
@@ -1757,20 +1757,8 @@ function UI.New_MsgWin(mode, title, msg)
 
     root:addChild(instance)
     root:mainloop()
-    --os.queueEvent("term_resize")
 
     return ok
-end
-
-local function DialWin_draw(self)
-    for i = 1, self.h - 2 do
-        screen.write(string_rep(" ", self.w - 2)..string_char(149), self.x + 1, self.y + i, self.color_bg, self.color_txt)
-        screen.write(string_char(149), self.x, self.y + i, self.color_txt, self.color_bg)
-    end
-    screen.write(string_rep(string_char(140), self.w - 2)..string_char(148), self.x + 1, self.y, self.color_bg, self.color_txt)
-    screen.write(string_char(151), self.x, self.y, self.color_txt, self.color_bg)
-    screen.write(string_char(138)..string_rep(string_char(140), self.w - 2)..string_char(133), self.x, self.h + self.y - 1, self.color_bg, self.color_txt)
-    screen.write(self.title, math_floor((self.w - #self.title)/2) + self.x, self.y, self.color_bg, self.color_txt)
 end
 
 ---Creating new *object* of *class*
@@ -1780,7 +1768,7 @@ function UI.New_DialWin(title, msg)
 
     local instance = UI.New_Container(math_floor((root.w - 24)/2) + 1, math_floor((root.h - 4)/2), 24, 4, colors.black)
     instance.title = title or " Title "
-    instance.draw = DialWin_draw
+    instance.draw = MsgWin_draw
     instance.onLayout = MsgWin_onLayout
 
     local label = UI.New_Label(2, 2, instance.w - 2, 1, msg or "", "left", instance.color_bg, instance.color_txt)
@@ -1814,25 +1802,25 @@ function UI.New_DialWin(title, msg)
     root:addChild(instance)
     root.focus = textfield
     root:mainloop()
-    --os.queueEvent("term_resize")
+
     if ok then return textfield.text end
 end
 
 local function Keyboard_draw(self)
-    for i = 1, self.h-2 do
-        screen.write(string_char(149), self.w+self.x-1, self.y+i,self.color_txt, self.color_bg)
-        screen.write(string_char(149)..string_rep(" ",self.w-2), self.x, self.y+i, self.color_bg, self.color_txt)
+    for i = 1, self.h - 2 do
+        screen.write(string_char(149), self.w + self.x - 1, self.y + i, self.color_txt, self.color_bg)
+        screen.write(string_char(149).._rep(" ",self.w - 2), self.x, self.y + i, self.color_bg, self.color_txt)
     end
-    screen.write(string_char(151)..string_rep(string_char(131), self.w-2), self.x, self.y,self.color_bg, self.color_txt)
-    screen.write(string_char(148), self.w+self.x-1, self.y, self.color_txt,self.color_bg)
-    screen.write(string_char(138)..string_rep(string_char(143), self.w-2)..string_char(133), self.x, self.h+self.y-1, self.color_txt, self.color_bg)
+    screen.write(string_char(151).._rep(string_char(131), self.w - 2), self.x, self.y, self.color_bg, self.color_txt)
+    screen.write(string_char(148), self.w + self.x - 1, self.y, self.color_txt, self.color_bg)
+    screen.write(string_char(138).._rep(string_char(143), self.w - 2)..string_char(133), self.x, self.h + self.y - 1, self.color_txt, self.color_bg)
 end
 
 local function Keyboard_onEvent(self,evt)
     if not self.parent then return false end
     if evt[3] and evt[4] and self:check(evt[3],evt[4]) then
         if EVENTS.TOP[evt[1]] then
-            for i=#self.children,1,-1 do
+            for i = #self.children, 1, -1 do
                 local child = self.children[i]
                 if child:check(evt[3],evt[4]) and child:onEvent(evt) then
                     return true
@@ -2173,6 +2161,14 @@ local function Root_tResize(self)
     screen.init()
 end
 
+local function Root_redraw(self)
+    Container_redraw(self)
+    screen.draw()
+    if self.focus then
+        self.focus:focusPostDraw()
+    end
+end
+
 local function Root_onEvent(self, evt)
     local event = evt[1]
     local focus = self.focus
@@ -2207,9 +2203,7 @@ local function Root_mainloop(self)
             self.running_program = false
         end
         self:onEvent(evt)
-        screen.draw()
     end
-    --c.termClear()
 end
 
 ---Creating new *object* of *class* root - event handler, to use root:mainloop()
@@ -2219,10 +2213,10 @@ function UI.New_Root()
     local instance = UI.New_Container(1, 1, term.getSize())
     instance.focus = nil
     instance.running_program = true
-    --instance.modal = nil
 
     instance.show = Root_show
     instance.tResize = Root_tResize
+    instance.redraw = Root_redraw
     instance.onEvent = Root_onEvent
     instance.mainloop = Root_mainloop
 
