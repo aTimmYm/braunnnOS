@@ -2041,7 +2041,7 @@ function UI.New_Window(x, y, w, h, color_bg, title)
 end
 
 local function Box_draw(self)
-    screen.draw_rectangle(self.x, self.y, self.w + self.x - 1, self.h + self.y - 1, self.color_bg)
+    screen.draw_rectangle(self.x, self.y, self.w, self.h, self.color_bg)
 end
 
 ---Creating new *object* of *class*

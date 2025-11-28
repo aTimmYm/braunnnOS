@@ -247,6 +247,12 @@ buttonMove.pressed = function (self)
     end
     ::finish::
 end
+
+surface.onResize = function (width, height)
+    buttonRet.w = width
+    list.w, list.h = width - 1, height - 1
+    scrollbar.local_x, scrollbar.h = list.w + 1, list.h
+end
 -----------------------------------------------------
 ---------| MAINLOOP И ДЕЙСТВИЯ ПОСЛЕ НЕГО |----------
 surface:onLayout()

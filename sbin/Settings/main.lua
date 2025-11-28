@@ -12,7 +12,7 @@ local UI = require("ui")
 local system = require("braunnnsys")
 -----------------------------------------------------
 -----| СЕКЦИЯ ОБЪЯВЛЕНИЯ ПЕРЕМЕННЫХ ПРОГРАММЫ |------
-local pageBuffer = nil
+local page_buffer = nil
 local settingsPath = "usr/settings.conf"
 local conf = c.readConf(settingsPath)
 local PALETTE = require("palette")
@@ -49,7 +49,7 @@ box:addChild(buttonTIME)
 local buttonCOLORS = UI.New_Button(2, buttonTIME.y + 1, buttonTIME.w, 1, "COLORS", _, box.color_bg, colors.white)
 box:addChild(buttonCOLORS)
 
-local systemLabel = UI.New_Label(2, buttonTIME.y + 1, box.w - 2, 1, "-SYSTEM--", _, box.color_bg, colors.lightGray)
+local systemLabel = UI.New_Label(2, buttonCOLORS.y + 1, box.w - 2, 1, "-SYSTEM--", _, box.color_bg, colors.lightGray)
 box:addChild(systemLabel)
 
 local buttonAbout = UI.New_Button(2, systemLabel.y + 1, systemLabel.w, 1, "ABOUT", _, box.color_bg, colors.white)
@@ -98,7 +98,7 @@ local function checkUpdates(manifest)
     end
 end
 
-local function createPage1()
+local function create_page_1()
     local page = UI.New_Box(box.w + 1, 1, surface.w - box.w, surface.h, colors.black)
 
     local tumblerLabel = UI.New_Label(2, 2, 12, 1, "Monitor Mode", "left", page.color_bg, colors.white)
@@ -130,13 +130,18 @@ local function createPage1()
         c.playSound("minecraft:block.lever.click",3)
     end
 
+    page.onResize = function (width, height)
+        monitorTumbler.local_x = width - 2
+        dropdown.local_x = width - 4
+    end
+
     return page
 end
 
-local function createPage2()
+local function create_page_2()
     local page = UI.New_Box(box.w + 1, 1, surface.w - box.w, surface.h, colors.black)
 
-    local time24FormatLabel = UI.New_Label(2,2, 17, 1, "Enable 24h format", "left", page.color_bg, colors.white)
+    local time24FormatLabel = UI.New_Label(2, 2, 17, 1, "Enable 24h format", "left", page.color_bg, colors.white)
     page:addChild(time24FormatLabel)
 
     local time24FormatTumbler = UI.New_Tumbler(page.w - 2, time24FormatLabel.y, colors.lightGray, colors.gray, _, conf["24format"])
@@ -158,10 +163,15 @@ local function createPage2()
         c.saveConf(settingsPath, conf)
     end
 
+    page.onResize = function (width, height)
+        time24FormatTumbler.local_x = width - 2
+        showSecondsTumbler.local_x = width - 2
+    end
+
     return page
 end
 
-local function createPage3()
+local function create_page_3()
     local page = UI.New_Box(box.w + 1, 1, surface.w - box.w, surface.h, colors.black)
 
     local labelCurrCols = UI.New_Label(2, 2, 16, 1, "Current colors: ", "left", colors.white, colors.black)
@@ -169,11 +179,10 @@ local function createPage3()
 
     local currCols = UI.New_Label(labelCurrCols.x + labelCurrCols.w + 1, labelCurrCols.y, 4, 1)
     currCols.draw = function(self) -- твой кастомный draw
-        screen.write(" ", self.x, self.y, colors.black)
-        screen.write(" ", self.x + 1, self.y, colors.white)
-        screen.write(" ", self.x + 2, self.y, colors.lightGray)
-        screen.write(" ", self.x + 3, self.y, colors.gray)
-        -- ... остальной твой красивый драв
+        screen.write(" ", self.x, self.y, colors.black, colors.black)
+        screen.write(" ", self.x + 1, self.y, colors.white, colors.white)
+        screen.write(" ", self.x + 2, self.y, colors.lightGray, colors.lightGray)
+        screen.write(" ", self.x + 3, self.y, colors.gray, colors.gray)
         screen.write(string_char(149), self.x - 1, self.y, colors.red, colors.black)
         screen.write(string_char(149), self.x + 4, self.y, colors.black, colors.red)
         screen.write(string_char(144), self.x + 4, self.y - 1, colors.black, colors.red)
@@ -199,10 +208,14 @@ local function createPage3()
         end
     end
 
+    page.onResize = function (width, height)
+        dropdownChoose.local_x, dropdownChoose.local_y = width - 13, chooseLabel.local_y
+    end
+
     return page
 end
 
-local function createPage4()
+local function create_page_4()
     local page = UI.New_Box(box.w + 1, 1, surface.w - box.w, surface.h, colors.black)
 
     local braunnnOS = UI.New_Label(2, 2, 9, 1, string_char(223).."raunnnOS", _, page.color_bg, colors.white)
@@ -246,27 +259,35 @@ local function createPage4()
     return page
 end
 
-local function setPage(creatorFunc)
-    if pageBuffer and pageBuffer.creator ~= creatorFunc then
-        surface:removeChild(pageBuffer)
+local function set_page(creator_func)
+    if page_buffer and page_buffer.creator ~= creator_func then
+        surface:removeChild(page_buffer)
     end
 
-    if pageBuffer and pageBuffer.creator == creatorFunc then
-        surface:addChild(pageBuffer)
+    if page_buffer and page_buffer.creator == creator_func then
+        surface:addChild(page_buffer)
         return
     end
 
-    local newPage = creatorFunc()
-    newPage.creator = creatorFunc
+    local newPage = creator_func()
+    newPage.creator = creator_func
     surface:addChild(newPage)
-    pageBuffer = newPage
+    page_buffer = newPage
     surface:onLayout()
 end
 -----------------------------------------------------
 --| СЕКЦИЯ ПЕРЕОПРЕДЕЛЕНИЯ ФУНКЦИОНАЛЬНЫХ МЕТОДОВ |--
-buttonSCREEN.pressed  = function() setPage(createPage1) end
-buttonTIME.pressed    = function() setPage(createPage2) end
-buttonCOLORS.pressed  = function() setPage(createPage3) end
-buttonAbout.pressed   = function() setPage(createPage4) end
+buttonSCREEN.pressed  = function() set_page(create_page_1) end
+buttonTIME.pressed    = function() set_page(create_page_2) end
+buttonCOLORS.pressed  = function() set_page(create_page_3) end
+buttonAbout.pressed   = function() set_page(create_page_4) end
+
+surface.onResize = function (width, height)
+    box.h = height
+    if page_buffer and page_buffer.onResize then
+        page_buffer.w, page_buffer.h = width - box.w, height
+        page_buffer.onResize(page_buffer.w, page_buffer.h)
+     end
+end
 -----------------------------------------------------
-setPage(createPage4)
+set_page(create_page_4)

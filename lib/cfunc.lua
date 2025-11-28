@@ -10,27 +10,6 @@ function M.DEBUG()
     return dbg
 end
 
-function M.write(string, x, y, bgcol, txtcol)
-    local tx, ty = term.getCursorPos()
-    local tbgcol = term.getBackgroundColor()
-    local ttxtcol = term.getTextColor()
-
-    term.setTextColor(txtcol or ttxtcol)
-    term.setBackgroundColor(bgcol or tbgcol)
-    term.setCursorPos(x or tx,y or ty)
-    term.write(string)
-
-    term.setCursorPos(tx,ty)
-    term.setTextColor(ttxtcol)
-    term.setBackgroundColor(tbgcol)
-end
-
-function M.drawFilledBox(sX,sY,eX,eY,color)
-    for i=sY,eY do
-        M.write(string_rep(" ",eX-sX+1),sX,i,color)
-    end
-end
-
 function M.printTable(...) --вывод массива
 	local table = {...}
 	for	_,v in pairs(table) do
@@ -50,21 +29,6 @@ function M.findMaxLenStrOfArray(array)
         max = math.max(max,#v)
     end
     return max
-end
-
-function M.termClear(bg,txt)
-    --local temp = {{term.getCursorPos()}, term.getTextColor(), term.getBackgroundColor()}
-    term.setCursorPos(1,1)
-    term.setBackgroundColor(bg or colors.black)
-    term.setTextColor(txt or colors.white)
-    term.clear()
-    --term.setCursorPos(temp[1][1], temp[1][2])
-    --term.setBackgroundColor(temp[2])
-    --term.setTextColor(temp[3])
-end
-
-function M.round(x)
-    return math.floor(x + 0.5)
 end
 
 function M.openFile(root,path,args)

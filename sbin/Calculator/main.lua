@@ -16,7 +16,6 @@ local btnTexts = {
 -----------------------------------------------------
 ----------| СЕКЦИЯ ИНИЦИАЛИЗАЦИИ ОБЪЕКТОВ |----------
 local window, surface = system.add_window("Titled", colors.black, "Calculator")
-if not surface then error("sosal22") end
 
 local display = UI.New_Label(1, 1, math.max(10, surface.w - 2), 3, "0", "right", surface.color_bg, colors.white)
 surface:addChild(display)
@@ -52,13 +51,11 @@ end
 for row = 1, #btnTexts do
 	for col = 1, #btnTexts[row] do
 		local txt = btnTexts[row][col]
-		local padX = 0
-		local padY = 0
 		local totalCols = #btnTexts[1]
 		local w = math.floor((surface.w - (totalCols - 1)) / totalCols)
 		local h = math.floor((surface.h - 3)/5)
-		local x = surface.x + (col - 1) * (w + padX) + 1
-		local y = display.h + (row - 1) * (h + padY) + 1
+		local x = surface.x + (col - 1) * w + 1
+		local y = display.h + (row - 1) * h + 1
 
 		local btn = UI.New_Button(x, y, w, h, txt)
 
@@ -97,5 +94,8 @@ for row = 1, #btnTexts do
 end
 -----------------------------------------------------
 --| СЕКЦИЯ ПЕРЕОПРЕДЕЛЕНИЯ ФУНКЦИОНАЛЬНЫХ МЕТОДОВ |--
+surface.onResize = function (width, height)
+
+end
 -----------------------------------------------------
 surface:onLayout()
