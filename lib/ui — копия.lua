@@ -771,7 +771,7 @@ local function Scrollbar_draw(self)
     end
 end
 
-local function Scrollbar_setObj(self, obj)
+local function Scrollbar_setObj(self,obj)
     self.obj = obj
     self.color_bg = self.obj.bg
     self.color_txt = self.obj.txtcol
@@ -782,7 +782,7 @@ local function Scrollbar_getTrackHeight(self)
     return self.h - 2
 end
 
-local function Scrollbar_checkIn(self, btn, x, y)
+local function Scrollbar_checkIn(self,btn, x, y)
     if y == self.y then
         self.held = 1  -- Up arrow
         return true
@@ -793,14 +793,14 @@ local function Scrollbar_checkIn(self, btn, x, y)
     return false
 end
 
-local function Scrollbar_isOnSlider(self, y)
+local function Scrollbar_isOnSlider(self,y)
     local slider_offset = self:getSliderOffset()
     local slider_height = self:getSliderHeight()
     local slider_y_start = self.y + 1 + slider_offset
     return y >= slider_y_start and y <= slider_y_start + slider_height - 1
 end
 
-local function Scrollbar_onMouseUp(self, btn, x, y)
+local function Scrollbar_onMouseUp(self,btn, x, y)
     if self.held == 1 and self:check(x, y) and y == self.y then
         self.obj:onMouseScroll(-1)
     elseif self.held == 3 and self:check(x, y) and y == self.y + self.h - 1 then
@@ -812,7 +812,7 @@ local function Scrollbar_onMouseUp(self, btn, x, y)
     return true
 end
 
-local function Scrollbar_onMouseScroll(self, dir, x, y)
+local function Scrollbar_onMouseScroll(self,dir, x, y)
     if self:check(x, y) then
         self.obj:onMouseScroll(dir)
         self.dirty = true
@@ -854,12 +854,12 @@ local function Scrollbar_getSliderOffset(self)
     local max_offset = self:getMaxSliderOffset()
     if max_offset == 0 then return 0 end
 
-    local scrollmax = self.obj.scrollmax or 0
-    if scrollmax <= 0 then return 0 end
+    local scrollmax = self.obj.scrollmax or 1
+    if scrollmax <= 1 then return 0 end
 
-    local pos = self.obj.scrollpos_y or 0
+    local pos = (self.obj.scrollpos or 1) - 1
     pos = clamp(pos, 0, scrollmax - 1)
-    local frac = pos / (scrollmax - 1) -- ВОЗМОЖНО ДЕЛЕНИЕ НА 0
+    local frac = pos / (scrollmax - 1)
     return clamp(math_floor(frac * max_offset + 0.5), 0, max_offset)
 end
 
@@ -886,9 +886,9 @@ local function Scrollbar_onMouseDown(self,btn, x, y)
 
     local slider_height = self:getSliderHeight()
     local max_offset = self:getMaxSliderOffset()
-    local scrollmax = self.obj.scrollmax or 0
+    local scrollmax = self.obj.scrollmax or 1
 
-    if scrollmax <= 0 or max_offset == 0 then
+    if scrollmax <= 1 or max_offset == 0 then
         return true
     end
 
@@ -904,32 +904,32 @@ local function Scrollbar_onMouseDown(self,btn, x, y)
     if max_offset > 0 then
         frac = desired_offset / max_offset
     end
-    local pos = math_floor(frac * scrollmax + 0.5)
-    local new_pos = clamp(pos, 0, scrollmax)
+    local pos = math_floor(frac * (scrollmax - 1) + 0.5)
+    local new_pos = clamp(pos + 1, 1, scrollmax)
 
-    self.obj.scrollpos_y = new_pos
+    self.obj.scrollpos = new_pos
     self.obj:onLayout()
     self.dirty = true
     return true
 end
 
-local function Scrollbar_onMouseDrag(self, btn, x, y)
+local function Scrollbar_onMouseDrag(self,btn, x, y)
     if self.held ~= 2 then return false end
 
     local track_top = self.y + 1
     local max_offset = self:getMaxSliderOffset()
-    local scrollmax = self.obj.scrollmax or 0
-    if max_offset == 0 or scrollmax <= 0 then return true end
+    local scrollmax = self.obj.scrollmax or 1
+    if max_offset == 0 or scrollmax <= 1 then return true end
 
     local desired_offset = math.floor((y - track_top) - self.drag_offset + 0.5)
     desired_offset = clamp(desired_offset, 0, max_offset)
 
     local frac = desired_offset / max_offset
-    local pos = math_floor(frac * scrollmax + 0.5)
-    local new_pos = clamp(pos, 0, scrollmax)
+    local pos = math_floor(frac * (scrollmax - 1) + 0.5)
+    local new_pos = clamp(pos + 1, 1, scrollmax)
 
-    if self.obj.scrollpos_y ~= new_pos then
-        self.obj.scrollpos_y = new_pos
+    if self.obj.scrollpos ~= new_pos then
+        self.obj.scrollpos = new_pos
         if self.obj.onLayout then self.obj:onLayout() end
         self.obj.dirty = true
         self.dirty = true
@@ -944,36 +944,10 @@ end
 function UI.New_Scrollbar(obj)
     expect(1, obj, "table")
 
-    local instance = New_Widget(obj.x + obj.w, obj.y, 1, obj.h, obj.color_bg, obj.color_txt)
+    local instance = New_Widget(obj.local_x + obj.w, obj.local_y, 1, obj.h, obj.color_bg, obj.color_txt)
     instance.obj = obj
-    instance.obj.scrollbar = instance
-    instance.held = 0  -- 0: none, 1: up arrow, 2: slider, 3: down arrow
-    instance.drag_offset = 0
-
-    instance.draw = Scrollbar_draw
-    instance.setObj = Scrollbar_setObj
-    instance.getTrackHeight = Scrollbar_getTrackHeight
-    instance.getSliderHeight = Scrollbar_getSliderHeight
-    instance.getMaxSliderOffset = Scrollbar_getMaxSliderOffset
-    instance.getSliderOffset = Scrollbar_getSliderOffset
-    instance.checkIn = Scrollbar_checkIn
-    instance.isOnSlider = Scrollbar_isOnSlider
-    instance.onMouseDown = Scrollbar_onMouseDown
-    instance.onMouseDrag = Scrollbar_onMouseDrag
-    instance.onMouseUp = Scrollbar_onMouseUp
-    instance.onMouseScroll = Scrollbar_onMouseScroll
-
-    return instance
-end
-
----Creating new *object* of *class* "scrollbar_horizontal" which connected at another *object*
----@param obj table *object*
----@return table return scrollbar_horizontal
-function UI.New_Scrollbar_Horizontal(obj)
-    expect(1, obj, "table")
-
-    local instance = New_Widget(obj.x, obj.y + obj.h, obj.w, 1, obj.color_bg, obj.color_txt)
-    instance.obj = obj
+    instance.color_bg = instance.obj.color_bg
+    instance.color_txt = instance.obj.color_txt
     instance.obj.scrollbar = instance
     instance.held = 0  -- 0: none, 1: up arrow, 2: slider, 3: down arrow
     instance.drag_offset = 0
@@ -995,15 +969,15 @@ function UI.New_Scrollbar_Horizontal(obj)
 end
 
 local function List_draw(self)
-    self.scrollmax = _max(0, #self.array - self.h)
-    self.scrollpos_y = _max(0, _min(self.scrollpos_y, self.scrollmax))
-    for i = self.scrollpos_y + 1, _min(self.h + self.scrollpos_y, #self.array) do
+    self.scrollmax = _max(1, #self.array - self.h + 1)
+    self.scrollpos = _max(1, _min(self.scrollpos, self.scrollmax))
+    for i = self.scrollpos, _min(self.h + self.scrollpos - 1, #self.array) do
         local index_arr = self.array[i]
-        screen.write(_sub(index_arr.._rep(" ", self.w - #index_arr), 1, self.w), self.x, (i - self.scrollpos_y - 1) + self.y, self.color_bg, self.color_txt)
+        screen.write(_sub(index_arr.._rep(" ", self.w - #index_arr), 1, self.w), self.x, (i - self.scrollpos) + self.y, self.color_bg, self.color_txt)
     end
     if self.item and self.item_index then
-        if (self.y + self.item_index - self.scrollpos_y - 1) >= self.y and (self.y + self.item_index - self.scrollpos_y - 1) <= (self.h + self.y - 1) then
-            screen.write(_sub(self.item.._rep(" ",self.w - #self.item), 1, self.w), self.x, self.y + self.item_index - self.scrollpos_y - 1, self.color_txt, self.color_bg)
+        if (self.y + self.item_index - self.scrollpos) >= self.y and (self.y + self.item_index - self.scrollpos) <= (self.h + self.y - 1) then
+            screen.write(_sub(self.item.._rep(" ",self.w - #self.item), 1, self.w), self.x, self.y + self.item_index - self.scrollpos, self.color_txt, self.color_bg)
         end
     end
         if self.h > #self.array then
@@ -1021,15 +995,15 @@ local function List_updateArr(self, array)
 end
 
 local function List_onMouseScroll(self, dir, x, y)
-    local scroll = clamp(self.scrollpos_y + dir * self.sensivity, 0, self.scrollmax)
-    if self.scrollpos_y ~= scroll then
-        self.scrollpos_y = scroll
+    local scroll = clamp(self.scrollpos + dir * self.sensivity, 1, self.scrollmax)
+    if self.scrollpos ~= scroll then
+        self.scrollpos = scroll
         self:updateDirty()
     end
     return true
 end
 
-local function List_onFocus(self, focused)
+local function List_onFocus(self,focused)
     if not focused then
         self.item = nil
         self.item_index = nil
@@ -1038,8 +1012,8 @@ local function List_onFocus(self, focused)
     return true
 end
 
-local function List_onMouseDown(self, btn, x, y)
-    local i = y - self.y + self.scrollpos_y + 1
+local function List_onMouseDown(self,btn,x,y)
+    local i = -self.y + y + self.scrollpos
     if i <= #self.array then
         if self.item and self.item == self.array[i] then
             self:pressed()
@@ -1057,21 +1031,21 @@ local function List_onKeyDown(self, key, held)
         if key == keys.up then
             self.item_index = _max(self.item_index - 1, 1)
             self.item = self.array[self.item_index]
-        if self.item_index <= self.scrollpos_y then
+        if self.item_index < self.scrollpos then
             self:onMouseScroll(1)
         end
         elseif key == keys.down then
             self.item_index = _min(self.item_index + 1, #self.array)
             self.item = self.array[self.item_index]
-        if self.item_index > _min(self.h + self.scrollpos_y, #self.array) then
+        if self.item_index > _min(self.h + self.scrollpos - 1, #self.array) then
             self:onMouseScroll(-1)
         end
         elseif key == keys.home then
-            self.scrollpos_y = 0
+            self.scrollpos = 1
             self.item_index = 1
             self.item = self.array[self.item_index]
         elseif key == keys['end'] then
-            self.scrollpos_y = self.scrollmax
+            self.scrollpos = self.scrollmax
             self.item_index = #self.array
             self.item = self.array[self.item_index]
         end
@@ -1109,7 +1083,7 @@ function UI.New_List(x, y, w, h, array, color_bg, color_txt)
     instance.array = array
     instance.item = nil
     instance.item_index = nil
-    instance.scrollpos_y = 0
+    instance.scrollpos = 1
     instance.scrollmax = 0
     instance.sensivity = 3
 
@@ -1263,8 +1237,8 @@ end
 
 local function TextBox_draw(self)
     screen.draw_rectangle(self.x, self.y, self.w, self.h, self.color_bg)
-    for i = self.scrollpos_y + 1, _min(self.h + self.scrollpos_y, #self.lines) do
-        screen.write(_sub(self.lines[i], self.offset_x + 1, self.offset_x + self.w - 1), self.x, i - self.scrollpos_y + self.y - 1, self.color_bg, self.color_txt)
+    for i = self.offset_y + 1, _min(self.h + self.offset_y, #self.lines) do
+        screen.write(_sub(self.lines[i], self.offset_x + 1, self.offset_x + self.w - 1), self.x, i - self.offset_y + self.y - 1, self.color_bg, self.color_txt)
     end
 end
 
@@ -1274,10 +1248,10 @@ end
 
 local function TextBox_moveCursorPos(self, posX, posY)
     self.cursor.y = clamp(posY, 1, #self.lines)
-    if self.cursor.y - self.scrollpos_y > self.h then
-        self.scrollpos_y = self.cursor.y - self.h
-    elseif self.cursor.y - self.scrollpos_y < 1 then
-        self.scrollpos_y = self.cursor.y - 1
+    if self.cursor.y - self.offset_y > self.h then
+        self.offset_y = self.cursor.y - self.h
+    elseif self.cursor.y - self.offset_y < 1 then
+        self.offset_y = self.cursor.y - 1
     end
     self.cursor.x = clamp(posX, 1, #(self.lines[self.cursor.y] or "") + 1)
     if self.cursor.x - self.offset_x > self.w then
@@ -1299,19 +1273,14 @@ local function TextBox_onCharTyped(self, chr)
 end
 
 local function TextBox_onMouseDown(self, btn, x, y)
-    self:moveCursorPos(x - self.x + self.offset_x + 1, y - self.y + self.scrollpos_y + 1)
+    self:moveCursorPos(x - self.x + self.offset_x + 1, y - self.y + self.offset_y + 1)
 end
 
 local function TextBox_focusPostDraw(self)
     local x = self.x - self.offset_x + self.cursor.x - 1
-    local y = self.y - self.scrollpos_y + self.cursor.y - 1
+    local y = self.y - self.offset_y + self.cursor.y - 1
     term.setCursorPos(x, y)
     term.setTextColor(colors.blue)
-    if (x < self.x or x > self.x + self.w - 1) or (y < self.y or y > self.y + self.h - 1) then
-        term.setCursorBlink(false)
-    else
-        term.setCursorBlink(true)
-    end
 end
 
 local function TextBox_onFocus(self, focused)
@@ -1319,19 +1288,9 @@ local function TextBox_onFocus(self, focused)
 end
 
 local function TextBox_onMouseScroll(self, dir, x, y)
-    if self.shiftheld then
-        self.offset_x = clamp(self.offset_x + dir, 0, c.findMaxLenStrOfArray(self.lines) - self.w + 1)
-    else
-        self.scrollpos_y = clamp(self.scrollpos_y + dir, 0, #self.lines - self.h + 1)
-    end
-    self:updateDirty()
+    self.offset_y = clamp(self.offset_y + dir, 0, #self.lines - self.h + 1)
+    self.dirty = true
     return true
-end
-
-local function TextBox_onKeyUp(self, key)
-    if key == keys.leftShift then
-        self.shiftheld = false
-    end
 end
 
 local function TextBox_onKeyDown(self, key, held)
@@ -1341,7 +1300,7 @@ local function TextBox_onKeyDown(self, key, held)
         if line == "" and self.lines[y - 1] then
             table.remove(self.lines, y)
             self:moveCursorPos(#self.lines[y - 1] + 1, y - 1)
-            self.scrollpos_y = _max(self.scrollpos_y - 1, 0)
+            self.offset_y = _max(self.offset_y - 1, 0)
         else
             self.lines[y] = _sub(line, 1, _max(self.cursor.x - 2, 0)).._sub(line, self.cursor.x, #line)
             self.offset_x = _max(self.offset_x - 1, 0)
@@ -1357,14 +1316,13 @@ local function TextBox_onKeyDown(self, key, held)
         self:moveCursorPos(self.cursor.x, y - 1)
     elseif key == keys.down then
         self:moveCursorPos(self.cursor.x, y + 1)
-    elseif key == keys.leftShift and held == true then
-        self.shiftheld = true
     elseif key == keys.enter then
         table_insert(self.lines, y + 1, "")
         self:moveCursorPos(self.cursor.x, y + 1)
     end
     self.len = #self.lines
-    self.scrollmax = _max(#self.lines - self.h, 0)
+    self.scrollpos = self.offset_y + 1
+    self.scrollmax = #self.lines
     self:updateDirty()
     return true
 end
@@ -1374,8 +1332,9 @@ function UI.New_TextBox(x, y, w, h, color_bg, color_txt)
     instance.lines = {}
     instance.cursor = {x = 1, y = 1}
     instance.offset_x = 0
-    instance.scrollpos_y = 0
-    instance.scrollmax = 0
+    instance.offset_y = 0
+    instance.scrollpos = 1
+    instance.scrollmax = 1
     instance.len = 1
 
     instance.draw = TextBox_draw
@@ -1386,7 +1345,6 @@ function UI.New_TextBox(x, y, w, h, color_bg, color_txt)
     instance.focusPostDraw = TextBox_focusPostDraw
     instance.onFocus = TextBox_onFocus
     instance.onMouseScroll = TextBox_onMouseScroll
-    instance.onKeyUp = TextBox_onKeyUp
     instance.onKeyDown = TextBox_onKeyDown
     instance.updateDirty = List_updateDirty
 
@@ -2246,13 +2204,13 @@ local function ScrollBox_onLayout(self)
     self.dirty = true
     Container_onLayout(self)
     for _, child in pairs(self.children) do
-        child.y = child.y - self.scrollpos_y
-        self.scrollmax = _max(_max(self.scrollmax, child.local_y + child.h) - self.h, 0)
+        child.y = child.y - (self.scrollpos - 1)
+        self.scrollmax = _max(_max(self.scrollmax, child.local_y + child.h + 1) - self.h, 1)
         if child.y + child.h > self.y and child.y <= self.y + self.h - 1 then
             table_insert(self.visibleChild, child)
         end
     end
-    self.len = self.scrollmax + self.h
+    self.len = self.scrollmax + self.h - 1
 end
 
 local function ScrollBox_updateDirty(self)
@@ -2276,8 +2234,8 @@ function UI.New_ScrollBox(x, y, w, h, color_bg)
 
     local instance = UI.New_Container(x, y, w, h, color_bg)
     instance.term = term.current()
-    instance.scrollpos_y = 0
-    instance.scrollmax = 0
+    instance.scrollpos = 1
+    instance.scrollmax = 1
     instance.len = 1
     instance.visibleChild = {}
     instance.sensivity = 3
@@ -2349,12 +2307,8 @@ local function Root_mainloop(self)
         --dbg.print(textutils.serialize(evt))
         --print(textutils.serialize(self.size))
         if evt[1] == "terminate" then
-            term.setCursorPos(1,1)
-            term.setBackgroundColor(colors.black)
-            term.setTextColor(colors.white)
-            term.clear()
+            c.termClear(self.color_bg)
             self.running_program = false
-            break
         end
         self:onEvent(evt)
     end

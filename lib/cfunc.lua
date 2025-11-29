@@ -26,7 +26,7 @@ end
 function M.findMaxLenStrOfArray(array)
     local max = 0
     for _, v in pairs(array) do
-        max = math.max(max,#v)
+        max = math.max(max, #v)
     end
     return max
 end
