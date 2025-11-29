@@ -12,8 +12,7 @@ df4bccffc73641b79da08106856799fa   lib/id3_meta.lua
 6b9e55f28cd0f62163904e7bec81352a   lib/mp4_meta
 0e8430925597fb135103b506fe2c669f   lib/palette
 914e77e5a6c186c459a010ae7733358a   lib/translit.lua
-510cf80690947b235cb29530ede8a534   lib/ui — копия.lua
-b0a777d04b4204a518ef1e228ba4c376   lib/ui.lua
+5fcb9caab85d9bd80cf5e219a86dbf6d   lib/ui.lua
 89b0b700ec66f8f1128e5783e1d32e86   sbin/Calculator/icon.ico
 8764849f29964f44e953c1df8f9f5418   sbin/Calculator/main.lua
 920e095b774f4f8e2c2c59c405ef9d09   sbin/Converter/main.lua
@@ -25,7 +24,7 @@ f420705bb6aeced24f1e2dcdbc818ff0   sbin/Explorer/icon.ico
 959b56503d01fbe97736e54f899dbbd0   sbin/MPlayer/main.lua
 117de29ab363f7522b3bbbd0d133235d   sbin/Messenger/icon.ico
 30bc906c5cdfc0379210541f2c2cb73c   sbin/Messenger/main.lua
-a22ff28f06b1d7279b5bf19f28799f26   sbin/Polygon/main.lua
+e779f1450f8c8ea6e034bd195fbd2067   sbin/Polygon/main.lua
 bbbb8a0f7aab18dc6179ff64a6dae421   sbin/Settings/icon.ico
 f93ac0e25c98508c33db8be15048514a   sbin/Settings/main.lua
 6bacd99cdcd6a49fdbd4efab032efee4   sbin/Shell/icon.ico
