@@ -4,32 +4,32 @@ local _sub = string.sub
 local _min = math.min
 local _max = math.max
 
-local _render = {}
+local _screen = {}
 
 local screen_w, screen_h
 
--- Буфер экрана
-local screen_buffer = {}
+-- Кадр экрана
+local screen_frame = {}
 
 -- Переменные для Clipping (Ограничение области рисования)
 -- По умолчанию область - весь экран
 local clip_x, clip_y, clip_w, clip_h
 
-function _render.fill()
+function _screen.fill()
     screen_w, screen_h = term.getSize()
     clip_x, clip_y, clip_w, clip_h = 1, 1, screen_w, screen_h
     for i = 1, screen_h do
-        screen_buffer[i] = {
+        screen_frame[i] = {
             text = _rep(" ", screen_w),
             color_bg = _rep(toBlit(32768), screen_w),
             color_txt = _rep(toBlit(1), screen_w)
         }
     end
 end
-_render.fill() -- Вызываем при загрузке
+_screen.fill() -- Вызываем при загрузке
 
 -- Функция установки области видимости (вместо window.create)
-function _render.clip_set(x, y, w, h)
+function _screen.clip_set(x, y, w, h)
     clip_x = _max(1, x)
     clip_y = _max(1, y)
     clip_w = _min(screen_w, x + w - 1)
@@ -37,15 +37,15 @@ function _render.clip_set(x, y, w, h)
 end
 
 -- Сброс области видимости на весь экран
-function _render.clip_remove()
+function _screen.clip_remove()
     clip_x, clip_y, clip_w, clip_h = 1, 1, screen_w, screen_h
 end
 
 -- Безопасная функция записи в буфер
-function _render.write(str, x, y, bg, txt)
+function _screen.write(str, x, y, bg, txt)
     if y < clip_y or y > clip_h then return end
 
-    local lineObj = screen_buffer[y]
+    local lineObj = screen_frame[y]
     if not lineObj then return end -- Защита от nil
 
     local start_draw = _max(x, clip_x)
@@ -69,21 +69,25 @@ function _render.write(str, x, y, bg, txt)
     lineObj.color_txt = _sub(lineObj.color_txt, 1, prefix_len) .. visible_txt .. _sub(lineObj.color_txt, suffix_start)
 end
 
-function _render.draw_rectangle(x, y, w, h, bg)
+function _screen.draw_rectangle(x, y, w, h, bg)
     local line = _rep(" ", w)
     for i = y, y + h - 1 do
-        _render.write(line, x, i, bg, 1)
+        _screen.write(line, x, i, bg, 1)
     end
 end
 
-function _render.update()
-    for i = 1, #screen_buffer do
+function _screen.update()
+    for i = 1, #screen_frame do
         term.setCursorPos(1,i)
-        term.blit(screen_buffer[i].text, screen_buffer[i].color_txt, screen_buffer[i].color_bg)
+        term.blit(screen_frame[i].text, screen_frame[i].color_txt, screen_frame[i].color_bg)
     end
 end
 
-function _render.draw_blittle(image, x, y)
+function _screen.get_buffer()
+    return screen_frame
+end
+
+function _screen.draw_blittle(image, x, y)
     local t, tC, bC = image[1], image[2], image[3]
     x, y = x or 1, y or 1  -- terminal не нужен, т.к. мы работаем с буфером
 
@@ -98,7 +102,7 @@ function _render.draw_blittle(image, x, y)
             goto continue  -- Пропускаем строку, если за пределами
         end
 
-        local frame = screen_buffer[y_eff]
+        local frame = screen_frame[y_eff]
         if not frame then
             goto continue  -- Защита от nil (хотя буфер должен быть полным)
         end
@@ -145,4 +149,4 @@ function _render.draw_blittle(image, x, y)
     end
 end
 
-return _render
+return _screen

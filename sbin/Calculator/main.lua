@@ -95,7 +95,17 @@ end
 -----------------------------------------------------
 --| СЕКЦИЯ ПЕРЕОПРЕДЕЛЕНИЯ ФУНКЦИОНАЛЬНЫХ МЕТОДОВ |--
 surface.onResize = function (width, height)
-
+	display.w = math.max(10, width - 2)
+	for row = 1, #btnTexts do
+		for col = 1, #btnTexts[row] do
+			local totalCols = #btnTexts[1]
+			local btn = buttons[(row - 1) * totalCols + col]
+			btn.w = math.floor((width - (totalCols - 1)) / totalCols)
+			btn.h = math.floor((height - 3)/5)
+			btn.local_x = surface.local_x + (col - 1) * btn.w + 1
+			btn.local_y = display.h + (row - 1) * btn.h + 1
+		end
+	end
 end
 -----------------------------------------------------
 surface:onLayout()

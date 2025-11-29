@@ -70,6 +70,13 @@ scrollBox:addChild(slider)
 
 local dropdown = UI.New_Dropdown(1, tumbler.y + 2, dropdown_array, _, _, _, colors.white, colors.black)
 scrollBox:addChild(dropdown)
+
+local textbox = UI.New_TextBox(2, slider.y + 2, scrollBox.w - 2, 5, colors.white, colors.black)
+scrollBox:addChild(textbox)
+
+textbox:setLine("Hello!", 1)
+textbox:setLine("world", 2)
+textbox:setLine("world", 4)
 -----------------------------------------------------
 ------| СЕКЦИЯ ОБЪЯВЛЕНИЯ ФУНКЦИЙ ПРОГРАММЫ |--------
 

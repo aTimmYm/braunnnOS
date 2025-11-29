@@ -5,8 +5,8 @@ local string_lower = string.lower
 local string_gmatch = string.gmatch
 local table_insert = table.insert
 local table_sort = table.sort
-local math_max = math.max
-local math_min = math.min
+local _max = math.max
+local _min = math.min
 local math_floor = math.floor
 -----------------------------------------------------
 -------| СЕКЦИЯ ПОДКЛЮЧЕНИЯ БИБЛИОТЕК И ROOT |-------
@@ -220,7 +220,8 @@ local function play(self, path)
     if Title ~= "Unknown" then
         trackName:setText(Title)
     else
-        trackName:setText(temp)
+        local name = temp:match("(.+)%..-$")
+        trackName:setText(name)
     end
 
     self.music_file = fs.open(self.filePath, "rb")
@@ -249,7 +250,7 @@ local function play_next_chunk(self)
         os.queueEvent("pause_music")
         return
     end
-    local to_read = math_min(CHUNK_SIZE, self.data_end - cur_pos)
+    local to_read = _min(CHUNK_SIZE, self.data_end - cur_pos)
     if to_read <= 0 then return false end
     local chunk = self.music_file.read(to_read)
     if not chunk then return false end
@@ -404,11 +405,11 @@ local function cacheUpdate()
             local total_sec = getTotalSeconds(Path .. v)
             total_sec = format_time(total_sec)
 
-            local tailRead = math_min(8192, fileSize)
+            local tailRead = _min(8192, fileSize)
             local tail = ""
             if tailRead > 0 then
                 -- Обернем в pcall на случай ошибки доступа
-                pcall(function () handle:seek("set", math_max(0, fileSize - tailRead)) end)
+                pcall(function () handle:seek("set", _max(0, fileSize - tailRead)) end)
                 tail = handle:read(tailRead) or ""
             end
 
@@ -497,7 +498,8 @@ for i, v in pairs(sortedCache) do
     boxAll:addChild(trackPlay)
     table_insert(trackButtons, trackPlay)
 
-    local trackLabel = UI.New_Label(trackPlay.x + trackPlay.w, trackPlay.y, boxAll.w - 10, 1, v, "left", boxAll.color_bg, colors.white)
+    local name = v:match("(.+)%..-$")
+    local trackLabel = UI.New_Label(trackPlay.x + trackPlay.w, trackPlay.y, boxAll.w - 10, 1, name, "left", boxAll.color_bg, colors.white)
     boxAll:addChild(trackLabel)
 
     local trackTime = UI.New_Label(boxAll.w - 5, trackPlay.y, 5, 1, cache[v].time, "left", boxAll.color_bg, colors.lightGray)
@@ -642,7 +644,7 @@ local function initNarrowMode(width)
     -- Логика кнопок
     btnVolumeUp.pressed = function (self)
         local cIdx = tonumber(volumeLabel.text) + 1 or 1
-        local nIdx = math_min(cIdx + 1, #volumes)
+        local nIdx = _min(cIdx + 1, #volumes)
         volume = volumes[nIdx]
         conf["volume"] = volume
         c.saveConf(confPath, conf)
@@ -651,7 +653,7 @@ local function initNarrowMode(width)
 
     btnVolumeDown.pressed = function (self)
         local cIdx = tonumber(volumeLabel.text) + 1 or 1
-        local nIdx = math_max(cIdx - 1, 1)
+        local nIdx = _max(cIdx - 1, 1)
         volume = volumes[nIdx]
         conf["volume"] = volume
         c.saveConf(confPath, conf)
@@ -732,12 +734,12 @@ end
 timeLine.pressed = function (self, btn, x, y)
     if not window.music_file then return end
     local relative_x = x - self.x
-    local width_range = math_max(1, self.w - 1)
+    local width_range = _max(1, self.w - 1)
     local percentage = relative_x / width_range
     local total_chunks = #self.arr
     local exact_pos = percentage * total_chunks + 1
     local new_pos = math_floor(exact_pos + 0.5)
-    new_pos = math_max(1, math_min(total_chunks, new_pos))
+    new_pos = _max(1, _min(total_chunks, new_pos))
     self.slidePosition = new_pos
     play_at_chunk(new_pos)
 end

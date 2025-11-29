@@ -1114,8 +1114,13 @@ end
 
 local function Textfield_focusPostDraw(self)
     term.setTextColor(colors.blue)
-    local bX = self.x + self.offset - self.writePos - 1
-    term.setCursorPos(bX, self.y)
+    local x = self.x + self.offset - self.writePos - 1
+    term.setCursorPos(x, self.y)
+    if x < self.x or x > self.x + self.w - 1 then
+        term.setCursorBlink(false)
+    else
+        term.setCursorBlink(true)
+    end
 end
 
 local function Textfield_moveCursorPos(self, pos)
@@ -1230,6 +1235,82 @@ function UI.New_Textfield(x, y, w, h, hint, hidden, color_bg, color_txt)
     instance.onPaste = Textfield_onPaste
     instance.onKeyDown = Textfield_onKeyDown
 
+    return instance
+end
+
+local function TextBox_draw(self)
+    screen.draw_rectangle(self.x, self.y, self.w, self.h, self.color_bg)
+    for i, line in pairs(self.lines) do
+        screen.write(_sub(line, self.offset_x, self.offset_x + self.w - 1), self.x, self.y + i - 1, self.color_bg, self.color_txt)
+    end
+end
+
+local function TextBox_setLine(self, line, number)
+    self.lines[number] = line
+end
+
+local function TextBox_moveCursorPos(self, posX, posY)
+    self.cursor_pos.x = clamp(posX, 1, #self.lines[self.cursor_pos.y] + 1)
+    if self.cursor_pos.x - self.offset_x > self.w then
+        self.offset_x = self.cursor_pos.x - self.w
+    elseif self.cursor_pos.x - self.offset_x < 1 then
+        self.offset_x = self.cursor_pos.x - 1
+    end
+end
+
+local function TextBox_onCharTyped(self, chr)
+    local i = self.cursor_pos.y
+    local x = self.cursor_pos.x
+    local line = self.lines[i]
+    if self.lines[i] then
+        self.lines[i] = _sub(line, 1, x - 1)..chr.._sub(line, x, #line)
+    else
+        self.lines[i] = chr
+    end
+    -- self.lines[i] = self.lines[i] or ""
+    -- self.lines[i] = _sub(self.lines[i], 1, self.offset_x - 1)..chr.._sub(self.lines[i], self.offset_x, #self.lines[i])
+    self:moveCursorPos(x + 1, 0)
+    self.dirty = true
+    return true
+end
+
+local function TextBox_onMouseDown(self, btn, x, y)
+    self.cursor_pos = {x = clamp(x - self.x + self.offset_x, 1, #self.lines[self.cursor_pos.y] + 1), y = y - self.y + 1}
+end
+
+local function TextBox_focusPostDraw(self, x, y)
+    local bX = self.x - self.offset_x + self.cursor_pos.x
+    term.setCursorPos(bX, self.cursor_pos.y + self.y - 1)
+    term.setTextColor(colors.blue)
+end
+
+local function TextBox_onFocus(self, focused)
+    term.setCursorBlink(focused)
+end
+
+-- local function TextBox_delete(self, line_num)
+--
+-- end
+
+local function TextBox_onMouseScroll(self, dir, x, y)
+
+end
+
+function UI.New_TextBox(x, y, w, h, color_bg, color_txt)
+    local instance = New_Widget(x, y, w, h, color_bg, color_txt)
+    instance.lines = {}
+    instance.cursor_pos = {x = 1, y = 1}
+    instance.offset_x = 1
+    instance.offset_y = 1
+
+    instance.draw = TextBox_draw
+    instance.setLine = TextBox_setLine
+    instance.onCharTyped = TextBox_onCharTyped
+    instance.moveCursorPos = TextBox_moveCursorPos
+    instance.onMouseDown = TextBox_onMouseDown
+    instance.focusPostDraw = TextBox_focusPostDraw
+    instance.onFocus = TextBox_onFocus
+    instance.onMouseScroll = TextBox_onMouseScroll
     return instance
 end
 

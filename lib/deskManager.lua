@@ -162,7 +162,7 @@ function dM.makeShortcuts()
             if desktops[d] then
                 desktops[d]:addChild(shortcut)
             else
-                error("Ошибка: Попытка добавить ярлык на несуществующий рабочий стол: " .. d)
+                error("Error: Attempt add shortcut to (desktop[" .. d .. "] = nil).")
             end
 
             col = col + 1
