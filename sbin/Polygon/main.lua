@@ -71,11 +71,14 @@ scrollBox:addChild(slider)
 local dropdown = UI.New_Dropdown(1, tumbler.y + 2, dropdown_array, _, _, _, colors.white, colors.black)
 scrollBox:addChild(dropdown)
 
-local textbox = UI.New_TextBox(2, slider.y + 2, scrollBox.w - 2, 7, colors.white, colors.black)
+local textbox = UI.New_TextBox(2, slider.y + 2, scrollBox.w - 2, 7, colors.gray, colors.white)
 scrollBox:addChild(textbox)
 
 local textboxBar = UI.New_Scrollbar(textbox)
 scrollBox:addChild(textboxBar)
+
+local btnReadFile = UI.New_Button(textbox.x, textbox.y + textbox.h + 1, 4, 1, "Read", "center", colors.black, colors.yellow)
+scrollBox:addChild(btnReadFile)
 -----------------------------------------------------
 ------| СЕКЦИЯ ОБЪЯВЛЕНИЯ ФУНКЦИЙ ПРОГРАММЫ |--------
 
@@ -122,6 +125,15 @@ end
 
 checkbox.pressed = function (self)
     checkboxLabel:setText(self.on and "OFF" or "ON")
+end
+
+btnReadFile.pressed = function (self)
+    local path = "manifest.txt"
+    local i = 1
+    for line in io.lines(path) do
+       textbox:setLine(line, i)
+       i = i + 1
+    end
 end
 
 surface.onResize = function (width, height)

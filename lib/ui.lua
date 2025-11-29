@@ -46,7 +46,7 @@ local function onCharTyped(self,chr) return true end
 local function onPaste(self,text) return true end
 local function onMouseDown(self,btn,x,y) return true end
 local function onMouseUp(self,btn,x,y) return true end
-local function onMouseScroll(self,dir,x,y) return true end
+local function onMouseScroll(self,dir,x,y) return false end
 local function onMouseDrag(self,btn,x,y) return true end
 local function onFocus(self,focused) return true end
 local function focusPostDraw(self) end
@@ -996,7 +996,7 @@ end
 
 local function List_draw(self)
     self.scrollmax = _max(0, #self.array - self.h)
-    self.scrollpos_y = _max(0, _min(self.scrollpos_y, self.scrollmax))
+    self.scrollpos_y = clamp(self.scrollpos_y, 0, self.scrollmax)
     for i = self.scrollpos_y + 1, _min(self.h + self.scrollpos_y, #self.array) do
         local index_arr = self.array[i]
         screen.write(_sub(index_arr.._rep(" ", self.w - #index_arr), 1, self.w), self.x, (i - self.scrollpos_y - 1) + self.y, self.color_bg, self.color_txt)
@@ -1025,8 +1025,9 @@ local function List_onMouseScroll(self, dir, x, y)
     if self.scrollpos_y ~= scroll then
         self.scrollpos_y = scroll
         self:updateDirty()
+        return true
     end
-    return true
+    return false
 end
 
 local function List_onFocus(self, focused)
@@ -1112,6 +1113,7 @@ function UI.New_List(x, y, w, h, array, color_bg, color_txt)
     instance.scrollpos_y = 0
     instance.scrollmax = 0
     instance.sensivity = 3
+    instance.scrollbar = nil
 
     instance.draw = List_draw
     instance.updateArr = List_updateArr
@@ -1158,9 +1160,13 @@ local function Textfield_moveCursorPos(self, pos)
 end
 
 local function Textfield_onMouseScroll(self, dir, x, y)
+    local old_offset = self.offset
     self.offset = _min(_max(self.offset - dir,0), #self.text - self.w + 1)
-    self.dirty = true
-    return true
+    if self.offset ~= old_offset then
+        self.dirty = true
+        return true
+    end
+    return false
 end
 
 local function Textfield_onMouseUp(self, btn, x, y)
@@ -1262,6 +1268,9 @@ function UI.New_Textfield(x, y, w, h, hint, hidden, color_bg, color_txt)
 end
 
 local function TextBox_draw(self)
+    self.len = _max(0, #(self.lines or "") - self.h)
+    self.scrollmax = self.len
+    self.scrollpos_y = clamp(self.scrollpos_y, 0, self.scrollmax)
     screen.draw_rectangle(self.x, self.y, self.w, self.h, self.color_bg)
     for i = self.scrollpos_y + 1, _min(self.h + self.scrollpos_y, #self.lines) do
         screen.write(_sub(self.lines[i], self.offset_x + 1, self.offset_x + self.w - 1), self.x, i - self.scrollpos_y + self.y - 1, self.color_bg, self.color_txt)
@@ -1270,6 +1279,7 @@ end
 
 local function TextBox_setLine(self, line, number)
     self.lines[number] = line
+    self:updateDirty()
 end
 
 local function TextBox_moveCursorPos(self, posX, posY)
@@ -1300,6 +1310,7 @@ end
 
 local function TextBox_onMouseDown(self, btn, x, y)
     self:moveCursorPos(x - self.x + self.offset_x + 1, y - self.y + self.scrollpos_y + 1)
+    return true
 end
 
 local function TextBox_focusPostDraw(self)
@@ -1319,19 +1330,28 @@ local function TextBox_onFocus(self, focused)
 end
 
 local function TextBox_onMouseScroll(self, dir, x, y)
+    local old_offset_x = self.offset_x
+    local old_scrollpos_y = self.scrollpos_y
+
     if self.shiftheld then
         self.offset_x = clamp(self.offset_x + dir, 0, c.findMaxLenStrOfArray(self.lines) - self.w + 1)
     else
         self.scrollpos_y = clamp(self.scrollpos_y + dir, 0, #self.lines - self.h + 1)
     end
-    self:updateDirty()
-    return true
+
+    if self.offset_x ~= old_offset_x or self.scrollpos_y ~= old_scrollpos_y then
+        self:updateDirty()
+        return true
+    end
+
+    return false
 end
 
 local function TextBox_onKeyUp(self, key)
     if key == keys.leftShift then
         self.shiftheld = false
     end
+    return true
 end
 
 local function TextBox_onKeyDown(self, key, held)
@@ -1805,7 +1825,6 @@ end
 
 local function Container_onEvent(self, evt)
     local event = evt[1]
-    local ret = onEvent(self, evt)
     -- if self.modal and EVENTS.TOP[event] and (self.modal.root.keyboard:onEvent(evt) or self.modal:onEvent(evt)) then return true end
     if EVENTS.TOP[event] then
         for i = #self.children, 1, -1 do
@@ -1821,7 +1840,8 @@ local function Container_onEvent(self, evt)
             end
         end
     end
-    return ret
+    -- If no child handled the event, try to handle it ourselves
+    return onEvent(self, evt)
 end
 
 ---Creating new *object* of *class*
