@@ -12,7 +12,9 @@ df4bccffc73641b79da08106856799fa   lib/id3_meta.lua
 6b9e55f28cd0f62163904e7bec81352a   lib/mp4_meta
 0e8430925597fb135103b506fe2c669f   lib/palette
 914e77e5a6c186c459a010ae7733358a   lib/translit.lua
-220b7c55656650c775c9f9ed4434c217   lib/ui.lua
+c40b90b13fd0855d3932010ba475f886   lib/ui.lua
+2eb92297b030385841d3611cf992bdc6   sbin/CEditor/Data/lex.lua
+b0d09ee425bf05e078bbd2923c0e2e96   sbin/CEditor/main.lua
 89b0b700ec66f8f1128e5783e1d32e86   sbin/Calculator/icon.ico
 8764849f29964f44e953c1df8f9f5418   sbin/Calculator/main.lua
 920e095b774f4f8e2c2c59c405ef9d09   sbin/Converter/main.lua
