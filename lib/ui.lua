@@ -984,6 +984,7 @@ local function Scrollbar_onMouseDown(self, btn, x, y)
 end
 
 local function Scrollbar_onMouseDrag(self, btn, x, y)
+    if self.held == 1 or self.held == 3 then return end
     local track_top = self.y + 1
     local max_offset = self:getMaxSliderOffset()
     local scrollmax = self.obj:getScrollMaxY()
@@ -1119,9 +1120,9 @@ end
 
 local function Scrollbar_H_onMouseUp(self, btn, x, y)
     if self.held == 1 and self:check(x, y) and x == self.x then
-        self.obj:onMouseScroll(-1)
+        self.obj:scrollX(-1)
     elseif self.held == 3 and self:check(x, y) and x == self.x + self.w - 1 then
-        self.obj:onMouseScroll(1)
+        self.obj:scrollX(1)
     end
     self.held = 0
     self.dirty = true
@@ -1129,6 +1130,7 @@ local function Scrollbar_H_onMouseUp(self, btn, x, y)
 end
 
 local function Scrollbar_H_onMouseDrag(self, btn, x, y)
+    if self.held == 1 or self.held == 3 then return end
     local track_left = self.x + 1
     local max_offset = self:getMaxSliderOffset()
     local scrollmax = self.obj:getScrollMaxX()
@@ -1211,7 +1213,7 @@ function UI.New_Scrollbar_Horizontal(obj)
     instance.onMouseDrag = Scrollbar_H_onMouseDrag
     instance.onMouseScroll = Scrollbar_H_onMouseScroll
     instance.isOnSlider = Scrollbar_H_isOnSlider
-    
+
     return instance
 end
 
@@ -1564,17 +1566,24 @@ local function TextBox_onKeyDown(self, key, held)
     local y = self.cursor.y
     local line = self.lines[y] or ""
     if key == keys.backspace then
-        if line == "" and self.lines[y - 1] then
+        if _sub(line, 1, self.cursor.x - 1) == "" and self.lines[y - 1] then
+            self:moveCursorPos(#self.lines[y - 1] + 1, y - 1)
+            self.lines[y - 1] = self.lines[y - 1] .. line
             table.remove(self.lines, y)
             self:setScrollPosX(_max(self.scroll.pos_x - 1, 0))
-            self:moveCursorPos(#self.lines[y - 1] + 1, y - 1)
         else
             self.lines[y] = _sub(line, 1, _max(self.cursor.x - 2, 0)).._sub(line, self.cursor.x, #line)
             self:setScrollPosX(_max(self.scroll.pos_x - 1, 0))
             self:moveCursorPos(self.cursor.x - 1, y)
         end
     elseif key == keys.delete then
-        self.lines[y] = _sub(line, 1, self.cursor.x - 1) .. _sub(line, self.cursor.x + 1, #line)
+        if self.cursor.x > #line and self.lines[y + 1] then
+            self.lines[y] = line .. self.lines[y + 1]
+            table.remove(self.lines, y + 1)
+            self:setScrollPosX(_max(self.scroll.pos_x - 1, 0))
+        else
+            self.lines[y] = _sub(line, 1, self.cursor.x - 1) .. _sub(line, self.cursor.x + 1, #line)
+        end
     elseif key == keys.left then
         self:moveCursorPos(self.cursor.x - 1, y)
     elseif key == keys.right then
@@ -1586,9 +1595,28 @@ local function TextBox_onKeyDown(self, key, held)
     elseif key == keys.leftShift and held == true then
         self.shiftheld = true
     elseif key == keys.enter then
-        table_insert(self.lines, y + 1, "")
-        self:moveCursorPos(self.cursor.x, y + 1)
+        table_insert(self.lines, y + 1, _sub(line, self.cursor.x, #line))
+        self:setLine(_sub(line, 1, self.cursor.x - 1), y)
+        self:moveCursorPos(1, y + 1)
+    elseif key == keys.tab then
+        self:onCharTyped('\t')
+    elseif key == keys.pageDown then
+        self:scrollY(self.h)
+    elseif key == keys.pageUp then
+        self:scrollY(-self.h)
+    elseif key == keys.home then
+        self:moveCursorPos(1, y)
+    elseif key == keys["end"] then
+        self:moveCursorPos(#line + 1, y)
     end
+    self:updateDirty()
+    return true
+end
+
+local function TextBox_onPaste(self, string)
+    local line = self.lines[self.cursor.y]
+    self.lines[self.cursor.y] = _sub(line, 1, self.cursor.x - 1)..string.._sub(line, self.cursor.x, #line)
+    self:moveCursorPos(self.cursor.x + #string, self.cursor.y)
     self:updateDirty()
     return true
 end
@@ -1597,10 +1625,10 @@ function UI.New_TextBox(x, y, w, h, color_bg, color_txt)
     local instance = New_Widget(x, y, w, h, color_bg, color_txt)
     add_mixin(instance, ScrollableMixin)
     instance:initScroll(3, 3)
-    instance.lines = {}
+    instance.lines = {""}
     instance.cursor = {x = 1, y = 1}
     function instance:getScrollMaxX()
-        return c.findMaxLenStrOfArray(self.lines)
+        return c.findMaxLenStrOfArray(self.lines) - self.w
     end
     function instance:getScrollMaxY()
         return _max(0, #self.lines - self.h)
@@ -1617,6 +1645,7 @@ function UI.New_TextBox(x, y, w, h, color_bg, color_txt)
     instance.onKeyUp = TextBox_onKeyUp
     instance.onKeyDown = TextBox_onKeyDown
     instance.updateDirty = List_updateDirty
+    instance.onPaste = TextBox_onPaste
 
     return instance
 end
