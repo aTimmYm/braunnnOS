@@ -12,22 +12,25 @@ local dropdown_array = {
 }
 -----------------------------------------------------
 ----------| СЕКЦИЯ ИНИЦИАЛИЗАЦИИ ОБЪЕКТОВ |----------
+local function add_scrollbar(obj)
+    obj.parent:addChild(UI.New_Scrollbar(obj))
+end
+
 local window, surface = system.add_window("Titled", colors.lightGray, "Polygon")
 
 local buttonError = UI.New_Button(1, 1, 5, 1, "Error", _, colors.white, colors.red)
 window:addChild(buttonError)
 
-local buttonInfo = UI.New_Button(buttonError.x+buttonError.w+1, 1, 1, 1, "?", _, colors.white, colors.blue)
+local buttonInfo = UI.New_Button(buttonError.x + buttonError.w + 1, 1, 1, 1, "?", _, colors.white, colors.blue)
 window:addChild(buttonInfo)
 
-local list = UI.New_List(math.ceil(surface.w/2), 2, math.floor(surface.w/2) - 1, surface.h-2, fslist, colors.white, colors.black)
+local list = UI.New_List(math.ceil(surface.w/2), 2, math.floor(surface.w/2) - 1, surface.h - 2, fslist, colors.white, colors.black)
 surface:addChild(list)
+
+add_scrollbar(list)
 
 local clock = UI.New_Clock(list.x, 1, conf["show_seconds"], conf["24format"], surface.color_bg, colors.white)
 surface:addChild(clock)
-
-local scrollbar = UI.New_Scrollbar(list)
-surface:addChild(scrollbar)
 
 local label = UI.New_Label(2, 2, list.x - 1 - 2, 1, "Label", _, colors.white, colors.black)
 surface:addChild(label)
@@ -38,8 +41,7 @@ surface:addChild(textfield)
 local scrollBox = UI.New_ScrollBox(2, textfield.y + 2, list.x - 4, surface.h - 6, colors.brown)
 surface:addChild(scrollBox)
 
-local scrollbarBox = UI.New_Scrollbar(scrollBox)
-surface:addChild(scrollbarBox)
+add_scrollbar(scrollBox)
 
 local radioButton = UI.New_RadioButton(1, 1, _, {"CAT","DOG"}, scrollBox.color_bg)
 scrollBox:addChild(radioButton)
@@ -74,10 +76,12 @@ scrollBox:addChild(dropdown)
 local textbox = UI.New_TextBox(2, slider.y + 2, scrollBox.w - 2, 7, colors.gray, colors.white)
 scrollBox:addChild(textbox)
 
-local textboxBar = UI.New_Scrollbar(textbox)
-scrollBox:addChild(textboxBar)
+add_scrollbar(textbox)
 
-local btnReadFile = UI.New_Button(textbox.x, textbox.y + textbox.h + 1, 4, 1, "Read", "center", colors.black, colors.yellow)
+local Xscrollbar = UI.New_Scrollbar_Horizontal(textbox)
+scrollBox:addChild(Xscrollbar)
+
+local btnReadFile = UI.New_Button(textbox.x, textbox.y + textbox.h + 2, 4, 1, "Read", "center", colors.black, colors.yellow)
 scrollBox:addChild(btnReadFile)
 -----------------------------------------------------
 ------| СЕКЦИЯ ОБЪЯВЛЕНИЯ ФУНКЦИЙ ПРОГРАММЫ |--------
@@ -138,18 +142,29 @@ end
 
 surface.onResize = function (width, height)
     list.local_x, list.local_y, list.w, list.h = math.ceil(width/2), 2, math.floor(width/2) - 1, height - 2
+    if list.scrollbar_v then
+        local scrollbar = list.scrollbar_v
+        scrollbar.local_x, scrollbar.local_y, scrollbar.h = list.local_x + list.w, list.local_y, list.h
+    end
     label.w = list.local_x - label.local_x - 1
     clock.local_x, clock.local_y = list.local_x, 1
     textfield.w = list.local_x - textfield.local_x - 1
     scrollBox.w, scrollBox.h = list.local_x - 4, height - 6
+    if scrollBox.scrollbar_v then
+        local scrollbar = scrollBox.scrollbar_v
+        scrollbar.local_x, scrollbar.local_y, scrollbar.h = scrollBox.local_x + scrollBox.w, scrollBox.local_y, scrollBox.h
+    end
     radioButton_horizontal.local_x, radioButton_horizontal.local_y = scrollBox.w - 9, radioButton.local_y
     radioLabel.local_x, radioLabel.local_y = radioButton_horizontal.local_x, radioButton_horizontal.local_y + 1
     checkbox.local_x, checkbox.local_y = scrollBox.w - 4, tumbler.local_y
     checkboxLabel.local_x, checkboxLabel.local_y = checkbox.local_x + checkbox.w + 1, checkbox.local_y
     running_label.local_x, running_label.local_y = scrollBox.w - 4, dropdown.local_y
-    scrollbar.local_x, scrollbar.local_y, scrollbar.h = list.local_x + list.w, list.local_y, list.h
     slider.w = list.local_x - 3
-    scrollbarBox.local_x, scrollbarBox.h = scrollBox.local_x + scrollBox.w, scrollBox.h
+    textbox.w = scrollBox.w - 2
+    if textbox.scrollbar_v then
+        local scrollbar = textbox.scrollbar_v
+        scrollbar.local_x, scrollbar.local_y, scrollbar.h = textbox.local_x + textbox.w, textbox.local_y, textbox.h
+    end
 end
 -----------------------------------------------------
 surface:onLayout()

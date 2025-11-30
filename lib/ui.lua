@@ -7,7 +7,7 @@ local string_gmatch = string.gmatch
 local table_insert = table.insert
 local _max = math.max
 local _min = math.min
-local math_floor = math.floor
+local _floor = math.floor
 local function clamp(val, a, b) return _max(a, _min(b, val)) end
 -----------------------------------------------------
 --CC:Tweaked Lua Minecraft CraftOS bOS™
@@ -394,7 +394,7 @@ local function Label_draw(self, bg_override, txtcol_override)
     elseif vert_align == "bottom" then
         start_y = self.y + self.h - num_lines
     else  -- center
-        start_y = self.y + math_floor((self.h - num_lines) / 2)
+        start_y = self.y + _floor((self.h - num_lines) / 2)
     end
     start_y = _max(start_y, self.y)
 
@@ -411,7 +411,7 @@ local function Label_draw(self, bg_override, txtcol_override)
         elseif horiz_align == "right" then
             x_pos = self.x + self.w - line_len
         else  -- center
-            x_pos = self.x + math_floor((self.w - line_len) / 2)
+            x_pos = self.x + _floor((self.w - line_len) / 2)
         end
         local left_pad = _rep(" ", x_pos - self.x)
         local right_pad = _rep(" ", self.w - (x_pos - self.x + line_len))
@@ -516,35 +516,19 @@ end
 local function Shortcut_draw(self)
     screen.draw_rectangle(self.x, self.y, self.w, self.h, self.color_bg)
 
-    local dX = math_floor((self.w - self.blittle_img.width)/2) + self.x
-    local dY = math_floor((self.h - 1 - self.blittle_img.height)/2) + self.y
+    local dX = _floor((self.w - self.blittle_img.width)/2) + self.x
+    local dY = _floor((self.h - 1 - self.blittle_img.height)/2) + self.y
     screen.draw_blittle(self.blittle_img, dX, dY)
     local txtcol_override = self.held and colors.lightGray or self.color_txt
     if #self.text >= self.w then
         screen.write(_sub(self.text, 1, self.w - 2).."..",
         self.x, dY + self.blittle_img.height, self.color_bg, txtcol_override)
     else
-        screen.write(_rep(" ",math_floor((self.w - #self.text)/2))..self.text..
-        _rep(" ", self.w - (math_floor((self.w - #self.text)/2) + self.x + #self.text)),
+        screen.write(_rep(" ",_floor((self.w - #self.text)/2))..self.text..
+        _rep(" ", self.w - (_floor((self.w - #self.text)/2) + self.x + #self.text)),
         self.x, dY + self.blittle_img.height, self.color_bg, txtcol_override)
     end
 end
-
--- local function Shortcut_pressed(self)
---     if self.needArgs[1] and not self.needArgs[2] then
---         local path = self.filePath
---         local args = ""
---         local dial = UI.New_DialWin(self.root)
---         dial:callWin(" Arguments ", "Enter arguments")
---         dial.btnOK.pressed = function (self)
---             args = dial.child[2].text
---             self.parent:removeWin()
---             c.openFile(self.root, path, args)
---         end
---     else
---         c.openFile(self.root, self.filePath, self.needArgs[2])
---     end
--- end
 
 local function Shortcut_pressed(self)
     local func, load_err = loadfile(self.filePath, _ENV)  -- "t" для text, или "bt" если нужно
@@ -635,7 +619,7 @@ local function Running_Label_draw(self, bg_override, txtcol_override)
     elseif horiz_align == "right" then
         x_pos = self.x + self.w - #visible_text
     else  -- center
-        x_pos = self.x + math_floor((self.w - #visible_text) / 2)
+        x_pos = self.x + _floor((self.w - #visible_text) / 2)
     end
 
     local left_pad = _rep(" ", x_pos - self.x)
@@ -744,6 +728,103 @@ function UI.New_Running_Label(x, y, w, h, text, align, scroll_speed, gap, color_
     return instance
 end
 
+local ScrollableMixin = {}
+
+function ScrollableMixin:initScroll(sensitivity_x, sensitivity_y)
+    self.scroll = {
+        -- Вертикальный скроллинг
+        pos_y = 0,
+        max_y = 0,
+
+        -- Горизонтальный скроллинг
+        pos_x = 0,
+        max_x = 0,
+
+        -- Чувствительность
+        sensitivity_x = sensitivity_x or 3,
+        sensitivity_y = sensitivity_y or 3,
+    }
+    self.scrollbar_v = nil  -- Vertical scrollbar
+    self.scrollbar_h = nil  -- Horizontal scrollbar
+end
+
+-- Вертикальный скроллинг
+function ScrollableMixin:getScrollMaxY()
+    return self.scroll.max_y
+end
+
+function ScrollableMixin:getScrollPosY()
+    return self.scroll.pos_y
+end
+
+function ScrollableMixin:setScrollPosY(pos)
+    local old_pos = self.scroll.pos_y
+    self.scroll.pos_y = clamp(pos, 0, self:getScrollMaxY())
+
+    if old_pos ~= self.scroll.pos_y then
+        self:updateDirty()
+        return true
+    end
+    return false
+end
+
+function ScrollableMixin:scrollY(direction)
+    local new_pos = self.scroll.pos_y + (direction * self.scroll.sensitivity_y)
+    return self:setScrollPosY(_floor(new_pos + 0.5))
+end
+
+-- Горизонтальный скроллинг
+function ScrollableMixin:getScrollMaxX()
+    return self.scroll.max_x
+end
+
+function ScrollableMixin:getScrollPosX()
+    return self.scroll.pos_x
+end
+
+function ScrollableMixin:setScrollPosX(pos)
+    local old_pos = self.scroll.pos_x
+    self.scroll.pos_x = clamp(pos, 0, self:getScrollMaxX())
+
+    if old_pos ~= self.scroll.pos_x then
+        self:updateDirty()
+        return true
+    end
+    return false
+end
+
+function ScrollableMixin:scrollX(direction)
+    local new_pos = self.scroll.pos_x + (direction * self.scroll.sensitivity_x)
+    return self:setScrollPosX(_floor(new_pos + 0.5))
+end
+
+-- Универсальный метод для обратной совместимости (если только Y скроллинг)
+function ScrollableMixin:getScrollMax()
+    return self:getScrollMaxY()
+end
+
+function ScrollableMixin:getScrollPos()
+    return self:getScrollPosY()
+end
+
+function ScrollableMixin:setScrollPos(pos)
+    return self:setScrollPosY(pos)
+end
+
+function ScrollableMixin:attachScrollbar(scrollbar, orientation)
+    if orientation == "horizontal" or orientation == "h" then
+        self.scrollbar_h = scrollbar
+    else
+        self.scrollbar_v = scrollbar
+    end
+end
+
+local function add_mixin(object, mixin)
+    for k, v in pairs(mixin) do
+        object[k] = v
+    end
+end
+
 local function Scrollbar_draw(self)
     local slider_height = self:getSliderHeight()
     local slider_offset = self:getSliderOffset()
@@ -775,6 +856,7 @@ local function Scrollbar_setObj(self, obj)
     self.obj = obj
     self.color_bg = self.obj.bg
     self.color_txt = self.obj.txtcol
+    obj:attachScrollbar(instance, "vertical")
     self.dirty = true
 end
 
@@ -782,7 +864,7 @@ local function Scrollbar_getTrackHeight(self)
     return self.h - 2
 end
 
-local function Scrollbar_checkIn(self, btn, x, y)
+local function Scrollbar_checkIn(self, x, y)
     if y == self.y then
         self.held = 1  -- Up arrow
         return true
@@ -808,14 +890,12 @@ local function Scrollbar_onMouseUp(self, btn, x, y)
     end
     self.held = 0
     self.dirty = true
-    self.obj:updateDirty()
     return true
 end
 
 local function Scrollbar_onMouseScroll(self, dir, x, y)
     if self:check(x, y) then
         self.obj:onMouseScroll(dir)
-        self.dirty = true
         return true
     end
     return false
@@ -825,7 +905,7 @@ local function Scrollbar_getSliderHeight(self)
     local track_height = self:getTrackHeight()
     if track_height <= 0 then return 0 end
 
-    local total_items = self.obj.len or #(self.obj.array or {})
+    local total_items = self.obj:getScrollMaxY() + self.obj.h
     local visible_items = self.obj.h or 0
 
     if total_items <= 0 then
@@ -837,7 +917,7 @@ local function Scrollbar_getSliderHeight(self)
     end
 
     local raw = (visible_items * track_height) / total_items
-    local h = math.floor(raw + 0.5)
+    local h = _floor(raw + 0.5)
     if h < 1 then h = 1 end
     if h > track_height then h = track_height end
     return h
@@ -854,29 +934,25 @@ local function Scrollbar_getSliderOffset(self)
     local max_offset = self:getMaxSliderOffset()
     if max_offset == 0 then return 0 end
 
-    local scrollmax = self.obj.scrollmax or 0
+    local scrollmax = self.obj:getScrollMaxY()
     if scrollmax <= 0 then return 0 end
 
-    local pos = self.obj.scrollpos_y or 0
-    pos = clamp(pos, 0, scrollmax - 1)
-    local frac = pos / (scrollmax - 1) -- ВОЗМОЖНО ДЕЛЕНИЕ НА 0
-    return clamp(math_floor(frac * max_offset + 0.5), 0, max_offset)
+    local pos = self.obj:getScrollPosY()
+    pos = clamp(pos, 0, scrollmax)
+    local frac = pos / scrollmax
+
+    return clamp(_floor(frac * max_offset + 0.5), 0, max_offset)
 end
 
-local function Scrollbar_onMouseDown(self,btn, x, y)
-    if not self:check(x, y) then return false end
-
-    if self:checkIn(btn, x, y) then
+local function Scrollbar_onMouseDown(self, btn, x, y)
+    if self:checkIn(x, y) then
         self.dirty = true
         return true
     end
 
     if self:isOnSlider(y) then
         self.held = 2
-        local slider_offset = self:getSliderOffset()
-        local slider_y_start = self.y + 1 + slider_offset
-        self.drag_offset = y - slider_y_start
-        self.dirty = true
+        self.drag_offset = y - self:getSliderOffset() - self.y - 1
         return true
     end
 
@@ -886,54 +962,39 @@ local function Scrollbar_onMouseDown(self,btn, x, y)
 
     local slider_height = self:getSliderHeight()
     local max_offset = self:getMaxSliderOffset()
-    local scrollmax = self.obj.scrollmax or 0
-
-    if scrollmax <= 0 or max_offset == 0 then
-        return true
-    end
+    local scrollmax = self.obj:getScrollMaxY()
 
     local click_rel = clamp(y - track_top, 0, track_height - 1)
 
     -- Центруємо: ставимо центр слайдера на місце кліка
     local half = (slider_height - 1) / 2        -- може бути .5 для парної висоти
     local desired_offset_f = click_rel - half  -- дробовий бажаний offset
-    local desired_offset = math_floor(desired_offset_f + 0.5) -- округлюємо до найближчого
+    local desired_offset = _floor(desired_offset_f + 0.5) -- округлюємо до найближчого
     desired_offset = clamp(desired_offset, 0, max_offset)
 
     local frac = 0
     if max_offset > 0 then
         frac = desired_offset / max_offset
     end
-    local pos = math_floor(frac * scrollmax + 0.5)
-    local new_pos = clamp(pos, 0, scrollmax)
+    local pos = _floor(frac * scrollmax + 0.5)
 
-    self.obj.scrollpos_y = new_pos
-    self.obj:onLayout()
-    self.dirty = true
+    self.obj:setScrollPosY(pos)
+
     return true
 end
 
 local function Scrollbar_onMouseDrag(self, btn, x, y)
-    if self.held ~= 2 then return false end
-
     local track_top = self.y + 1
     local max_offset = self:getMaxSliderOffset()
-    local scrollmax = self.obj.scrollmax or 0
-    if max_offset == 0 or scrollmax <= 0 then return true end
+    local scrollmax = self.obj:getScrollMaxY()
 
-    local desired_offset = math.floor((y - track_top) - self.drag_offset + 0.5)
+    local desired_offset = _floor((y - track_top) - self.drag_offset + 0.5)
     desired_offset = clamp(desired_offset, 0, max_offset)
 
     local frac = desired_offset / max_offset
-    local pos = math_floor(frac * scrollmax + 0.5)
-    local new_pos = clamp(pos, 0, scrollmax)
+    local pos = _floor(frac * scrollmax + 0.5)
 
-    if self.obj.scrollpos_y ~= new_pos then
-        self.obj.scrollpos_y = new_pos
-        if self.obj.onLayout then self.obj:onLayout() end
-        self.obj.dirty = true
-        self.dirty = true
-    end
+    self.obj:setScrollPosY(pos)
 
     return true
 end
@@ -946,9 +1007,11 @@ function UI.New_Scrollbar(obj)
 
     local instance = New_Widget(obj.x + obj.w, obj.y, 1, obj.h, obj.color_bg, obj.color_txt)
     instance.obj = obj
-    instance.obj.scrollbar = instance
     instance.held = 0  -- 0: none, 1: up arrow, 2: slider, 3: down arrow
     instance.drag_offset = 0
+    if obj.attachScrollbar then
+        obj:attachScrollbar(instance, "vertical")
+    end
 
     instance.draw = Scrollbar_draw
     instance.setObj = Scrollbar_setObj
@@ -964,6 +1027,163 @@ function UI.New_Scrollbar(obj)
     instance.onMouseScroll = Scrollbar_onMouseScroll
 
     return instance
+end
+
+local function Scrollbar_H_getSliderWidth(self)
+        local track_width = self:getTrackWidth()
+        if track_width <= 0 then return 0 end
+
+        local total_width = self.obj:getScrollMaxX() + self.obj.w
+        local visible_width = self.obj.w or 0
+
+        if total_width <= 0 or visible_width >= total_width then
+            return track_width
+        end
+
+        local raw = (visible_width * track_width) / total_width
+        local w = math.floor(raw + 0.5)
+        if w < 1 then w = 1 end
+        if w > track_width then w = track_width end
+        return w
+    end
+
+local function Scrollbar_H_getSliderOffset(self)
+        local max_offset = self:getMaxSliderOffset()
+        if max_offset == 0 then return 0 end
+
+        local scrollmax = self.obj:getScrollMaxX()
+        if scrollmax <= 0 then return 0 end
+
+        local pos = self.obj:getScrollPosX()
+        pos = clamp(pos, 0, scrollmax)
+        local frac = scrollmax > 0 and (pos / scrollmax) or 0
+        return clamp(_floor(frac * max_offset + 0.5), 0, max_offset)
+end
+
+local function Scrollbar_H_getTrackWidth(self)
+    return self.w - 2  -- Минус две стрелки
+end
+
+local function Scrollbar_H_getMaxSliderOffset(self)
+    local track_width = self:getTrackWidth()
+    if track_width <= 0 then return 0 end
+    local slider_width = self:getSliderWidth()
+    return _max(0, track_width - slider_width)
+end
+
+local function Scrollbar_H_onMouseDown(self, btn, x, y)
+    -- Левая стрелка
+    if x == self.x then
+        self.held = 1
+        self.dirty = true
+        return true
+    -- Правая стрелка
+    elseif x == self.x + self.w - 1 then
+        self.held = 3
+        self.dirty = true
+        return true
+    end
+
+    -- На слайдере
+    if self:isOnSlider(x) then
+        self.held = 2
+        local slider_offset = self:getSliderOffset()
+        local slider_x_start = self.x + 1 + slider_offset
+        self.drag_offset = x - slider_x_start
+        self.dirty = true
+        return true
+    end
+
+    -- Клик на трек
+    local track_left = self.x + 1
+    local max_offset = self:getMaxSliderOffset()
+    local scrollmax = self.obj:getScrollMaxX()
+
+    if scrollmax <= 0 or max_offset == 0 then
+        return true
+    end
+
+    local slider_width = self:getSliderWidth()
+    local click_rel = clamp(x - track_left, 0, self:getTrackWidth() - 1)
+    local half = (slider_width - 1) / 2
+    local desired_offset = _floor(click_rel - half + 0.5)
+    desired_offset = clamp(desired_offset, 0, max_offset)
+
+    local frac = max_offset > 0 and (desired_offset / max_offset) or 0
+    local pos = _floor(frac * scrollmax + 0.5)
+    self.obj:setScrollPosX(pos)
+
+    self.dirty = true
+    return true
+end
+
+local function Scrollbar_H_onMouseUp(self, btn, x, y)
+    if self.held == 1 and self:check(x, y) and x == self.x then
+        self.obj:onMouseScroll(-1)
+    elseif self.held == 3 and self:check(x, y) and x == self.x + self.w - 1 then
+        self.obj:onMouseScroll(1)
+    end
+    self.held = 0
+    self.dirty = true
+    return true
+end
+
+local function Scrollbar_H_onMouseDrag(self, btn, x, y)
+    local track_left = self.x + 1
+    local max_offset = self:getMaxSliderOffset()
+    local scrollmax = self.obj:getScrollMaxX()
+
+    local desired_offset = _floor((x - track_left) - self.drag_offset + 0.5)
+    desired_offset = clamp(desired_offset, 0, max_offset)
+
+    local frac = desired_offset / max_offset
+    local pos = _floor(frac * scrollmax + 0.5)
+
+    self.obj:setScrollPosX(pos)
+
+    return true
+end
+
+local function Scrollbar_H_onMouseScroll(self, dir, x, y)
+    if self:check(x, y) then
+        self.obj:scrollX(dir)
+        return true
+    end
+    return false
+end
+
+local function Scrollbar_H_isOnSlider(self, x)
+    local slider_offset = self:getSliderOffset()
+    local slider_width = self:getSliderWidth()
+    local slider_x_start = self.x + 1 + slider_offset
+    return x >= slider_x_start and x <= slider_x_start + slider_width - 1
+end
+
+local function Scrollbar_H_draw(self)
+    local slider_width = self:getSliderWidth()
+    local slider_offset = self:getSliderOffset()
+    local slider_x_start = self.x + 1 + slider_offset
+
+    -- Фон трека
+    for x = self.x + 1, slider_x_start - 1 do
+        screen.write(" ", x, self.y, self.color_bg, self.color_bg)
+    end
+    for x = slider_x_start + slider_width, self.x + self.w - 2 do
+        screen.write(" ", x, self.y, self.color_bg, self.color_bg)
+    end
+
+    -- Стрелка влево
+    local left_bg, left_fg = (self.held == 1 and self.color_txt or self.color_bg), (self.held == 1 and self.color_bg or self.color_txt)
+    screen.write(string_char(17), self.x, self.y, left_bg, left_fg)
+
+    -- Стрелка вправо
+    local right_bg, right_fg = (self.held == 3 and self.color_txt or self.color_bg), (self.held == 3 and self.color_bg or self.color_txt)
+    screen.write(string_char(16), self.x + self.w - 1, self.y, right_bg, right_fg)
+
+    -- Ползунок
+    for x = slider_x_start, _min(slider_x_start + slider_width - 1, self.x + self.w - 2) do
+        screen.write(" ", x, self.y, self.color_txt, self.color_txt)  -- Filled pixel
+    end
 end
 
 ---Creating new *object* of *class* "scrollbar_horizontal" which connected at another *object*
@@ -974,39 +1194,41 @@ function UI.New_Scrollbar_Horizontal(obj)
 
     local instance = New_Widget(obj.x, obj.y + obj.h, obj.w, 1, obj.color_bg, obj.color_txt)
     instance.obj = obj
-    instance.obj.scrollbar = instance
-    instance.held = 0  -- 0: none, 1: up arrow, 2: slider, 3: down arrow
+    instance.orientation = "horizontal"
+    instance.held = 0
     instance.drag_offset = 0
+    if obj.attachScrollbar then
+        obj:attachScrollbar(instance, "horizontal")
+    end
 
-    instance.draw = Scrollbar_draw
-    instance.setObj = Scrollbar_setObj
-    instance.getTrackHeight = Scrollbar_getTrackHeight
-    instance.getSliderHeight = Scrollbar_getSliderHeight
-    instance.getMaxSliderOffset = Scrollbar_getMaxSliderOffset
-    instance.getSliderOffset = Scrollbar_getSliderOffset
-    instance.checkIn = Scrollbar_checkIn
-    instance.isOnSlider = Scrollbar_isOnSlider
-    instance.onMouseDown = Scrollbar_onMouseDown
-    instance.onMouseDrag = Scrollbar_onMouseDrag
-    instance.onMouseUp = Scrollbar_onMouseUp
-    instance.onMouseScroll = Scrollbar_onMouseScroll
-
+    instance.draw = Scrollbar_H_draw
+    instance.getSliderWidth = Scrollbar_H_getSliderWidth
+    instance.getSliderOffset = Scrollbar_H_getSliderOffset
+    instance.getTrackWidth = Scrollbar_H_getTrackWidth
+    instance.getMaxSliderOffset = Scrollbar_H_getMaxSliderOffset
+    instance.onMouseDown = Scrollbar_H_onMouseDown
+    instance.onMouseUp = Scrollbar_H_onMouseUp
+    instance.onMouseDrag = Scrollbar_H_onMouseDrag
+    instance.onMouseScroll = Scrollbar_H_onMouseScroll
+    instance.isOnSlider = Scrollbar_H_isOnSlider
+    
     return instance
 end
 
+
 local function List_draw(self)
-    self.scrollmax = _max(0, #self.array - self.h)
-    self.scrollpos_y = clamp(self.scrollpos_y, 0, self.scrollmax)
-    for i = self.scrollpos_y + 1, _min(self.h + self.scrollpos_y, #self.array) do
+    -- self.scroll.max_y = _max(0, #self.array - self.h)
+    -- self.scrollpos_y = clamp(self.scrollpos_y, 0, self.scroll.max_y)
+    for i = self.scroll.pos_y + 1, _min(self.h + self.scroll.pos_y, #self.array) do
         local index_arr = self.array[i]
-        screen.write(_sub(index_arr.._rep(" ", self.w - #index_arr), 1, self.w), self.x, (i - self.scrollpos_y - 1) + self.y, self.color_bg, self.color_txt)
+        screen.write(_sub(index_arr.._rep(" ", self.w - #index_arr), 1, self.w), self.x, (i - self.scroll.pos_y - 1) + self.y, self.color_bg, self.color_txt)
     end
     if self.item and self.item_index then
-        if (self.y + self.item_index - self.scrollpos_y - 1) >= self.y and (self.y + self.item_index - self.scrollpos_y - 1) <= (self.h + self.y - 1) then
-            screen.write(_sub(self.item.._rep(" ",self.w - #self.item), 1, self.w), self.x, self.y + self.item_index - self.scrollpos_y - 1, self.color_txt, self.color_bg)
+        if (self.y + self.item_index - self.scroll.pos_y - 1) >= self.y and (self.y + self.item_index - self.scroll.pos_y - 1) <= (self.h + self.y - 1) then
+            screen.write(_sub(self.item.._rep(" ",self.w - #self.item), 1, self.w), self.x, self.y + self.item_index - self.scroll.pos_y - 1, self.color_txt, self.color_bg)
         end
     end
-        if self.h > #self.array then
+    if self.h > #self.array then
         for i = #self.array, self.h - 1 do
             screen.write(_sub(_rep(" ", self.w), 1, self.w), self.x, i + self.y, self.color_bg, self.color_txt)
         end
@@ -1021,13 +1243,7 @@ local function List_updateArr(self, array)
 end
 
 local function List_onMouseScroll(self, dir, x, y)
-    local scroll = clamp(self.scrollpos_y + dir * self.sensivity, 0, self.scrollmax)
-    if self.scrollpos_y ~= scroll then
-        self.scrollpos_y = scroll
-        self:updateDirty()
-        return true
-    end
-    return false
+    return self:scrollY(dir)
 end
 
 local function List_onFocus(self, focused)
@@ -1040,7 +1256,7 @@ local function List_onFocus(self, focused)
 end
 
 local function List_onMouseDown(self, btn, x, y)
-    local i = y - self.y + self.scrollpos_y + 1
+    local i = y - self.y + self.scroll.pos_y + 1
     if i <= #self.array then
         if self.item and self.item == self.array[i] then
             self:pressed()
@@ -1058,21 +1274,21 @@ local function List_onKeyDown(self, key, held)
         if key == keys.up then
             self.item_index = _max(self.item_index - 1, 1)
             self.item = self.array[self.item_index]
-        if self.item_index <= self.scrollpos_y then
-            self:onMouseScroll(1)
-        end
+            if self.item_index <= self.scroll.pos_y then
+                self:onMouseScroll(-(1/self.scroll.sensitivity_y))
+            end
         elseif key == keys.down then
             self.item_index = _min(self.item_index + 1, #self.array)
             self.item = self.array[self.item_index]
-        if self.item_index > _min(self.h + self.scrollpos_y, #self.array) then
-            self:onMouseScroll(-1)
-        end
+            if self.item_index > _min(self.h + self.scroll.pos_y, #self.array) then
+                self:onMouseScroll((1/self.scroll.sensitivity_y))
+            end
         elseif key == keys.home then
-            self.scrollpos_y = 0
+            self.scroll.pos_y = 0
             self.item_index = 1
             self.item = self.array[self.item_index]
         elseif key == keys['end'] then
-            self.scrollpos_y = self.scrollmax
+            self.scroll.pos_y = self.scroll.max_y
             self.item_index = #self.array
             self.item = self.array[self.item_index]
         end
@@ -1082,8 +1298,11 @@ local function List_onKeyDown(self, key, held)
 end
 
 local function List_updateDirty(self)
-    if self.scrollbar then
-        self.scrollbar.dirty = true
+    if self.scrollbar_v then
+        self.scrollbar_v.dirty = true
+    end
+    if self.scrollbar_h then
+        self.scrollbar_h.dirty = true
     end
     self.dirty = true
 end
@@ -1107,13 +1326,14 @@ function UI.New_List(x, y, w, h, array, color_bg, color_txt)
     expect(7, color_txt, "number", "nil")
 
     local instance = New_Widget(x, y, w, h, color_bg, color_txt)
+    add_mixin(instance, ScrollableMixin)
+    instance:initScroll(3, 3)
     instance.array = array
     instance.item = nil
     instance.item_index = nil
-    instance.scrollpos_y = 0
-    instance.scrollmax = 0
-    instance.sensivity = 3
-    instance.scrollbar = nil
+    function instance:getScrollMaxY()
+        return _max(0, #self.array - self.h)
+    end
 
     instance.draw = List_draw
     instance.updateArr = List_updateArr
@@ -1268,12 +1488,9 @@ function UI.New_Textfield(x, y, w, h, hint, hidden, color_bg, color_txt)
 end
 
 local function TextBox_draw(self)
-    self.len = _max(0, #(self.lines or "") - self.h)
-    self.scrollmax = self.len
-    self.scrollpos_y = clamp(self.scrollpos_y, 0, self.scrollmax)
     screen.draw_rectangle(self.x, self.y, self.w, self.h, self.color_bg)
-    for i = self.scrollpos_y + 1, _min(self.h + self.scrollpos_y, #self.lines) do
-        screen.write(_sub(self.lines[i], self.offset_x + 1, self.offset_x + self.w - 1), self.x, i - self.scrollpos_y + self.y - 1, self.color_bg, self.color_txt)
+    for i = self.scroll.pos_y + 1, _min(self.h + self.scroll.pos_y, #self.lines) do
+        screen.write(_sub(self.lines[i], self.scroll.pos_x + 1, self.scroll.pos_x + self.w - 1), self.x, i - self.scroll.pos_y + self.y - 1, self.color_bg, self.color_txt)
     end
 end
 
@@ -1284,16 +1501,16 @@ end
 
 local function TextBox_moveCursorPos(self, posX, posY)
     self.cursor.y = clamp(posY, 1, #self.lines)
-    if self.cursor.y - self.scrollpos_y > self.h then
-        self.scrollpos_y = self.cursor.y - self.h
-    elseif self.cursor.y - self.scrollpos_y < 1 then
-        self.scrollpos_y = self.cursor.y - 1
+    if self.cursor.y - self.scroll.pos_y > self.h then
+        self:setScrollPosY(self.cursor.y - self.h)
+    elseif self.cursor.y - self.scroll.pos_y < 1 then
+        self:setScrollPosY(self.cursor.y - 1)
     end
     self.cursor.x = clamp(posX, 1, #(self.lines[self.cursor.y] or "") + 1)
-    if self.cursor.x - self.offset_x > self.w then
-        self.offset_x = self.cursor.x - self.w
-    elseif self.cursor.x - self.offset_x < 1 then
-        self.offset_x = self.cursor.x - 1
+    if self.cursor.x - self.scroll.pos_x > self.w then
+        self:setScrollPosX(self.cursor.x - self.w)
+    elseif self.cursor.x - self.scroll.pos_x < 1 then
+        self:setScrollPosX(self.cursor.x - 1)
     end
 end
 
@@ -1309,13 +1526,13 @@ local function TextBox_onCharTyped(self, chr)
 end
 
 local function TextBox_onMouseDown(self, btn, x, y)
-    self:moveCursorPos(x - self.x + self.offset_x + 1, y - self.y + self.scrollpos_y + 1)
+    self:moveCursorPos(x - self.x + self.scroll.pos_x + 1, y - self.y + self.scroll.pos_y + 1)
     return true
 end
 
 local function TextBox_focusPostDraw(self)
-    local x = self.x - self.offset_x + self.cursor.x - 1
-    local y = self.y - self.scrollpos_y + self.cursor.y - 1
+    local x = self.x - self.scroll.pos_x + self.cursor.x - 1
+    local y = self.y - self.scroll.pos_y + self.cursor.y - 1
     term.setCursorPos(x, y)
     term.setTextColor(colors.blue)
     if (x < self.x or x > self.x + self.w - 1) or (y < self.y or y > self.y + self.h - 1) then
@@ -1330,21 +1547,10 @@ local function TextBox_onFocus(self, focused)
 end
 
 local function TextBox_onMouseScroll(self, dir, x, y)
-    local old_offset_x = self.offset_x
-    local old_scrollpos_y = self.scrollpos_y
-
     if self.shiftheld then
-        self.offset_x = clamp(self.offset_x + dir, 0, c.findMaxLenStrOfArray(self.lines) - self.w + 1)
-    else
-        self.scrollpos_y = clamp(self.scrollpos_y + dir, 0, #self.lines - self.h + 1)
+        return self:scrollX(dir)
     end
-
-    if self.offset_x ~= old_offset_x or self.scrollpos_y ~= old_scrollpos_y then
-        self:updateDirty()
-        return true
-    end
-
-    return false
+    return self:scrollY(dir)
 end
 
 local function TextBox_onKeyUp(self, key)
@@ -1360,11 +1566,11 @@ local function TextBox_onKeyDown(self, key, held)
     if key == keys.backspace then
         if line == "" and self.lines[y - 1] then
             table.remove(self.lines, y)
+            self:setScrollPosX(_max(self.scroll.pos_x - 1, 0))
             self:moveCursorPos(#self.lines[y - 1] + 1, y - 1)
-            self.scrollpos_y = _max(self.scrollpos_y - 1, 0)
         else
             self.lines[y] = _sub(line, 1, _max(self.cursor.x - 2, 0)).._sub(line, self.cursor.x, #line)
-            self.offset_x = _max(self.offset_x - 1, 0)
+            self:setScrollPosX(_max(self.scroll.pos_x - 1, 0))
             self:moveCursorPos(self.cursor.x - 1, y)
         end
     elseif key == keys.delete then
@@ -1383,20 +1589,22 @@ local function TextBox_onKeyDown(self, key, held)
         table_insert(self.lines, y + 1, "")
         self:moveCursorPos(self.cursor.x, y + 1)
     end
-    self.len = #self.lines
-    self.scrollmax = _max(#self.lines - self.h, 0)
     self:updateDirty()
     return true
 end
 
 function UI.New_TextBox(x, y, w, h, color_bg, color_txt)
     local instance = New_Widget(x, y, w, h, color_bg, color_txt)
+    add_mixin(instance, ScrollableMixin)
+    instance:initScroll(3, 3)
     instance.lines = {}
     instance.cursor = {x = 1, y = 1}
-    instance.offset_x = 0
-    instance.scrollpos_y = 0
-    instance.scrollmax = 0
-    instance.len = 1
+    function instance:getScrollMaxX()
+        return c.findMaxLenStrOfArray(self.lines)
+    end
+    function instance:getScrollMaxY()
+        return _max(0, #self.lines - self.h)
+    end
 
     instance.draw = TextBox_draw
     instance.setLine = TextBox_setLine
@@ -1688,7 +1896,7 @@ local function Slider_draw(self)
     -- Calculate thumb position if N > 0
     if N > 0 then
         local i = self.slidePosition
-        local offset = (N == 1) and 0 or _min(math_floor((i - 1) / (N - 1) * (W - 1)), self.w - 1)
+        local offset = (N == 1) and 0 or _min(_floor((i - 1) / (N - 1) * (W - 1)), self.w - 1)
         local thumb_x = self.x + offset
         -- Overlay thumb (use a different char, e.g., █ or slider thumb equivalent)
         screen.write(" ", thumb_x, self.y, self.color_txt, self.color_bg)
@@ -1704,7 +1912,7 @@ local function Slider_updatePos(self, x, y)
 
     if N > 0 and self.w > 1 then  -- Avoid div by zero
         local offset = x - self.x
-        local raw_index = math_floor((offset / (self.w - 1) * (N - 1)) + 0.5) + 1
+        local raw_index = _floor((offset / (self.w - 1) * (N - 1)) + 0.5) + 1
         self.slidePosition = _max(1, _min(N, raw_index))
     end
     self.dirty = true
@@ -1879,7 +2087,7 @@ local function MsgWin_draw(self)
     screen.write(_rep(string_char(140), self.w - 2)..string_char(148), self.x + 1, self.y, self.color_bg, self.color_txt)
     screen.write(string_char(151), self.x, self.y, self.color_txt, self.color_bg)
     screen.write(string_char(138).._rep(string_char(140), self.w - 2)..string_char(133), self.x, self.h + self.y - 1, self.color_bg, self.color_txt)
-    screen.write(self.title, math_floor((self.w - #self.title)/2) + self.x, self.y, self.color_bg, self.color_txt)
+    screen.write(self.title, _floor((self.w - #self.title)/2) + self.x, self.y, self.color_bg, self.color_txt)
 end
 
 local function MsgWin_onLayout(self)
@@ -1903,12 +2111,12 @@ function UI.New_MsgWin(mode, title, msg)
     instance:addChild(label)
     local btnOK, btnYES
     if mode == "INFO" then
-        btnOK = UI.New_Button(math_floor((instance.w - 4)/2)+1, instance.h, 4, 1," OK ")
+        btnOK = UI.New_Button(_floor((instance.w - 4)/2)+1, instance.h, 4, 1," OK ")
         instance:addChild(btnOK)
     elseif mode == "YES,NO" then
-        btnYES = UI.New_Button(math_floor((instance.w - 5)/2) - 2, instance.h, 5, 1," YES ")
+        btnYES = UI.New_Button(_floor((instance.w - 5)/2) - 2, instance.h, 5, 1," YES ")
         instance:addChild(btnYES)
-        btnOK = UI.New_Button(math_floor((instance.w + 4)/2), instance.h, 4, 1, " NO ")
+        btnOK = UI.New_Button(_floor((instance.w + 4)/2), instance.h, 4, 1, " NO ")
         instance:addChild(btnOK)
 
         btnYES.pressed = function (self)
@@ -1928,10 +2136,10 @@ function UI.New_MsgWin(mode, title, msg)
         instance.w,  instance.h = math.floor(width*0.65  + 0.5), math.floor(height*0.65  + 0.5)
         label.w, label.h = instance.w - 2, instance.h - 2
         if mode == "INFO" then
-            btnOK.local_x, btnOK.local_y = math_floor((instance.w - 4)/2), instance.h
+            btnOK.local_x, btnOK.local_y = _floor((instance.w - 4)/2), instance.h
         elseif mode == "YES,NO" then
-            btnYES.local_x, btnYES.local_y = math_floor((instance.w - 5)/2) - 2, instance.h
-            btnOK.local_x, btnOK.local_y = math_floor((instance.w + 4)/2), instance.h
+            btnYES.local_x, btnYES.local_y = _floor((instance.w - 5)/2) - 2, instance.h
+            btnOK.local_x, btnOK.local_y = _floor((instance.w + 4)/2), instance.h
         end
     end
 
@@ -1946,7 +2154,7 @@ end
 function UI.New_DialWin(title, msg)
     local root = UI.New_Root()
 
-    local instance = UI.New_Container(math_floor((root.w - 24)/2) + 1, math_floor((root.h - 4)/2), 24, 4, colors.black)
+    local instance = UI.New_Container(_floor((root.w - 24)/2) + 1, _floor((root.h - 4)/2), 24, 4, colors.black)
     instance.title = title or " Title "
     instance.draw = MsgWin_draw
     instance.onLayout = MsgWin_onLayout
@@ -1957,7 +2165,7 @@ function UI.New_DialWin(title, msg)
     local textfield = UI.New_Textfield(label.local_x, label.local_y + 1, instance.w - 2, 1, "", false, colors.gray--[[instance.color_bg]], instance.color_txt)
     instance:addChild(textfield)
 
-    local btnOK = UI.New_Button(math_floor(instance.w/2 - 4 - 1), instance.h, 4, 1, " OK ", _, instance.color_bg, instance.color_txt)
+    local btnOK = UI.New_Button(_floor(instance.w/2 - 4 - 1), instance.h, 4, 1, " OK ", _, instance.color_bg, instance.color_txt)
     instance:addChild(btnOK)
     local ok = nil
 
@@ -1967,7 +2175,7 @@ function UI.New_DialWin(title, msg)
         ok = true
     end
 
-    local btnCANCEL = UI.New_Button(math_floor(instance.w/2), instance.h, 8, 1, " CANCEL ", _, instance.color_bg, instance.color_txt)
+    local btnCANCEL = UI.New_Button(_floor(instance.w/2), instance.h, 8, 1, " CANCEL ", _, instance.color_bg, instance.color_txt)
     instance:addChild(btnCANCEL)
 
     btnCANCEL.pressed = function (self)
@@ -1976,7 +2184,7 @@ function UI.New_DialWin(title, msg)
     end
 
     instance.onResize = function (width, height)
-        instance.local_x, instance.local_y = math_floor((width - 24)/2), math_floor((height - 4)/2)
+        instance.local_x, instance.local_y = _floor((width - 24)/2), _floor((height - 4)/2)
     end
 
     root:addChild(instance)
@@ -2015,7 +2223,7 @@ local function Keyboard_onEvent(self,evt)
 end
 
 function UI.New_Keyboard(width, height)
-    local instance = UI.New_Container(math_floor((width - 21)/2) + 1, height - 6, 21, 7, colors.black)
+    local instance = UI.New_Container(_floor((width - 21)/2) + 1, height - 6, 21, 7, colors.black)
     instance.focus = nil
     -- Стани: 0=default, 1=shift, 2=caps, 3=smileys
     instance.upper = 0
@@ -2187,7 +2395,7 @@ function UI.New_Keyboard(width, height)
     instance.onLayout = MsgWin_onLayout
     instance.onEvent = Keyboard_onEvent
     instance.onResize = function (width, height)
-        instance.local_x, instance.local_y = math_floor((width - 21)/2) + 1, height - 6
+        instance.local_x, instance.local_y = _floor((width - 21)/2) + 1, height - 6
     end
 
     return instance
@@ -2266,13 +2474,13 @@ local function ScrollBox_onLayout(self)
     self.dirty = true
     Container_onLayout(self)
     for _, child in pairs(self.children) do
-        child.y = child.y - self.scrollpos_y
-        self.scrollmax = _max(_max(self.scrollmax, child.local_y + child.h) - self.h, 0)
+        child.y = child.y - self.scroll.pos_y
+        self.scroll.max_y = _max(_max(self.scroll.max_y, child.local_y + child.h) - self.h, 0)
         if child.y + child.h > self.y and child.y <= self.y + self.h - 1 then
             table_insert(self.visibleChild, child)
         end
     end
-    self.len = self.scrollmax + self.h
+    -- self.len = self.scroll.max_y + self.h
 end
 
 local function ScrollBox_updateDirty(self)
@@ -2295,12 +2503,10 @@ function UI.New_ScrollBox(x, y, w, h, color_bg)
     expect(5, color_bg, "number", "nil")
 
     local instance = UI.New_Container(x, y, w, h, color_bg)
+    add_mixin(instance, ScrollableMixin)
+    instance:initScroll(3, 3)
     instance.term = term.current()
-    instance.scrollpos_y = 0
-    instance.scrollmax = 0
-    instance.len = 1
     instance.visibleChild = {}
-    instance.sensivity = 3
 
     instance.draw = ScrollBox_draw
     instance.redraw = ScrollBox_redraw
