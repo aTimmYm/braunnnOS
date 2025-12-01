@@ -90,17 +90,8 @@ scrollBox:addChild(btnReadFile)
 --| СЕКЦИЯ ПЕРЕОПРЕДЕЛЕНИЯ ФУНКЦИОНАЛЬНЫХ МЕТОДОВ |--
 local keyboard = false
 buttonInfo.pressed = function (self)
-    if not keyboard then
-        system.call_keyboard()
-        keyboard = true
-    else
-        system.remove_keyboard()
-        keyboard = false
-    end
-
-    -- UI.New_MsgWin("INFO", " INFO ", "This is a polygon. A test file that displays all interface elements except shortcuts, as they are represented on the desktop you accessed (most likely).")
-    -- window:onLayout()
-
+    UI.New_MsgWin("INFO", " INFO ", "This is a polygon. A test file that displays all interface elements except shortcuts, as they are represented on the desktop you accessed (most likely).")
+    window:onLayout()
 end
 
 buttonError.pressed = function (self)

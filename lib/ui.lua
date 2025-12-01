@@ -153,7 +153,7 @@ local function Tumbler_updateAnimation(self)
     self.dirty = true
 end
 
-local function Tumbler_onMouseDown(self,btn, x, y)
+local function Tumbler_onMouseDown(self, btn, x, y)
     if not self.animating then
         self:startAnimation(self.on and "to_off" or "to_on")
         self:pressed()
@@ -161,7 +161,7 @@ local function Tumbler_onMouseDown(self,btn, x, y)
     return true
 end
 
-local function Tumbler_onEvent(self,evt)
+local function Tumbler_onEvent(self, evt)
     if evt[1] == "timer" and evt[2] == self.timer_id then
         self:updateAnimation()
         return true
@@ -234,13 +234,13 @@ local function RadioButton_horizontal_draw(self)
     end
 end
 
-local function RadioButton_horizontal_changeCount(self,arg)
+local function RadioButton_horizontal_changeCount(self, arg)
     self.count = arg
     self.w = arg
     self.dirty = true
 end
 
-local function RadioButton_horizontal_onMouseUp(self,btn,x,y)
+local function RadioButton_horizontal_onMouseUp(self, btn, x, y)
     if self:check(x,y) then
         self.item = x - self.x+1
         self.dirty = true
@@ -468,13 +468,13 @@ local function Button_draw(self)
     end
 end
 
-local function Button_onMouseDown(self,btn,x,y)
+local function Button_onMouseDown(self, btn, x, y)
     self.held = true
     self.dirty = true
     return true
 end
 
-local function Button_onMouseUp(self,btn,x,y)
+local function Button_onMouseUp(self, btn, x, y)
     if self:check(x,y) and self.held == true then self:pressed() end
     self.held = false
     self.dirty = true
@@ -634,7 +634,7 @@ local function Running_Label_draw(self, bg_override, txtcol_override)
     end
 end
 
-local function Running_Label_setText(self,text)
+local function Running_Label_setText(self, text)
     if self.text ~= text then self.scroll_pos = 1 end
     self.text = text
     self:checkScrolling()
@@ -662,7 +662,7 @@ local function Running_Label_stopTimer(self)
     self.timer_id = nil
 end
 
-local function Running_Label_onEvent(self,evt)
+local function Running_Label_onEvent(self, evt)
     if evt[1] == "timer" and evt[2] == self.timer_id then
         if self.scrolling then
             self.scroll_pos = self.scroll_pos + 1
@@ -884,9 +884,9 @@ end
 
 local function Scrollbar_onMouseUp(self, btn, x, y)
     if self.held == 1 and self:check(x, y) and y == self.y then
-        self.obj:onMouseScroll(-1)
+        self.obj:scrollY(-1)
     elseif self.held == 3 and self:check(x, y) and y == self.y + self.h - 1 then
-        self.obj:onMouseScroll(1)
+        self.obj:scrollY(1)
     end
     self.held = 0
     self.dirty = true
@@ -895,7 +895,7 @@ end
 
 local function Scrollbar_onMouseScroll(self, dir, x, y)
     if self:check(x, y) then
-        self.obj:onMouseScroll(dir)
+        self.obj:scrollY(dir)
         return true
     end
     return false
@@ -1277,13 +1277,13 @@ local function List_onKeyDown(self, key, held)
             self.item_index = _max(self.item_index - 1, 1)
             self.item = self.array[self.item_index]
             if self.item_index <= self.scroll.pos_y then
-                self:onMouseScroll(-(1/self.scroll.sensitivity_y))
+                self:scrollY(-(1/self.scroll.sensitivity_y))
             end
         elseif key == keys.down then
             self.item_index = _min(self.item_index + 1, #self.array)
             self.item = self.array[self.item_index]
             if self.item_index > _min(self.h + self.scroll.pos_y, #self.array) then
-                self:onMouseScroll((1/self.scroll.sensitivity_y))
+                self:scrollY(1/self.scroll.sensitivity_y)
             end
         elseif key == keys.home then
             self.scroll.pos_y = 0
@@ -1383,7 +1383,7 @@ end
 
 local function Textfield_onMouseScroll(self, dir, x, y)
     local old_offset = self.offset
-    self.offset = _min(_max(self.offset - dir,0), #self.text - self.w + 1)
+    self.offset = _max(0, _min(#self.text - self.w + 1, self.offset - dir))
     if self.offset ~= old_offset then
         self.dirty = true
         return true
@@ -1516,6 +1516,14 @@ local function TextBox_moveCursorPos(self, posX, posY)
     end
 end
 
+local function TextBox_clear(self)
+    self.lines = {""}
+    self.cursor = {x = 1, y = 1}
+    self.scroll.pos_y = 0
+    self.scroll.pos_x = 0
+    self.dirty = true
+end
+
 local function TextBox_onCharTyped(self, chr)
     local y = self.cursor.y
     local x = self.cursor.x
@@ -1644,6 +1652,7 @@ function UI.New_TextBox(x, y, w, h, color_bg, color_txt)
     instance.onMouseScroll = TextBox_onMouseScroll
     instance.onKeyUp = TextBox_onKeyUp
     instance.onKeyDown = TextBox_onKeyDown
+    instance.clear = TextBox_clear
     instance.updateDirty = List_updateDirty
     instance.onPaste = TextBox_onPaste
 
@@ -1914,6 +1923,52 @@ function UI.New_Dropdown(x, y, array, defaultValue, maxSizeW, orientation, color
     instance.onFocus = Dropdown_onFocus
     instance.pressed = pressed
     instance.onMouseDown = Dropdown_onMouseDown
+
+    return instance
+end
+
+local function menu_onFocus(self, focused)
+    if not focused and self.expanded then
+        self.expanded = false
+        self.parent:onLayout()
+    end
+    return true
+end
+
+local function menu_onMouseDown(self, btn, x, y)
+    if self.expanded then
+        local coord = y - self.y
+        if self.arr[coord] then
+            self:pressed(coord)
+        end
+    end
+    self.expanded = not self.expanded
+    if not self.expanded then self.parent:onLayout() else self.dirty = true end
+    return true
+end
+
+local function menu_draw(self)
+    local color_bg, color_txt = self.color_bg, self.color_txt
+    if self.expanded then
+        local max_length = c.findMaxLenStrOfArray(self.arr)
+        for i, v in pairs(self.arr) do
+            screen.write(v.._rep(" ", max_length - #v), self.x, self.y + i, color_bg, color_txt)
+        end
+        color_bg, color_txt = self.color_txt, self.color_bg
+        self.h = #self.arr + 1
+    end
+    screen.write(self.name, self.x, self.y, color_bg, color_txt)
+end
+
+function UI.New_Menu(x, y, name, arr, color_bg, color_txt)
+    local instance = New_Widget(x, y, #name, 1, color_bg, color_txt)
+    instance.arr = arr or {}
+    instance.name = name
+    instance.expanded = false
+
+    instance.draw = menu_draw
+    instance.onMouseDown = menu_onMouseDown
+    instance.onFocus = menu_onFocus
 
     return instance
 end
@@ -2206,6 +2261,12 @@ function UI.New_DialWin(title, msg)
 
     local btnCANCEL = UI.New_Button(_floor(instance.w/2), instance.h, 8, 1, " CANCEL ", _, instance.color_bg, instance.color_txt)
     instance:addChild(btnCANCEL)
+
+    textfield.pressed = function (self)
+        table.remove(root.children, 1)
+        root.running_program = false
+        ok = true
+    end
 
     btnCANCEL.pressed = function (self)
         table.remove(root.children, 1)

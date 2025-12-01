@@ -122,17 +122,6 @@ function dM.makeDesktops()
     Surface:addChild(desktops[currdesk])
 end
 
-local function reSize(self)
-    self.pos = {
-        x = self.parent.pos.x + self.offset_X,
-        y = self.parent.pos.y + self.offset_Y
-    }
-    self.size = {
-        w = shortcut_width,
-        h = shortcut_height
-    }
-end
-
 local APP_CONFIG = {
     Paint = {
         needArgs = { true }
@@ -189,12 +178,5 @@ end
 function dM.getCurrdesk()
     return currdesk
 end
-
---[[function dM.tResize()
-    dM.makeDesktops()
-    dM.makeShortcuts()
-    Radio:changeCount(num_desks)
-    Radio.item = currdesk
-end]]
 
 return dM

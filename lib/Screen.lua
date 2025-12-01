@@ -1,6 +1,6 @@
 local to_blit = colors.toBlit
-local _blit = term.blit
 local _setCursorPos = term.setCursorPos
+local _blit = term.blit
 local _rep = string.rep
 local _sub = string.sub
 local _min = math.min
@@ -11,7 +11,7 @@ local _screen = {}
 local screen_w, screen_h
 
 -- Кадр экрана
-local screen_frame, screen_buffer = {}, {}
+local screen_frame = {}
 
 -- Переменные для Clipping (Ограничение области рисования)
 -- По умолчанию область - весь экран
@@ -21,15 +21,10 @@ function _screen.fill()
     screen_w, screen_h = term.getSize()
     clip_x, clip_y, clip_w, clip_h = 1, 1, screen_w, screen_h
     local text_line = _rep(" ", screen_w)
-    local bg_line = _rep(to_blit(32768), screen_w)
-    local txt_line = _rep(to_blit(1), screen_w)
+    local bg_line   = _rep(to_blit(32768), screen_w)
+    local txt_line  = _rep(to_blit(1), screen_w)
     for i = 1, screen_h do
         screen_frame[i] = {
-            text = text_line,
-            color_bg = bg_line,
-            color_txt = txt_line
-        }
-        screen_buffer[i] = {
             text = text_line,
             color_bg = bg_line,
             color_txt = txt_line
@@ -55,7 +50,7 @@ end
 function _screen.write(str, x, y, bg, txt)
     if y < clip_y or y > clip_h then return end
 
-    local lineObj = screen_buffer[y]
+    local lineObj = screen_frame[y]
     if not lineObj then return end -- Защита от nil
 
     local start_draw = _max(x, clip_x)
@@ -87,15 +82,9 @@ function _screen.draw_rectangle(x, y, w, h, bg)
 end
 
 function _screen.update()
-    for i, line in pairs(screen_frame) do
-        local buffer = screen_buffer[i]
+    for i, line in ipairs(screen_frame) do
         _setCursorPos(1, i)
-        if buffer.text ~= line.text or buffer.color_bg ~= line.color_bg or buffer.color_txt ~= line.color_txt then
-            _blit(buffer.text, buffer.color_txt, buffer.color_bg)
-            line.text = buffer.text
-            line.color_bg = buffer.color_bg
-            line.color_txt = buffer.color_txt
-        end
+        _blit(line.text, line.color_txt, line.color_bg)
     end
 end
 
@@ -118,7 +107,7 @@ function _screen.draw_blittle(image, x, y)
             goto continue  -- Пропускаем строку, если за пределами
         end
 
-        local frame = screen_buffer[y_eff]
+        local frame = screen_frame[y_eff]
         if not frame then
             goto continue  -- Защита от nil (хотя буфер должен быть полным)
         end
