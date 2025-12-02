@@ -41,6 +41,10 @@ function _screen.clip_set(x, y, w, h)
     clip_h = _min(screen_h, y + h - 1)
 end
 
+function _screen.clip_get()
+    return clip_x, clip_y, clip_w, clip_h
+end
+
 -- Сброс области видимости на весь экран
 function _screen.clip_remove()
     clip_x, clip_y, clip_w, clip_h = 1, 1, screen_w, screen_h

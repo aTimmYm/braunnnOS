@@ -18,6 +18,9 @@ local conf = c.readConf(settingsPath)
 local PALETTE = require("palette")
 local version = "0.2 DEV"
 local files_to_update = {}
+local compact = 0
+local box = {}
+local menu_bar = nil
 
 local dropdownChooseArr = {}
 for k, _ in pairs(PALETTE) do
@@ -27,33 +30,14 @@ end
 ----------| СЕКЦИЯ ИНИЦИАЛИЗАЦИИ ОБЪЕКТОВ |----------
 local window, surface = system.add_window("Titled", colors.black, "Settings")
 
-local box = UI.New_Box(1, 1, 11, surface.h, colors.black)
-box.draw = function (self)
-    screen.draw_rectangle(self.x, self.y, self.w, self.h, self.color_bg)
-    for i = self.y, self.h + self.y - 1 do
-        screen.write("|", self.x, i, self.color_bg, self.color_txt)
-        screen.write("|", self.w + self.x - 1, i, self.color_bg, self.color_txt)
-    end
+local function get_compact_mode(width)
+    if width < 21 then return 3
+    elseif width < 33 then return 2
+    elseif width < 47 then return 1
+    else return 0 end
 end
-surface:addChild(box)
 
-local displayLabel = UI.New_Label(2, 1, box.w - 2, 1, "-DISPLAY-", _, colors.black, colors.lightGray)
-box:addChild(displayLabel)
-
-local buttonSCREEN = UI.New_Button(2, displayLabel.y + 1, displayLabel.w, 1, "SCREEN", _, box.color_bg, colors.white)
-box:addChild(buttonSCREEN)
-
-local buttonTIME = UI.New_Button(2, buttonSCREEN.y + 1, buttonSCREEN.w, 1, "TIME&DATE",_, box.color_bg,colors.white)
-box:addChild(buttonTIME)
-
-local buttonCOLORS = UI.New_Button(2, buttonTIME.y + 1, buttonTIME.w, 1, "COLORS", _, box.color_bg, colors.white)
-box:addChild(buttonCOLORS)
-
-local systemLabel = UI.New_Label(2, buttonCOLORS.y + 1, box.w - 2, 1, "-SYSTEM--", _, box.color_bg, colors.lightGray)
-box:addChild(systemLabel)
-
-local buttonAbout = UI.New_Button(2, systemLabel.y + 1, systemLabel.w, 1, "ABOUT", _, box.color_bg, colors.white)
-box:addChild(buttonAbout)
+compact = get_compact_mode(window.w)
 -----------------------------------------------------
 ------| СЕКЦИЯ ОБЪЯВЛЕНИЯ ФУНКЦИЙ ПРОГРАММЫ |--------
 local function write_file(path, data)
@@ -99,7 +83,8 @@ local function checkUpdates(manifest)
 end
 
 local function create_page_1()
-    local page = UI.New_Box(box.w + 1, 1, surface.w - box.w, surface.h, colors.black)
+    local box_w =  box.w or 0
+    local page = UI.New_Box(box_w + 1, 1, compact == 2 and surface.w or surface.w - box_w, surface.h, colors.black)
 
     local tumblerLabel = UI.New_Label(2, 2, 12, 1, "Monitor Mode", "left", page.color_bg, colors.white)
     page:addChild(tumblerLabel)
@@ -131,15 +116,21 @@ local function create_page_1()
     end
 
     page.onResize = function (width, height)
-        monitorTumbler.local_x = width - 2
-        dropdown.local_x = width - 4
+        local x = compact == 3 and 1 or 2
+        tumblerLabel.local_x = x
+        dropdownLabel.local_x = x
+        monitorTumbler.local_x = width - x
+        dropdown.local_x = width - 2 - x
     end
+
+    page.onResize(page.w)
 
     return page
 end
 
 local function create_page_2()
-    local page = UI.New_Box(box.w + 1, 1, surface.w - box.w, surface.h, colors.black)
+    local box_w =  box.w or 0
+    local page = UI.New_Box(box_w + 1, 1, compact == 2 and surface.w or surface.w - box_w, surface.h, colors.black)
 
     local time24FormatLabel = UI.New_Label(2, 2, 17, 1, "Enable 24h format", "left", page.color_bg, colors.white)
     page:addChild(time24FormatLabel)
@@ -164,21 +155,27 @@ local function create_page_2()
     end
 
     page.onResize = function (width, height)
-        time24FormatTumbler.local_x = width - 2
-        showSecondsTumbler.local_x = width - 2
+        local x = compact == 3 and 1 or 2
+        time24FormatLabel.local_x = x
+        showSecondsLabel.local_x = x
+        time24FormatTumbler.local_x = width - x
+        showSecondsTumbler.local_x = width - x
     end
+
+    page.onResize(page.w)
 
     return page
 end
 
 local function create_page_3()
-    local page = UI.New_Box(box.w + 1, 1, surface.w - box.w, surface.h, colors.black)
+    local box_w =  box.w or 0
+    local page = UI.New_Box(box_w + 1, 1, compact == 2 and surface.w or surface.w - box_w, surface.h, colors.black)
 
-    local labelCurrCols = UI.New_Label(2, 2, 16, 1, "Current colors: ", "left", colors.white, colors.black)
+    local labelCurrCols = UI.New_Label(2, 2, 15, 1, "Current colors:", "left", colors.white, colors.black)
     page:addChild(labelCurrCols)
 
     local currCols = UI.New_Label(labelCurrCols.x + labelCurrCols.w + 1, labelCurrCols.y, 4, 1)
-    currCols.draw = function(self) -- твой кастомный draw
+    currCols.draw = function(self)
         screen.write(" ", self.x, self.y, colors.black, colors.black)
         screen.write(" ", self.x + 1, self.y, colors.white, colors.white)
         screen.write(" ", self.x + 2, self.y, colors.lightGray, colors.lightGray)
@@ -209,14 +206,27 @@ local function create_page_3()
     end
 
     page.onResize = function (width, height)
-        dropdownChoose.local_x, dropdownChoose.local_y = width - 13, chooseLabel.local_y
+        local x = compact == 3 and 1 or 2
+        labelCurrCols.local_x = x
+        currCols.local_x = labelCurrCols.local_x + labelCurrCols.w + 1
+        chooseLabel.local_x = x
+        if compact >= 1 then
+            dropdownChoose.local_x = x
+            dropdownChoose.local_y = chooseLabel.local_y + 2
+        else
+            dropdownChoose.local_x = width - 13
+            dropdownChoose.local_y = chooseLabel.local_y
+        end
     end
+
+    page.onResize(page.w)
 
     return page
 end
 
 local function create_page_4()
-    local page = UI.New_Box(box.w + 1, 1, surface.w - box.w, surface.h, colors.black)
+    local box_w =  box.w or 0
+    local page = UI.New_Box(box_w + 1, 1, compact == 2 and surface.w or surface.w - box_w, surface.h, colors.black)
 
     local braunnnOS = UI.New_Label(2, 2, 9, 1, string_char(223).."raunnnOS", _, page.color_bg, colors.white)
     page:addChild(braunnnOS)
@@ -256,17 +266,26 @@ local function create_page_4()
         end
     end
 
+    page.onResize = function (width, height)
+        local x = compact == 3 and 1 or 2
+        braunnnOS.local_x = x
+        versionLabel.local_x = x
+        buttonCheckUpdate.local_x = x
+    end
+
+    page.onResize(page.w)
+
     return page
 end
 
 local function set_page(creator_func)
-    if page_buffer and page_buffer.creator ~= creator_func then
-        surface:removeChild(page_buffer)
+    if page_buffer and page_buffer.creator == creator_func then
+        if not page_buffer.parent then surface:addChild(page_buffer) end
+        return
     end
 
-    if page_buffer and page_buffer.creator == creator_func then
-        surface:addChild(page_buffer)
-        return
+    if page_buffer then
+        surface:removeChild(page_buffer)
     end
 
     local newPage = creator_func()
@@ -275,19 +294,100 @@ local function set_page(creator_func)
     page_buffer = newPage
     surface:onLayout()
 end
+
+local function create_sidebar()
+    if box and box.parent then return end -- Уже есть
+
+    box = UI.New_Box(1, 1, 11, surface.h, colors.black)
+    box.draw = function (self)
+        screen.draw_rectangle(self.x, self.y, self.w, self.h, self.color_bg)
+        for i = self.y, self.h + self.y - 1 do
+            screen.write("|", self.x, i, self.color_bg, self.color_txt)
+            screen.write("|", self.w + self.x - 1, i, self.color_bg, self.color_txt)
+        end
+    end
+    surface:addChild(box)
+
+    local displayLabel = UI.New_Label(2, 1, box.w - 2, 1, "-DISPLAY-", _, colors.black, colors.lightGray)
+    box:addChild(displayLabel)
+
+    local buttonSCREEN = UI.New_Button(2, displayLabel.y + 1, displayLabel.w, 1, "SCREEN", _, box.color_bg, colors.white)
+    box:addChild(buttonSCREEN)
+
+    local buttonTIME = UI.New_Button(2, buttonSCREEN.y + 1, buttonSCREEN.w, 1, "TIME&DATE",_, box.color_bg,colors.white)
+    box:addChild(buttonTIME)
+
+    local buttonCOLORS = UI.New_Button(2, buttonTIME.y + 1, buttonTIME.w, 1, "COLORS", _, box.color_bg, colors.white)
+    box:addChild(buttonCOLORS)
+
+    local systemLabel = UI.New_Label(2, buttonCOLORS.y + 1, box.w - 2, 1, "-SYSTEM--", _, box.color_bg, colors.lightGray)
+    box:addChild(systemLabel)
+
+    local buttonAbout = UI.New_Button(2, systemLabel.y + 1, systemLabel.w, 1, "ABOUT", _, box.color_bg, colors.white)
+    box:addChild(buttonAbout)
+
+    buttonSCREEN.pressed  = function() set_page(create_page_1) end
+    buttonTIME.pressed    = function() set_page(create_page_2) end
+    buttonCOLORS.pressed  = function() set_page(create_page_3) end
+    buttonAbout.pressed   = function() set_page(create_page_4) end
+end
+
+local function add_menu()
+    if menu_bar and menu_bar.parent then return end
+
+    menu_bar = UI.New_Menu(1, 1, "=", {"SCREEN", "TIME&DATE", "COLORS", "ABOUT"}, window.color_bg, colors.black)
+    window:addChild(menu_bar)
+
+    menu_bar.pressed = function (self, id)
+        if      id == "SCREEN" then set_page(create_page_1)
+        elseif  id == "TIME&DATE" then set_page(create_page_2)
+        elseif  id == "COLORS" then set_page(create_page_3)
+        elseif  id == "ABOUT" then set_page(create_page_4)
+        end
+    end
+end
+
+local function rebuild_interface(force)
+    local new_compact = get_compact_mode(window.w)
+
+    if new_compact == compact and not force then return end
+
+    compact = new_compact
+
+    if compact >= 2 then
+        if box and box.parent then
+            surface:removeChild(box)
+            box = {}
+        end
+        add_menu()
+    else
+        if menu_bar and menu_bar.parent then
+            window:removeChild(menu_bar)
+            menu_bar = nil
+        end
+        create_sidebar()
+    end
+end
+
 -----------------------------------------------------
 --| СЕКЦИЯ ПЕРЕОПРЕДЕЛЕНИЯ ФУНКЦИОНАЛЬНЫХ МЕТОДОВ |--
-buttonSCREEN.pressed  = function() set_page(create_page_1) end
-buttonTIME.pressed    = function() set_page(create_page_2) end
-buttonCOLORS.pressed  = function() set_page(create_page_3) end
-buttonAbout.pressed   = function() set_page(create_page_4) end
-
 surface.onResize = function (width, height)
-    box.h = height
-    if page_buffer and page_buffer.onResize then
-        page_buffer.w, page_buffer.h = width - box.w, height
-        page_buffer.onResize(page_buffer.w, page_buffer.h)
-     end
+    rebuild_interface(false)
+
+    if box and box.h then box.h = height end
+
+    if page_buffer then
+        local sidebar_w = (box and box.w) or 0
+
+        local page_w = (compact == 2) and width or (width - sidebar_w)
+
+        page_buffer.local_x = sidebar_w + 1
+        page_buffer.w = page_w
+        page_buffer.h = height
+
+        if page_buffer.onResize then page_buffer.onResize(page_w, height) end
+    end
 end
 -----------------------------------------------------
+rebuild_interface(true)
 set_page(create_page_4)

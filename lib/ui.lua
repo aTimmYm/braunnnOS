@@ -30,11 +30,14 @@ local EVENTS = {
     }
 }
 
---local system = require("braunnnsys")
 local screen = require("Screen")
 local c = require("cfunc")
 local expect = require("cc.expect")
 local blittle = require("blittle_extended")
+
+local function clip_calc(x1, y1, w1, h1, x2, y2, w2, h2)
+    return _max(x1, x2), _max(y1, y2), _min(w1, w2), _min(h1, h2)
+end
 
 local function check(self,x,y)
     return (x >= self.x and x < self.w + self.x and
@@ -1489,11 +1492,78 @@ function UI.New_Textfield(x, y, w, h, hint, hidden, color_bg, color_txt)
     return instance
 end
 
-local function TextBox_draw(self)
-    screen.draw_rectangle(self.x, self.y, self.w, self.h, self.color_bg)
-    for i = self.scroll.pos_y + 1, _min(self.h + self.scroll.pos_y, #self.lines) do
-        screen.write(_sub(self.lines[i], self.scroll.pos_x + 1, self.scroll.pos_x + self.w - 1), self.x, i - self.scroll.pos_y + self.y - 1, self.color_bg, self.color_txt)
+local function delete_selected_text(self)
+    if self.selected.status and self.lines[1] then
+        local p1 = self.selected.pos1
+        local p2 = self.selected.pos2
+        local s, e = p1, p2
+        if p1.y > p2.y or (p1.y == p2.y and p1.x > p2.x) then
+            s, e = p2, p1 --то, что я пытался сделать, но мозгов не хватило, Увы
+        end
+        local string = ""
+        for i = s.y, e.y do
+            local line_str = self.lines[s.y] or ""
+            if s.y == i then
+                string = string .. _sub(line_str, 1, s.x - 1)
+            end
+            if e.y == i then
+                string = string .. _sub(line_str, e.x + 1, #line_str)
+            end
+            table.remove(self.lines, s.y)
+        end
+        table.insert(self.lines, s.y, string)
+        self:moveCursorPos(s.x, s.y)
+        self.selected.status = false
+        return true
     end
+    return false
+end
+
+local function TextBox_draw(self)
+    local x, y, w, h = screen.clip_get()
+    local cx, cy, cw, ch = clip_calc(x, y, w, h, self.x, self.y, self.w + self.x - 1, self.h + self.y - 1)
+    screen.clip_set(cx, cy, cw, ch)
+    screen.draw_rectangle(self.x, self.y, self.w, self.h, self.color_bg)
+
+    local start_line = self.scroll.pos_y + 1
+    local end_line = _min(self.h + self.scroll.pos_y, #self.lines)
+
+    for i = start_line, end_line do
+        local str = self.lines[i] or ""
+        local visible_str = _sub(str, self.scroll.pos_x + 1, self.scroll.pos_x + self.w)
+        screen.write(visible_str, self.x, self.y + (i - self.scroll.pos_y) - 1, self.color_bg, self.color_txt)
+    end
+
+    if self.selected.status then
+        local p1 = self.selected.pos1
+        local p2 = self.selected.pos2
+        local s, e = p1, p2
+        if p1.y > p2.y or (p1.y == p2.y and p1.x > p2.x) then
+            s, e = p2, p1 --то, что я пытался сделать, но мозгов не хватило, Увы
+        end
+
+        local start = _max(s.y, start_line)
+        local _end = _min(e.y, end_line)
+        for i = start, _end do
+            local line_str = self.lines[i] or ""
+            local sel_x_start = 1
+            local sel_x_end = #line_str
+            if i == s.y then
+                sel_x_start = s.x
+            end
+            if i == e.y then
+                sel_x_end = e.x
+            end
+            if sel_x_start <= sel_x_end + 1 then
+                local sel_text = _sub(line_str, sel_x_start, sel_x_end)
+                if #line_str == 0 and i ~= e.y and i ~= s.y then sel_text = " " end
+                local draw_x = self.x + (sel_x_start - 1) - self.scroll.pos_x
+                local draw_y = self.y + (i - self.scroll.pos_y) - 1
+                screen.write(sel_text, draw_x, draw_y, colors.blue, colors.white)
+            end
+        end
+    end
+    screen.clip_set(x, y, w, h)
 end
 
 local function TextBox_setLine(self, line, number)
@@ -1525,6 +1595,7 @@ local function TextBox_clear(self)
 end
 
 local function TextBox_onCharTyped(self, chr)
+    delete_selected_text(self)
     local y = self.cursor.y
     local x = self.cursor.x
     local line = self.lines[y]
@@ -1537,6 +1608,11 @@ end
 
 local function TextBox_onMouseDown(self, btn, x, y)
     self:moveCursorPos(x - self.x + self.scroll.pos_x + 1, y - self.y + self.scroll.pos_y + 1)
+    local cx, cy = self.cursor.x, self.cursor.y
+    self.selected.pos1 = {x = cx, y = cy}
+    self.selected.pos2 = {x = cx, y = cy}
+    self.selected.status = false
+    self.dirty = true
     return true
 end
 
@@ -1574,6 +1650,7 @@ local function TextBox_onKeyDown(self, key, held)
     local y = self.cursor.y
     local line = self.lines[y] or ""
     if key == keys.backspace then
+        if delete_selected_text(self) then self:updateDirty() return true end
         if _sub(line, 1, self.cursor.x - 1) == "" and self.lines[y - 1] then
             self:moveCursorPos(#self.lines[y - 1] + 1, y - 1)
             self.lines[y - 1] = self.lines[y - 1] .. line
@@ -1585,6 +1662,7 @@ local function TextBox_onKeyDown(self, key, held)
             self:moveCursorPos(self.cursor.x - 1, y)
         end
     elseif key == keys.delete then
+        if delete_selected_text(self) then self:updateDirty() return true end
         if self.cursor.x > #line and self.lines[y + 1] then
             self.lines[y] = line .. self.lines[y + 1]
             table.remove(self.lines, y + 1)
@@ -1600,21 +1678,26 @@ local function TextBox_onKeyDown(self, key, held)
         self:moveCursorPos(self.cursor.x, y - 1)
     elseif key == keys.down then
         self:moveCursorPos(self.cursor.x, y + 1)
-    elseif key == keys.leftShift and held == true then
+    elseif key == keys.leftShift then
         self.shiftheld = true
     elseif key == keys.enter then
+        if delete_selected_text(self) then self:updateDirty() return true end
         table_insert(self.lines, y + 1, _sub(line, self.cursor.x, #line))
         self:setLine(_sub(line, 1, self.cursor.x - 1), y)
         self:moveCursorPos(1, y + 1)
     elseif key == keys.tab then
         self:onCharTyped('\t')
     elseif key == keys.pageDown then
-        self:scrollY(self.h)
+        self.selected.status = false
+        self:scrollY(self.h / self.scroll.sensitivity_y)
     elseif key == keys.pageUp then
-        self:scrollY(-self.h)
+        self.selected.status = false
+        self:scrollY(-self.h / self.scroll.sensitivity_y)
     elseif key == keys.home then
+        self.selected.status = false
         self:moveCursorPos(1, y)
     elseif key == keys["end"] then
+        self.selected.status = false
         self:moveCursorPos(#line + 1, y)
     end
     self:updateDirty()
@@ -1629,12 +1712,30 @@ local function TextBox_onPaste(self, string)
     return true
 end
 
+local function TextBox_onMouseDrag(self, btn, x, y)
+    local x1 = self.selected.pos1.x
+    local y1 = self.selected.pos1.y
+    local lines = self.lines
+    self.selected.pos2.x = _min(#lines[y1] + 1, _max(1, x - self.x + 1 + self.scroll.pos_x))
+    self.selected.pos2.y = _min(#lines, _max(1, y - self.y + 1 + self.scroll.pos_y))
+    self:moveCursorPos(x - self.x + self.scroll.pos_x + 1, y - self.y + self.scroll.pos_y + 1)
+    self.selected.status = true
+    self.dirty = true
+    return true
+end
+
 function UI.New_TextBox(x, y, w, h, color_bg, color_txt)
     local instance = New_Widget(x, y, w, h, color_bg, color_txt)
     add_mixin(instance, ScrollableMixin)
     instance:initScroll(3, 3)
     instance.lines = {""}
     instance.cursor = {x = 1, y = 1}
+    instance.selected = {
+        status = false,
+        pos1 = {x = 1, y = 1},
+        pos2 = {x = 1, y = 1}
+    }
+
     function instance:getScrollMaxX()
         return c.findMaxLenStrOfArray(self.lines) - self.w
     end
@@ -1655,6 +1756,7 @@ function UI.New_TextBox(x, y, w, h, color_bg, color_txt)
     instance.clear = TextBox_clear
     instance.updateDirty = List_updateDirty
     instance.onPaste = TextBox_onPaste
+    instance.onMouseDrag = TextBox_onMouseDrag
 
     return instance
 end
@@ -1931,6 +2033,8 @@ local function menu_onFocus(self, focused)
     if not focused and self.expanded then
         self.expanded = false
         self.parent:onLayout()
+		self.h = 1
+        self.w = #self.name
     end
     return true
 end
@@ -1938,12 +2042,18 @@ end
 local function menu_onMouseDown(self, btn, x, y)
     if self.expanded then
         local coord = y - self.y
-        if self.arr[coord] then
-            self:pressed(coord)
+        if coord == 0 then return false end
+        local elem = self.arr[coord]
+        if elem then
+            self:pressed(elem)
         end
     end
     self.expanded = not self.expanded
-    if not self.expanded then self.parent:onLayout() else self.dirty = true end
+    if not self.expanded then
+        self.parent:onLayout()
+        self.h = 1
+        self.w = #self.name
+    else self.dirty = true end
     return true
 end
 
@@ -1956,6 +2066,7 @@ local function menu_draw(self)
         end
         color_bg, color_txt = self.color_txt, self.color_bg
         self.h = #self.arr + 1
+        self.w = max_length
     end
     screen.write(self.name, self.x, self.y, color_bg, color_txt)
 end
