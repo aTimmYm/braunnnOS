@@ -14,7 +14,8 @@ df4bccffc73641b79da08106856799fa   lib/id3_meta.lua
 914e77e5a6c186c459a010ae7733358a   lib/translit.lua
 0ddcf0c99234cd6538751c7c70602e97   lib/ui.lua
 2eb92297b030385841d3611cf992bdc6   sbin/CEditor/Data/lex.lua
-95305769aeba786b7c96ff449135afd7   sbin/CEditor/main.lua
+de94b88a3f39f5c326495bffb460e41a   sbin/CEditor/main — копия.lua
+c88a9a54d65786a901f5159f40870664   sbin/CEditor/main.lua
 89b0b700ec66f8f1128e5783e1d32e86   sbin/Calculator/icon.ico
 8764849f29964f44e953c1df8f9f5418   sbin/Calculator/main.lua
 920e095b774f4f8e2c2c59c405ef9d09   sbin/Converter/main.lua
