@@ -1,6 +1,6 @@
-local to_blit = colors.toBlit
-local _setCursorPos = term.setCursorPos
 local _blit = term.blit
+local _setCursorPos = term.setCursorPos
+local to_blit = colors.toBlit
 local _rep = string.rep
 local _sub = string.sub
 local _min = math.min
@@ -8,14 +8,8 @@ local _max = math.max
 
 local _screen = {}
 
-local screen_w, screen_h
-
--- Кадр экрана
+local screen_w, screen_h, clip_x, clip_y, clip_w, clip_h
 local screen_frame = {}
-
--- Переменные для Clipping (Ограничение области рисования)
--- По умолчанию область - весь экран
-local clip_x, clip_y, clip_w, clip_h
 
 function _screen.fill()
     screen_w, screen_h = term.getSize()
@@ -31,21 +25,17 @@ function _screen.fill()
         }
     end
 end
-_screen.fill() -- Вызываем при загрузке
+_screen.fill()
 
--- Функция установки области видимости (вместо window.create)
 function _screen.clip_set(x, y, w, h)
-    clip_x = _max(1, x)
-    clip_y = _max(1, y)
-    clip_w = _min(screen_w, x + w - 1)
-    clip_h = _min(screen_h, y + h - 1)
+    clip_x, clip_y = _max(1, x), _max(1, y)
+    clip_w, clip_h = _min(screen_w, w), _min(screen_h, h)
 end
 
 function _screen.clip_get()
     return clip_x, clip_y, clip_w, clip_h
 end
 
--- Сброс области видимости на весь экран
 function _screen.clip_remove()
     clip_x, clip_y, clip_w, clip_h = 1, 1, screen_w, screen_h
 end
@@ -54,8 +44,8 @@ end
 function _screen.write(str, x, y, bg, txt)
     if y < clip_y or y > clip_h then return end
 
-    local lineObj = screen_frame[y]
-    if not lineObj then return end -- Защита от nil
+    local line = screen_frame[y]
+    if not line then return end -- Защита от nil
 
     local start_draw = _max(x, clip_x)
     local end_draw   = _min(x + #str - 1, clip_w)
@@ -73,9 +63,9 @@ function _screen.write(str, x, y, bg, txt)
     local prefix_len = start_draw - 1
     local suffix_start = end_draw + 1
 
-    lineObj.text = _sub(lineObj.text, 1, prefix_len) .. visible_str .. _sub(lineObj.text, suffix_start)
-    lineObj.color_bg = _sub(lineObj.color_bg, 1, prefix_len) .. visible_bg .. _sub(lineObj.color_bg, suffix_start)
-    lineObj.color_txt = _sub(lineObj.color_txt, 1, prefix_len) .. visible_txt .. _sub(lineObj.color_txt, suffix_start)
+    line.text = _sub(line.text, 1, prefix_len) .. visible_str .. _sub(line.text, suffix_start)
+    line.color_bg = _sub(line.color_bg, 1, prefix_len) .. visible_bg .. _sub(line.color_bg, suffix_start)
+    line.color_txt = _sub(line.color_txt, 1, prefix_len) .. visible_txt .. _sub(line.color_txt, suffix_start)
 end
 
 function _screen.draw_rectangle(x, y, w, h, bg)

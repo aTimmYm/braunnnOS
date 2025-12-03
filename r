@@ -1619,7 +1619,7 @@ end
 local function TextBox_onMouseDown(self, btn, x, y)
     self:moveCursorPos(x - self.x + self.scroll.pos_x + 1, y - self.y + self.scroll.pos_y + 1)
     local cx, cy = self.cursor.x, self.cursor.y
-    self.click_pos = {x = x - self.x + 1 + self.scroll.pos_x, y = y - self.y + 1 + self.scroll.pos_y}
+    self.test = {x = x - self.x + 1 + self.scroll.pos_x, y = y - self.y + 1 + self.scroll.pos_y}
     self.selected.pos1 = {x = cx, y = cy}
     self.selected.pos2 = {x = cx, y = cy}
     self.selected.status = false
@@ -1628,32 +1628,34 @@ local function TextBox_onMouseDown(self, btn, x, y)
 end
 
 local function TextBox_onMouseUp(self, btn, x, y)
-    self.click_pos = nil
+    self.test = nil
     return true
 end
 
 local function TextBox_onMouseDrag(self, btn, x, y)
     local p1 = self.selected.pos1
     local p2 = self.selected.pos2
-    local oX = self.click_pos.x
-    local oY = self.click_pos.y
+    local oX = self.test.x
+    local oY = self.test.y
     local max_lines = #self.lines
     local nY = y - self.y + 1 + self.scroll.pos_y
     nY = _max(1, _min(max_lines + 1, nY))
     local current_line = #self.lines[_min(max_lines, nY)]
     local nX = x - self.x + 1 + self.scroll.pos_x
-    nX = _max(1, _min(current_line, nX))
+    --nX = _max(1, _min(current_line, nX))
     if (nX < oX and nY == oY) or nY < oY then
         p1.x = nX
-        p2.x = oX - 1
+        p2.x = _max(1, _min(current_line, oX - 1))
         p1.y = nY
-        p2.y = oY
+        p2.y = _max(1, _min(max_lines + 1, oY))
     else
-        p1.x = oX
+        p1.x = _max(1, _min(current_line, oX))
         p2.x = nX
-        p1.y = oY
+        p1.y = _max(1, _min(max_lines + 1, oY))
         p2.y = nY
     end
+    dbg.print("P1: "..p1.x.." | "..p1.y)
+    dbg.print("P2: "..p2.x.." | "..p2.y)
     self:moveCursorPos(nX, nY)
     self.selected.status = true
     self.dirty = true
@@ -1746,6 +1748,7 @@ function UI.New_TextBox(x, y, w, h, color_bg, color_txt)
     instance:initScroll(3, 3)
     instance.lines = {""}
     instance.cursor = {x = 1, y = 1}
+    -- instance.test = {}
     instance.selected = {
         status = false,
         pos1 = {x = 1, y = 1},

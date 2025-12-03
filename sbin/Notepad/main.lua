@@ -75,6 +75,7 @@ menu.pressed = function (self, id)
             file.writeLine(v)
         end
         file.close()
+        if not opened_file then opened_file = path end
     end
 end
 

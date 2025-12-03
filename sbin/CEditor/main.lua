@@ -63,32 +63,23 @@ textbox.draw = function (self)
         screen.write(char, 5, i, self.color_bg, colors.gray)
     end
 
-    local start_line = self.scroll.pos_y + 1
-    local end_line = _min(self.h + self.scroll.pos_y, #self.lines)
-    screen.clip_set(self.x, self.y, self.w, self.h)
-    if self.selected.status and self.lines[1] then
+    screen.clip_set(self.x, self.y, self.w + self.x + 1, self.h + self.y + 1)
+    if self.selected.status then
         local p1 = self.selected.pos1
         local p2 = self.selected.pos2
-        local s, e = p1, p2
-        if p1.y > p2.y or (p1.y == p2.y and p1.x > p2.x) then
-            s, e = p2, p1 --то, что я пытался сделать, но мозгов не хватило, Увы
-        end
-
-        local start = _max(s.y, start_line)
-        local _end = _min(e.y, end_line)
-        for i = start, _end do
+        for i = p1.y, p2.y do
             local line_str = self.lines[i] or ""
             local sel_x_start = 1
             local sel_x_end = #line_str
-            if i == s.y then
-                sel_x_start = s.x
+            if i == p1.y then
+                sel_x_start = p1.x
             end
-            if i == e.y then
-                sel_x_end = e.x
+            if i == p2.y then
+                sel_x_end = p2.x
             end
             if sel_x_start <= sel_x_end + 1 then
                 local sel_text = _sub(line_str, sel_x_start, sel_x_end)
-                if #line_str == 0 and i ~= e.y and i ~= s.y then sel_text = " " end
+                if #line_str == 0 and i ~= p2.y and i ~= p1.y then sel_text = " " end
                 local draw_x = self.x + (sel_x_start - 1) - self.scroll.pos_x
                 local draw_y = self.y + (i - self.scroll.pos_y) - 1
                 screen.write(sel_text, draw_x, draw_y, colors.blue, colors.white)
@@ -157,6 +148,7 @@ menu.pressed = function (self, id)
             file.writeLine(v)
         end
         file.close()
+        if not opened_file then opened_file = path end
     end
 end
 
@@ -188,6 +180,7 @@ surface.onMouseDown = function (self, btn, x, y)
         if textbox.lines[igrik] then
             local selected = textbox.selected
             selected.status = true
+            textbox.click_pos = {x = 1, y = igrik}
             selected.pos1 = {x = 1, y = igrik}
             selected.pos2 = {x = #textbox.lines[igrik], y = igrik}
             if textbox.lines[igrik + 1] then
@@ -195,7 +188,7 @@ surface.onMouseDown = function (self, btn, x, y)
             else
                 textbox:moveCursorPos(#textbox.lines[igrik] + 1, igrik)
             end
-            textbox.root.focus = textbox
+            self.root.focus = textbox
             textbox.dirty = true
         end
         return true

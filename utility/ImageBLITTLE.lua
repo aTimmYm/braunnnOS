@@ -1,7 +1,7 @@
 package.path = package.path .. ";/lib/?" .. ";/lib/?.lua"
 local c = require("cfunc")
-os.loadAPI("lib/blittle")
-c.termClear()
+local blittle = require("/lib/blittle_extended")
+term.clear()
 print("Write filename/path without 'nfp'")
 local a = read()..".nfp"
 if a ~= "e.nfp" and a ~= "exit.nfp" then
