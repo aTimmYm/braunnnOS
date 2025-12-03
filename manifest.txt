@@ -3,7 +3,7 @@ ca6a0a27c9e2032daebb53d238ff5511   home/Games/Chess/Chess_Data/cfunc.lua
 d05119ae7307b31058fed885744757ee   home/Games/Chess/Chess_Data/interface_classes.lua
 a65296abd8f0d4b19bf3f0c331045603   home/Games/Chess/Chess_Data/obj_classes
 73cbbe4b2f88f099c1fc2d3880a8f535   init.lua
-b0f73d59495acc412ffe9f49d674cee4   lib/Screen.lua
+27d87e043591e1df7b395a4f62dbd9bf   lib/Screen.lua
 47b6c38d73ff7dd093fd28717dcd98bf   lib/blittle_extended
 4381f9b637cf50ba7ea2ce92df8c2a73   lib/braunnnsys.lua
 80a50d206aa0982feb7c2d008b43f720   lib/cfunc.lua
@@ -12,10 +12,11 @@ df4bccffc73641b79da08106856799fa   lib/id3_meta.lua
 6b9e55f28cd0f62163904e7bec81352a   lib/mp4_meta
 0e8430925597fb135103b506fe2c669f   lib/palette
 914e77e5a6c186c459a010ae7733358a   lib/translit.lua
-3418fce12fa4c8a71c52d3556a76639a   lib/ui.lua
+48f171dd5e2f4b99786013e42ced3295   lib/ui.lua
+630dd96cba2fff5ccc4664f3189063ba   r
 2eb92297b030385841d3611cf992bdc6   sbin/CEditor/Data/lex.lua
 de94b88a3f39f5c326495bffb460e41a   sbin/CEditor/main — копия.lua
-c88a9a54d65786a901f5159f40870664   sbin/CEditor/main.lua
+f7755d08ce6e5e5be7d3c85ae201ff27   sbin/CEditor/main.lua
 89b0b700ec66f8f1128e5783e1d32e86   sbin/Calculator/icon.ico
 8764849f29964f44e953c1df8f9f5418   sbin/Calculator/main.lua
 920e095b774f4f8e2c2c59c405ef9d09   sbin/Converter/main.lua
@@ -23,16 +24,17 @@ f420705bb6aeced24f1e2dcdbc818ff0   sbin/Explorer/icon.ico
 2fcdb8b5462dd32b3f6d753fa6431e68   sbin/Explorer/main.lua
 7e554e61628f2c4328fbffc85cd20e8f   sbin/MPlayer/Data/MusicAlbum.ico
 4461760019647e8a2ddf428b038b5fa8   sbin/MPlayer/Data/volume.ico
-22b8b48e5600d9073054d8f003e3c832   sbin/MPlayer/icon.ico
+f6c5de817d959fac7c4cd45955177fd8   sbin/MPlayer/icon.ico
 959b56503d01fbe97736e54f899dbbd0   sbin/MPlayer/main.lua
-117de29ab363f7522b3bbbd0d133235d   sbin/Messenger/icon.ico
+076d2c410b35a2ea9ca0e0e7846d9a4d   sbin/Messenger/icon.ico
 30bc906c5cdfc0379210541f2c2cb73c   sbin/Messenger/main.lua
-c2f3d2eb48dfc012de0d6b0907a9dfe6   sbin/Notepad/main.lua
+f1b15d15a7d06d21feef13b37339b96c   sbin/Notepad/icon.ico
+50e7c769881b234f0a32a224c637ad9a   sbin/Notepad/main.lua
 5adcb987fc91aabef759a01f134b5e4f   sbin/Polygon/main.lua
 bbbb8a0f7aab18dc6179ff64a6dae421   sbin/Settings/icon.ico
 a5360bd5f476be3745e57603c0763633   sbin/Settings/main.lua
-6bacd99cdcd6a49fdbd4efab032efee4   sbin/Shell/icon.ico
+4dd495caabceaa7444fcc0f99459ebe0   sbin/Shell/icon.ico
 59e11930ca44ac3c1368f3de7ffbdf36   sbin/Shell/main.lua
 afa429e55e9250e810b1bc66524a9d1f   startup.lua
 d85ee7513ea6d48e84ddb2323ef64052   usr/icon_default.ico
-7f194caa2df0ed1de926fd0ec26101e1   utility/ImageBLITTLE.lua
+accb6ed5f03f8508046b96c605123fec   utility/ImageBLITTLE.lua
