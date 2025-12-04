@@ -1,4 +1,5 @@
 local UI = require("ui")
+local clipboard = require("Clipboard")
 local dM = require("deskManager")
 local _system = {}
 
@@ -28,6 +29,14 @@ function _system.remove_keyboard(r)
     r:removeChild(keyboard)
 end
 
+function _system.clipboard_copy()
+    return clipboard.copy()
+end
+
+function _system.clipboard_paste()
+    return clipboard.paste()
+end
+
 function _system.execute(path, ...)
     local func, load_err = loadfile(path, _ENV)  -- "t" для text, или "bt" если нужно
     if not func then
@@ -44,8 +53,6 @@ end
 function _system.dekstop_manager()
     local surface = UI.New_Box(1, 1, root.w, root.h, colors.black)
     root:addChild(surface)
-    local radioButton_horizontal = UI.New_RadioButton_horizontal(math.floor(root.w/2), root.h, 1, colors.black, colors.white)
-    surface:addChild(radioButton_horizontal)
     local btnReboot = UI.New_Button(surface.w - 5, 1, 6, 1, "REBOOT", _, colors.black, colors.lightGray)
     surface:addChild(btnReboot)
     local btnExit = UI.New_Button(btnReboot.x - 9, 1, 8, 1, "SHUTDOWN", _, colors.black, colors.lightGray)
@@ -59,7 +66,10 @@ function _system.dekstop_manager()
     dM.setObjects(root, surface, radioButton_horizontal)
     dM.makeDesktops()
     dM.makeShortcuts()
-    radioButton_horizontal:changeCount(dM.updateNumDesks())
+    local num_desk = dM.updateNumDesks()
+    local radioButton_horizontal = UI.New_RadioButton_horizontal(math.floor((root.w - num_desk)/2) + 1, root.h, 1, colors.black, colors.white)
+    surface:addChild(radioButton_horizontal)
+    radioButton_horizontal:changeCount(num_desk)
     radioButton_horizontal.pressed = function(self)
         dM.selectDesk(self.item)
         self.parent:onLayout()
@@ -95,14 +105,15 @@ function _system.dekstop_manager()
         btnModem.local_x = btnDebug.local_x - 6
         dM.makeDesktops()
         dM.makeShortcuts()
-        radioButton_horizontal:changeCount(dM.updateNumDesks())
+        local num_desk = dM.updateNumDesks()
+        radioButton_horizontal:changeCount(num_desk)
+        radioButton_horizontal.local_x = math.floor((root.w - num_desk)/2) + 1
         radioButton_horizontal.item = dM.getCurrdesk()
         for _, child in ipairs(surface.children) do
             if child.onResize then
                 child.onResize(width, height)
             end
         end
-
     end
 end
 

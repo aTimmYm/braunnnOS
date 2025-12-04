@@ -31,6 +31,7 @@ local EVENTS = {
 }
 
 local screen = require("Screen")
+local clipboard = require("Clipboard")
 local c = require("cfunc")
 local expect = require("cc.expect")
 local blittle = require("blittle_extended")
@@ -851,7 +852,7 @@ local function Scrollbar_draw(self)
 
     -- Ползунок
     for y = slider_y_start, _min(slider_y_start + slider_height - 1, self.y + self.h - 2) do
-        screen.write(" ", self.x, y, self.color_txt, self.color_txt)  -- Filled pixel
+        screen.write(string_char(149), self.x, y, self.color_bg, self.color_txt)  -- Filled pixel
     end
 end
 
@@ -1187,7 +1188,7 @@ local function Scrollbar_H_draw(self)
 
     -- Ползунок
     for x = slider_x_start, _min(slider_x_start + slider_width - 1, self.x + self.w - 2) do
-        screen.write(" ", x, self.y, self.color_txt, self.color_txt)  -- Filled pixel
+        screen.write(string_char(140), x, self.y, self.color_bg, self.color_txt)  -- Filled pixel
     end
 end
 
@@ -1605,8 +1606,8 @@ local function TextBox_onFocus(self, focused)
 end
 
 local function TextBox_onCharTyped(self, chr)
-    delete_selected_text(self)
     local y = self.cursor.y
+    delete_selected_text(self)
     local x = self.cursor.x
     local line = self.lines[y]
     line = line or ""
@@ -1619,7 +1620,7 @@ end
 local function TextBox_onMouseDown(self, btn, x, y)
     self:moveCursorPos(x - self.x + self.scroll.pos_x + 1, y - self.y + self.scroll.pos_y + 1)
     local cx, cy = self.cursor.x, self.cursor.y
-    self.click_pos = {x = x - self.x + 1 + self.scroll.pos_x, y = y - self.y + 1 + self.scroll.pos_y}
+    self.click_pos = {x = cx, y = cy}
     self.selected.pos1 = {x = cx, y = cy}
     self.selected.pos2 = {x = cx, y = cy}
     self.selected.status = false
@@ -1632,17 +1633,15 @@ local function TextBox_onMouseUp(self, btn, x, y)
     return true
 end
 
-local function TextBox_onMouseDrag(self, btn, x, y)
+local function select_text(self, new_x, new_y)
     local p1 = self.selected.pos1
     local p2 = self.selected.pos2
     local oX = self.click_pos.x
     local oY = self.click_pos.y
     local max_lines = #self.lines
-    local nY = y - self.y + 1 + self.scroll.pos_y
-    nY = _max(1, _min(max_lines + 1, nY))
+    local nY = _max(1, _min(max_lines + 1, new_y))
     local current_line = #self.lines[_min(max_lines, nY)]
-    local nX = x - self.x + 1 + self.scroll.pos_x
-    nX = _max(1, _min(current_line, nX))
+    local nX = _max(1, _min(current_line, new_x))
     if (nX < oX and nY == oY) or nY < oY then
         p1.x = nX
         p2.x = oX - 1
@@ -1657,11 +1656,17 @@ local function TextBox_onMouseDrag(self, btn, x, y)
     self:moveCursorPos(nX, nY)
     self.selected.status = true
     self.dirty = true
+end
+
+local function TextBox_onMouseDrag(self, btn, x, y)
+    local nY = y - self.y + 1 + self.scroll.pos_y
+    local nX = x - self.x + 1 + self.scroll.pos_x
+    select_text(self, nX, nY)
     return true
 end
 
 local function TextBox_onMouseScroll(self, dir, x, y)
-    if self.shiftheld then
+    if self.shift_held then
         return self:scrollX(dir)
     end
     return self:scrollY(dir)
@@ -1669,7 +1674,10 @@ end
 
 local function TextBox_onKeyUp(self, key)
     if key == keys.leftShift then
-        self.shiftheld = false
+        self.shift_held = false
+    end
+    if key == keys.leftCtrl then
+        self.ctrl_held = false
     end
     return true
 end
@@ -1700,14 +1708,47 @@ local function TextBox_onKeyDown(self, key, held)
         end
     elseif key == keys.left then
         self:moveCursorPos(self.cursor.x - 1, y)
+        if self.shift_held then select_text(self, self.cursor.x, self.cursor.y) end
     elseif key == keys.right then
         self:moveCursorPos(self.cursor.x + 1, y)
+        if self.shift_held then
+            local a = self.cursor.x
+            if not self.selected.status then a = a - 1 end
+            select_text(self, a, self.cursor.y)
+        end
+    elseif key == keys.c and self.ctrl_held then
+        local peremennaya = {}
+        for i = self.selected.pos1.y, self.selected.pos2.y do
+            table_insert(peremennaya, self.lines[i])
+        end
+        peremennaya[#peremennaya] = _sub(peremennaya[#peremennaya], 1, self.selected.pos2.x)
+        peremennaya[1] = _sub(peremennaya[1], self.selected.pos1.x, #peremennaya[1])
+        clipboard.copy(peremennaya)
+        return true
+    elseif key == keys.a and self.ctrl_held then
+        local p1, p2 = self.selected.pos1, self.selected.pos2
+        local all_lines = #self.lines
+        local last_line = self.lines[all_lines]
+        p1.x, p1.y = 1, 1
+        p2.x, p2.y = #last_line, all_lines
+        self.selected.status = true
+        self.cursor.x, self.cursor.y = p2.x + 1, p2.y
     elseif key == keys.up then
         self:moveCursorPos(self.cursor.x, y - 1)
+        if self.shift_held then select_text(self, self.cursor.x, self.cursor.y) end
     elseif key == keys.down then
         self:moveCursorPos(self.cursor.x, y + 1)
-    elseif key == keys.leftShift then
-        self.shiftheld = true
+        if self.shift_held then select_text(self, self.cursor.x, self.cursor.y) end
+    elseif key == keys.leftShift and not held then
+        if not self.selected.status then
+            local cx, cy = self.cursor.x, self.cursor.y
+            self.click_pos = {x = cx, y = cy}
+            self.selected.pos1 = {x = cx, y = cy}
+            self.selected.pos2 = {x = cx, y = cy}
+        end
+        self.shift_held = true
+    elseif key == keys.leftCtrl and not held then
+        self.ctrl_held = true
     elseif key == keys.enter then
         if delete_selected_text(self) then self:updateDirty() return true end
         table_insert(self.lines, y + 1, _sub(line, self.cursor.x, #line))
@@ -1716,27 +1757,43 @@ local function TextBox_onKeyDown(self, key, held)
     elseif key == keys.tab then
         self:onCharTyped('\t')
     elseif key == keys.pageDown then
-        self.selected.status = false
         self:scrollY(self.h / self.scroll.sensitivity_y)
     elseif key == keys.pageUp then
-        self.selected.status = false
         self:scrollY(-self.h / self.scroll.sensitivity_y)
     elseif key == keys.home then
-        self.selected.status = false
         self:moveCursorPos(1, y)
     elseif key == keys["end"] then
-        self.selected.status = false
         self:moveCursorPos(#line + 1, y)
     end
+    if not self.shift_held and not self.ctrl_held then self.selected.status = false end
     self:updateDirty()
     return true
 end
 
 local function TextBox_onPaste(self, string)
-    local line = self.lines[self.cursor.y]
-    self.lines[self.cursor.y] = _sub(line, 1, self.cursor.x - 1)..string.._sub(line, self.cursor.x, #line)
-    self:moveCursorPos(self.cursor.x + #string, self.cursor.y)
-    self:updateDirty()
+    if self.selected.status then
+        delete_selected_text(self)
+    end
+    local paste = clipboard.paste()
+    local y = self.cursor.y
+    local lines = self.lines
+    local t_line = self.lines[self.cursor.y]
+    local i = 0
+    local ostatok
+    for line in paste:gmatch("[^\n]+") do
+        if i == 0 then
+            ostatok = _sub(t_line, self.cursor.x, #t_line)
+            t_line = _sub(t_line, 1, self.cursor.x - 1)..line
+            self:setLine(t_line, y)
+        else
+            table.insert(lines, y + i, line)
+        end
+        i = i + 1
+    end
+    local prev_line = lines[y + i - 1]
+    lines[y + i - 1] = _sub(prev_line, 1, #prev_line)..ostatok
+    self:moveCursorPos(#prev_line + 1, y + i - 1)
+    self.dirty = true
     return true
 end
 
@@ -2287,6 +2344,34 @@ function UI.New_Container(x, y, w, h, color_bg)
     instance.removeChild = Container_removeChild
     instance.redraw = Container_redraw
     instance.onEvent = Container_onEvent
+
+    return instance
+end
+
+local function SwitchContainer_add_tab(self, name, ...)
+    local args = {...}
+    self.tabs[name] = {table.unpack(args)}
+end
+
+local function SwitchContainer_set_tab(self, name)
+    if self.tab_buffer and self.tab_buffer ~= name then
+        for _, child in ipairs(self.tabs[self.tab_buffer]) do
+            self:removeChild(child)
+        end
+    end
+    for _, child in ipairs(self.tabs[name]) do
+        self:addChild(child)
+    end
+    self.tab_buffer = name
+end
+
+function UI.New_SwitchContainer(x, y, w, h, colors_bg)
+    local instance = UI.New_Container(x, y, w, h, colors_bg)
+    instance.tabs = {}
+    instance.tab_buffer = nil
+
+    instance.addTab = SwitchContainer_add_tab
+    instance.setTab = SwitchContainer_set_tab
 
     return instance
 end

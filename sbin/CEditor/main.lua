@@ -3,6 +3,7 @@ local _min = math.min
 local _max = math.max
 local _sub = string.sub
 local _rep = string.rep
+local _gsub = string.gsub
 -----------------------------------------------------
 -------| СЕКЦИЯ ПОДКЛЮЧЕНИЯ БИБЛИОТЕК И ROOT |-------
 local system = require("braunnnsys")
@@ -34,15 +35,15 @@ local COLORS = {
 ----------| СЕКЦИЯ ИНИЦИАЛИЗАЦИИ ОБЪЕКТОВ |----------
 local window, surface = system.add_window("Titled", colors.black, "CEditor")
 
-local menu = UI.New_Menu(1, 1, "File", {"New","Open", "Save", "Save as"}, colors.white, colors.black)
+local menu = UI.New_Menu(1, 1, "File", {"New", "Open", "Save", "Save as"}, colors.white, colors.black)
 window:addChild(menu)
 
 local textbox = UI.New_TextBox(6, 1, surface.w - 6, surface.h - 1, colors.black, colors.white)
 surface:addChild(textbox)
 
 textbox.draw = function (self)
-    screen.draw_rectangle(1, 2, 4, surface.h, colors.gray)
-    screen.clip_set(1, 1, self.w + self.x - 1, surface.h)
+    screen.draw_rectangle(1, self.y, 4, self.h + 1, colors.gray)
+    screen.clip_set(1, 2, self.w + self.x - 1, surface.h)
     screen.draw_rectangle(self.x, self.y, self.w, self.h, self.color_bg)
     for j = self.scroll.pos_y + 1, _min(self.h + self.scroll.pos_y, #self.lines) do
         local tokens = table.unpack(_lex(self.lines[j]))
@@ -80,9 +81,10 @@ textbox.draw = function (self)
             if sel_x_start <= sel_x_end + 1 then
                 local sel_text = _sub(line_str, sel_x_start, sel_x_end)
                 if #line_str == 0 and i ~= p2.y and i ~= p1.y then sel_text = " " end
+                sel_text = _gsub(sel_text, " ", string.char(183))
                 local draw_x = self.x + (sel_x_start - 1) - self.scroll.pos_x
                 local draw_y = self.y + (i - self.scroll.pos_y) - 1
-                screen.write(sel_text, draw_x, draw_y, colors.blue, colors.white)
+                screen.write(sel_text, draw_x, draw_y, colors.lightGray, colors.white)
             end
         end
     end
@@ -159,19 +161,78 @@ textbox.moveCursorPos = function (self, x, y)
 end
 
 local preff_x
+local alt_held = false
 local temp_key = textbox.onKeyDown
 textbox.onKeyDown = function (self, key, held)
     if not preff_x then preff_x = self.cursor.x end
-    if key == keys.up then
-        self:moveCursorPos(preff_x, self.cursor.y - 1)
+    if key == keys.leftAlt then
+        alt_held = true
         return true
+    elseif key == keys.up then
+        local cp = self.cursor
+        if cp.y == 1 and cp.x ~= 1 then cp.x = 1 end
+        if alt_held then
+            if self.selected.status then
+                local p1 = self.selected.pos1
+                local p2 = self.selected.pos2
+                if p1.y > 1 then
+                    local line = self.lines[p1.y - 1]
+                    table.move(self.lines, p1.y, p2.y, p1.y - 1)
+                    self:setLine(line, p2.y)
+                    p1.y = p1.y - 1
+                    p2.y = p2.y - 1
+                    if p1.y < self.scroll.pos_y then
+                        self:scrollY(-1 / self.scroll.sensitivity_y)
+                    end
+                    self:moveCursorPos(preff_x, self.cursor.y - 1)
+                end
+                return true
+            end
+            if cp.y == 1 then return true end
+            local line = self.lines[cp.y - 1]
+            table.move(self.lines, cp.y, cp.y, cp.y - 1)
+            self:setLine(line, cp.y)
+        end
     elseif key == keys.down then
-        self:moveCursorPos(preff_x, self.cursor.y + 1)
-        return true
+        local cp = self.cursor
+        local n = #self.lines
+        if cp.y == n and cp.x ~= #self.lines[n] then cp.x = #self.lines[n] end
+        if alt_held then
+            if self.selected.status then
+                local p1 = self.selected.pos1
+                local p2 = self.selected.pos2
+                local lines = self.lines
+                if p2.y < #lines then
+                    local line = lines[p2.y + 1]
+                    table.move(lines, p1.y, p2.y, p1.y + 1)
+                    self:setLine(line, p1.y)
+                    p1.y = p1.y + 1
+                    p2.y = p2.y + 1
+                    if p2.y > self.h + self.scroll.pos_y then
+                        self:scrollY(1 / self.scroll.sensitivity_y)
+                    end
+                    self:moveCursorPos(preff_x, self.cursor.y + 1)
+                end
+                return true
+            end
+            if cp.y == 1 then return true end
+            local line = self.lines[cp.y + 1]
+            table.move(self.lines, cp.y, cp.y, cp.y + 1)
+            self:setLine(line, cp.y)
+        end
     else
         preff_x = nil
     end
     return temp_key(self, key, held)
+end
+
+local temp_keyUp = textbox.onKeyUp
+textbox.onKeyUp = function (self, key)
+    if key == keys.leftAlt then
+        alt_held = false
+        return true
+    end
+    return temp_keyUp(self, key)
 end
 
 surface.onMouseDown = function (self, btn, x, y)
