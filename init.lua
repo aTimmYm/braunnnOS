@@ -23,10 +23,10 @@ system.dekstop_manager()
 
 ---------| MAINLOOP И ДЕЙСТВИЯ ПОСЛЕ НЕГО |----------
 while root.running_program do
-    local ret, run_err = pcall(root.mainloop, root)
-    if not ret then
-        UI.New_MsgWin("INFO", "Error", run_err)
-    end
+	local ret, run_err = pcall(root.mainloop, root)
+	if not ret then
+		UI.New_MsgWin("INFO", "Error", run_err)
+	end
 end
 bOS.init = nil
 -----------------------------------------------------

@@ -8,12 +8,13 @@ local system = require("braunnnsys")
 local fslist = {} for i=1,64 do fslist[i]="Item - "..i end
 local conf = c.readConf("usr/settings.conf")
 local dropdown_array = {
-    "One","Two","Three","Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven"
+	"One","Two","Three","Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven"
 }
+local box_buffer = nil
 -----------------------------------------------------
 ----------| СЕКЦИЯ ИНИЦИАЛИЗАЦИИ ОБЪЕКТОВ |----------
 local function add_scrollbar(obj)
-    obj.parent:addChild(UI.New_Scrollbar(obj))
+	obj.parent:addChild(UI.New_Scrollbar(obj))
 end
 
 local window, surface = system.add_window("Titled", colors.lightGray, "Polygon")
@@ -38,8 +39,13 @@ surface:addChild(label)
 local textfield = UI.New_Textfield(label.x, label.y + 2, label.w, 1, _, _,colors.white,colors.black)
 surface:addChild(textfield)
 
-local scrollBox = UI.New_ScrollBox(2, textfield.y + 2, list.x - 4, surface.h - 6, colors.brown)
+local tabbar = UI.New_TabBar(2, textfield.y + 2, textfield.w, 1, 1, {"ScrollBox", "SEST"}, colors.brown, colors.white)
+tabbar.tab_w = 11
+surface:addChild(tabbar)
+
+local scrollBox = UI.New_ScrollBox(2, tabbar.y + 1, list.x - 4, surface.h - 7, colors.brown)
 surface:addChild(scrollBox)
+box_buffer = scrollBox
 
 add_scrollbar(scrollBox)
 
@@ -88,74 +94,87 @@ scrollBox:addChild(btnReadFile)
 
 -----------------------------------------------------
 --| СЕКЦИЯ ПЕРЕОПРЕДЕЛЕНИЯ ФУНКЦИОНАЛЬНЫХ МЕТОДОВ |--
-local keyboard = false
 buttonInfo.pressed = function (self)
-    UI.New_MsgWin("INFO", " INFO ", "This is a polygon. A test file that displays all interface elements except shortcuts, as they are represented on the desktop you accessed (most likely).")
-    window:onLayout()
+	UI.New_MsgWin("INFO", " INFO ", "This is a polygon. A test file that displays all interface elements except shortcuts, as they are represented on the desktop you accessed (most likely).")
+	window:onLayout()
 end
 
 buttonError.pressed = function (self)
-    error("This is critical polygon error which closes it")
+	error("This is critical polygon error which closes it")
 end
 
 list.pressed = function (self)
-    label:setText(list.item)
+	label:setText(list.item)
 end
 
 textfield.pressed = function (self)
-    label:setText(textfield.text)
+	label:setText(textfield.text)
+end
+
+tabbar.pressed = function (self, name, index)
+	--if self.item_index == index then return end
+	if name == "ScrollBox" then
+		surface:removeChild(box_buffer)
+		surface:addChild(scrollBox)
+		surface:addChild(scrollBox.scrollbar_v)
+		surface:onLayout()
+	elseif name == "SEST" then
+		surface:removeChild(box_buffer)
+		surface:removeChild(box_buffer.scrollbar_v)
+		surface:onLayout()
+	end
 end
 
 radioButton.pressed = function (self)
-    label:setText(self.text[self.item])
+	label:setText(self.text[self.item])
 end
 
 radioButton_horizontal.pressed = function (self)
-    radioLabel:setText(tostring(self.item))
+	radioLabel:setText(tostring(self.item))
 end
 
 tumbler.pressed = function (self)
-    tumblerLabel:setText(self.on and "OFF" or "ON")
+	tumblerLabel:setText(self.on and "OFF" or "ON")
 end
 
 checkbox.pressed = function (self)
-    checkboxLabel:setText(self.on and "OFF" or "ON")
+	checkboxLabel:setText(self.on and "OFF" or "ON")
 end
 
 btnReadFile.pressed = function (self)
-    local path = "manifest.txt"
-    local i = 1
-    for line in io.lines(path) do
-       textbox:setLine(line, i)
-       i = i + 1
-    end
+	local path = "manifest.txt"
+	local i = 1
+	for line in io.lines(path) do
+	   textbox:setLine(line, i)
+	   i = i + 1
+	end
 end
 
 surface.onResize = function (width, height)
-    list.local_x, list.local_y, list.w, list.h = math.ceil(width/2), 2, math.floor(width/2) - 1, height - 2
-    if list.scrollbar_v then
-        local scrollbar = list.scrollbar_v
-        scrollbar.local_x, scrollbar.local_y, scrollbar.h = list.local_x + list.w, list.local_y, list.h
-    end
-    label.w = list.local_x - label.local_x - 1
-    clock.local_x, clock.local_y = list.local_x, 1
-    textfield.w = list.local_x - textfield.local_x - 1
-    scrollBox.w, scrollBox.h = list.local_x - 4, height - 6
-    if scrollBox.scrollbar_v then
-        local scrollbar = scrollBox.scrollbar_v
-        scrollbar.local_x, scrollbar.local_y, scrollbar.h = scrollBox.local_x + scrollBox.w, scrollBox.local_y, scrollBox.h
-    end
-    radioButton_horizontal.local_x, radioButton_horizontal.local_y = scrollBox.w - 9, radioButton.local_y
-    radioLabel.local_x, radioLabel.local_y = radioButton_horizontal.local_x, radioButton_horizontal.local_y + 1
-    checkbox.local_x, checkbox.local_y = scrollBox.w - 4, tumbler.local_y
-    checkboxLabel.local_x, checkboxLabel.local_y = checkbox.local_x + checkbox.w + 1, checkbox.local_y
-    running_label.local_x, running_label.local_y = scrollBox.w - 4, dropdown.local_y
-    slider.w = list.local_x - 3
-    textbox.w = scrollBox.w - 2
-    if textbox.scrollbar_v then
-        local scrollbar = textbox.scrollbar_v
-        scrollbar.local_x, scrollbar.local_y, scrollbar.h = textbox.local_x + textbox.w, textbox.local_y, textbox.h
-    end
+	list.local_x, list.local_y, list.w, list.h = math.ceil(width/2), 2, math.floor(width/2) - 1, height - 2
+	if list.scrollbar_v then
+		local scrollbar = list.scrollbar_v
+		scrollbar.local_x, scrollbar.local_y, scrollbar.h = list.local_x + list.w, list.local_y, list.h
+	end
+	label.w = list.local_x - label.local_x - 1
+	clock.local_x, clock.local_y = list.local_x, 1
+	textfield.w = list.local_x - textfield.local_x - 1
+	scrollBox.w, scrollBox.h = list.local_x - 4, height - 7
+	if scrollBox.scrollbar_v then
+		local scrollbar = scrollBox.scrollbar_v
+		scrollbar.local_x, scrollbar.local_y, scrollbar.h = scrollBox.local_x + scrollBox.w, scrollBox.local_y, scrollBox.h
+	end
+	radioButton_horizontal.local_x, radioButton_horizontal.local_y = scrollBox.w - 9, radioButton.local_y
+	radioLabel.local_x, radioLabel.local_y = radioButton_horizontal.local_x, radioButton_horizontal.local_y + 1
+	checkbox.local_x, checkbox.local_y = scrollBox.w - 4, tumbler.local_y
+	checkboxLabel.local_x, checkboxLabel.local_y = checkbox.local_x + checkbox.w + 1, checkbox.local_y
+	running_label.local_x, running_label.local_y = scrollBox.w - 4, dropdown.local_y
+	slider.w = list.local_x - 3
+	textbox.w = scrollBox.w - 2
+	if textbox.scrollbar_v then
+		local scrollbar = textbox.scrollbar_v
+		scrollbar.local_x, scrollbar.local_y, scrollbar.h = textbox.local_x + textbox.w, textbox.local_y, textbox.h
+	end
 end
 -----------------------------------------------------
 surface:onLayout()

@@ -44,139 +44,139 @@ local currdesk = 1
 local sum
 
 function dM.setObjects(root, surface, radio)
-    if root and not Root then Root = root end
-    if surface and not Surface then Surface = surface end
-    if radio and not Radio then Radio = radio end
+	if root and not Root then Root = root end
+	if surface and not Surface then Surface = surface end
+	if radio and not Radio then Radio = radio end
 end
 
 function dM.updateNumDesks()
-    num_shortcuts = #system_apps--+#user_apps
+	num_shortcuts = #system_apps--+#user_apps
 
-    maxCols = math_floor(desk_width/(shortcut_width + spacing_x - 1))
-    maxRows = math_floor(desk_height/(shortcut_height + spacing_y - 1))
+	maxCols = math_floor(desk_width/(shortcut_width + spacing_x - 1))
+	maxRows = math_floor(desk_height/(shortcut_height + spacing_y - 1))
 
-    num_desks = math_max(math_ceil(num_shortcuts/(maxRows*maxCols)),1)
-    return num_desks
+	num_desks = math_max(math_ceil(num_shortcuts/(maxRows*maxCols)),1)
+	return num_desks
 end
 
 function dM.deleteDesks(parent)
-    for _, desktop in pairs(desktops) do
-        desktop.child = {}
-        parent:removeChild(desktop)
-    end
-    desktops = {}
+	for _, desktop in pairs(desktops) do
+		desktop.child = {}
+		parent:removeChild(desktop)
+	end
+	desktops = {}
 end
 
 function dM.makeDesktops()
-    if desktops and #desktops > 0 then dM.deleteDesks(Surface) end
+	if desktops and #desktops > 0 then dM.deleteDesks(Surface) end
 
-    sum = shortcut_width
+	sum = shortcut_width
 
-    while sum <= Surface.w-4 do
-        sum = sum + shortcut_width + spacing_x
-    end
-    desk_width = sum - shortcut_width - spacing_x
+	while sum <= Surface.w-4 do
+		sum = sum + shortcut_width + spacing_x
+	end
+	desk_width = sum - shortcut_width - spacing_x
 
-    sum = shortcut_height
+	sum = shortcut_height
 
-    while sum <= Surface.h-2 do
-        sum = sum + shortcut_height + spacing_y
-    end
-    desk_height = sum - shortcut_height - spacing_y
+	while sum <= Surface.h-2 do
+		sum = sum + shortcut_height + spacing_y
+	end
+	desk_height = sum - shortcut_height - spacing_y
 
-    dM.updateNumDesks()
+	dM.updateNumDesks()
 
-    for j = 1, num_desks do
-        local desk = UI.New_Box(math_floor((Surface.w - desk_width)/2) + 1, math_floor((Surface.h - desk_height)/2) + 1, desk_width, desk_height - 1)
+	for j = 1, num_desks do
+		local desk = UI.New_Box(math_floor((Surface.w - desk_width)/2) + 1, math_floor((Surface.h - desk_height)/2) + 1, desk_width, desk_height - 1)
 
-        desk.onResize = function (width, height)
-            desk.w, desk.h = desk_width, desk_height
-            desk.x, desk.y = math_floor((width - desk_width)/2) + 1, math_floor((height - desk_height)/2) + 1
-        end
+		desk.onResize = function (width, height)
+			desk.w, desk.h = desk_width, desk_height
+			desk.x, desk.y = math_floor((width - desk_width)/2) + 1, math_floor((height - desk_height)/2) + 1
+		end
 
-        desk.draw = function (self)
-            local temp = string_rep("-", shortcut_width)
-            for a = 1, maxCols-1 do
-                temp = temp.."+"..string_rep("-", shortcut_width)
-            end
-            for i = 1, maxRows-1 do
-                screen.write(temp, self.x, shortcut_height * i + spacing_y * (i-1) + self.y, self.color_bg, colors.lightGray)
-            end
-            local d = 0
-            for ci = 1, maxRows do
-                for b = 1, shortcut_height do
-                    for j = 1, maxCols - 1 do
-                        screen.write("|", shortcut_width * j + spacing_x * (j-1) + self.x,
-                        d+b+(self.y-1)+shortcut_height*(ci-1),
-                        self.color_bg, colors.lightGray)
-                    end
-                end
-                d = d + 1
-            end
-        end
+		desk.draw = function (self)
+			local temp = string_rep("-", shortcut_width)
+			for a = 1, maxCols-1 do
+				temp = temp.."+"..string_rep("-", shortcut_width)
+			end
+			for i = 1, maxRows-1 do
+				screen.write(temp, self.x, shortcut_height * i + spacing_y * (i-1) + self.y, self.color_bg, colors.lightGray)
+			end
+			local d = 0
+			for ci = 1, maxRows do
+				for b = 1, shortcut_height do
+					for j = 1, maxCols - 1 do
+						screen.write("|", shortcut_width * j + spacing_x * (j-1) + self.x,
+						d+b+(self.y-1)+shortcut_height*(ci-1),
+						self.color_bg, colors.lightGray)
+					end
+				end
+				d = d + 1
+			end
+		end
 
-        table_insert(desktops, desk)
-    end
+		table_insert(desktops, desk)
+	end
 
-    currdesk = math_min(currdesk, num_desks)
-    Surface:addChild(desktops[currdesk])
+	currdesk = math_min(currdesk, num_desks)
+	Surface:addChild(desktops[currdesk])
 end
 
 local APP_CONFIG = {
-    Paint = {
-        needArgs = { true }
-    },
-    converter = {
-        needArgs = { true, "converter_main.lua" }
-    },
+	Paint = {
+		needArgs = { true }
+	},
+	converter = {
+		needArgs = { true, "converter_main.lua" }
+	},
 }
 
 function dM.makeShortcuts()
-    local col = 1
-    local row = 1
-    local d = 1
-    for _, appName in ipairs(system_apps) do
-        local appDir = APP_ROOT_PATH .. appName
-        local mainPath = appDir .. APP_MAIN_SUFFIX
-        if fs.exists(mainPath) then
-            local config = APP_CONFIG[appName] or {}
-            local iconPath = appDir .. APP_ICON_SUFFIX
-            local offset_X = (col - 1) * (shortcut_width + spacing_x)
-            local offset_Y = (row - 1) * (shortcut_height + spacing_y)
-            local shortcut = UI.New_Shortcut(1 + offset_X, 1 + offset_Y, shortcut_width, shortcut_height, appName, mainPath, iconPath, colors.black, colors.white)
-            if config.needArgs then
-                shortcut.needArgs = config.needArgs
-            end
-            --shortcut.reSize = reSize
-            if desktops[d] then
-                desktops[d]:addChild(shortcut)
-            else
-                error("Error: Attempt add shortcut to (desktop[" .. d .. "] = nil).")
-            end
+	local col = 1
+	local row = 1
+	local d = 1
+	for _, appName in ipairs(system_apps) do
+		local appDir = APP_ROOT_PATH .. appName
+		local mainPath = appDir .. APP_MAIN_SUFFIX
+		if fs.exists(mainPath) then
+			local config = APP_CONFIG[appName] or {}
+			local iconPath = appDir .. APP_ICON_SUFFIX
+			local offset_X = (col - 1) * (shortcut_width + spacing_x)
+			local offset_Y = (row - 1) * (shortcut_height + spacing_y)
+			local shortcut = UI.New_Shortcut(1 + offset_X, 1 + offset_Y, shortcut_width, shortcut_height, appName, mainPath, iconPath, colors.black, colors.white)
+			if config.needArgs then
+				shortcut.needArgs = config.needArgs
+			end
+			--shortcut.reSize = reSize
+			if desktops[d] then
+				desktops[d]:addChild(shortcut)
+			else
+				error("Error: Attempt add shortcut to (desktop[" .. d .. "] = nil).")
+			end
 
-            col = col + 1
-            if col > maxCols then
-                col = 1
-                row = row + 1
+			col = col + 1
+			if col > maxCols then
+				col = 1
+				row = row + 1
 
-                if row > maxRows then
-                    row = 1
-                    d = d + 1
-                end
-            end
-        end
-    end
+				if row > maxRows then
+					row = 1
+					d = d + 1
+				end
+			end
+		end
+	end
 end
 
 function dM.selectDesk(num)
-    if currdesk ~= num and Surface:removeChild(desktops[currdesk]) then
-        Surface:addChild(desktops[num])
-        currdesk = num
-    end
+	if currdesk ~= num and Surface:removeChild(desktops[currdesk]) then
+		Surface:addChild(desktops[num])
+		currdesk = num
+	end
 end
 
 function dM.getCurrdesk()
-    return currdesk
+	return currdesk
 end
 
 return dM
