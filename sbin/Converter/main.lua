@@ -7,11 +7,11 @@ local system = require("braunnnsys")
 local UI = require("ui")
 local lib
 
-lib = require("id3_meta")
+lib = require("sbin/Converter/Data/id3_meta")
 local readID3v1 = lib.readID3v1
 local readID3v2 = lib.readID3v2
 
-lib = require("mp4_meta")
+lib = require("sbin/Converter/Data/mp4_meta")
 local readMP4Metadata = lib.readMP4Metadata
 
 local termTxtcol = term.getTextColor()

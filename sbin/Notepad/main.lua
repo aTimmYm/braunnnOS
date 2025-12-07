@@ -7,6 +7,7 @@ local UI = require("ui")
 -----------------------------------------------------
 -----| СЕКЦИЯ ОБЪЯВЛЕНИЯ ПЕРЕМЕННЫХ ПРОГРАММЫ |------
 local opened_file = nil
+local args = {...}
 -----------------------------------------------------
 ----------| СЕКЦИЯ ИНИЦИАЛИЗАЦИИ ОБЪЕКТОВ |----------
 local window, surface = system.add_window("Titled", colors.black, "Notepad")
@@ -16,6 +17,13 @@ window:addChild(menu)
 
 local textbox = UI.New_TextBox(1, 1, surface.w - 1, surface.h - 1, colors.black, colors.white)
 surface:addChild(textbox)
+if args[1] then
+	local i = 1
+	for line in io.lines(args[1]) do
+		textbox:setLine(line, i)
+		i = i + 1
+	end
+end
 
 local scrollbar_v = UI.New_Scrollbar(textbox)
 surface:addChild(scrollbar_v)

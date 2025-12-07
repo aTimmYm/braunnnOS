@@ -41,7 +41,15 @@ surface:addChild(scrollbar)
 ------| СЕКЦИЯ ОБЪЯВЛЕНИЯ ФУНКЦИЙ ПРОГРАММЫ |--------
 local extensions = {
 	[".txt"] = function (item, fullPath)
-		c.openFile(root,shell.resolveProgram("edit"),item)
+		local func, load_err = loadfile("sbin/Notepad/main.lua", _ENV)  -- "t" для text, или "bt" если нужно
+		if not func then
+			UI.New_MsgWin("INFO", "Error", load_err)
+		else
+			local ret, exec_err = pcall(func, fullPath)
+			if not ret then
+				UI.New_MsgWin("INFO", "Error", exec_err)
+			end
+		end
 		return true
 	end,
 	[".lua"] = function (item, fullPath)
@@ -252,6 +260,12 @@ surface.onResize = function (width, height)
 	buttonRet.w = width
 	list.w, list.h = width - 1, height - 1
 	scrollbar.local_x, scrollbar.h = list.w + 1, list.h
+end
+
+local temp_close = window.close.pressed
+window.close.pressed = function (self)
+	shell.setDir("")
+	return temp_close(self)
 end
 -----------------------------------------------------
 ---------| MAINLOOP И ДЕЙСТВИЯ ПОСЛЕ НЕГО |----------

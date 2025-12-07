@@ -32,6 +32,13 @@ local COLORS = {
 	["equality"] = colors.red,
 	["arg"] = colors.white
 }
+local new_tabs = setmetatable({}, {__len = function (tbl)
+	local i = 0
+	for _, _ in pairs(tbl) do
+		i = i + 1
+	end
+	return i
+end})
 local tabs = {}
 local tab_buffer = nil
 -----------------------------------------------------
@@ -207,8 +214,15 @@ end
 --| СЕКЦИЯ ПЕРЕОПРЕДЕЛЕНИЯ ФУНКЦИОНАЛЬНЫХ МЕТОДОВ |--
 menu.pressed = function (self, id)
 	if id == "New" then
+		local str_new = "NEW - "..tostring(#new_tabs + 1)
+		if not new_tabs[str_new] then
+			new_tabs[str_new] = true
+		else
+			str_new = "NEW - "..tostring(#new_tabs)
+			new_tabs[str_new] = true
+		end
 		local new_selected = tabbar.selected + 1
-		add_tab("NEW", _, new_selected)
+		add_tab(str_new, _, new_selected)
 		tabbar.selected = new_selected
 		tabbar:pressed(new_selected)
 	elseif id == "Open" then
@@ -223,6 +237,13 @@ menu.pressed = function (self, id)
 			return
 		end
 		local name = path:match("([^/%\\]+)$")
+		for i, v in ipairs(tabbar.tabs) do
+			if v == name and tabs[i].path == path then
+				tabbar.selected = i
+				tabbar:pressed(i)
+				return
+			end
+		end
 		local new_selected = tabbar.selected + 1
 		local box = add_tab(name, path, new_selected)
 		tabbar.selected = new_selected
@@ -253,6 +274,7 @@ menu.pressed = function (self, id)
 		end
 		local name = path:match("([^/%\\]+)$")
 		local file = fs.open(path, "w")
+		new_tabs[tabbar.tabs[tabbar.selected]] = nil
 		tabbar.tabs[tabbar.selected] = name
 		for _, v in pairs(tab_buffer.lines) do
 			file.writeLine(v)
@@ -262,33 +284,65 @@ menu.pressed = function (self, id)
 	end
 end
 
-tabbar.onMouseDrag = function (self, btn, x, y)
+local clicked_index
+tabbar.onMouseDown = function (self, btn, x, y)
 	local local_x = x - self.x + 1
 	local new_index = _ceil(local_x / self.max_w)
-	local clicked_index = self.temp
-	if new_index > #self.tabs then return end
-	if clicked_index == new_index then return end
-	self.tabs[clicked_index], self.tabs[new_index] = self.tabs[new_index], self.tabs[clicked_index]
-	tabs[self.temp], tabs[new_index] = tabs[new_index], tabs[self.temp]
-    
-    if self.selected == self.temp then
-        self.selected = new_index
-    elseif self.selected == new_index then
-        self.selected = self.temp
-    end
 
-	self.temp = new_index
-	self.dirty = true
+	if new_index > #self.tabs then return end
+
+	if local_x % self.max_w == 0 then
+		if new_tabs[self.tabs[new_index]] then new_tabs[self.tabs[new_index]] = nil end
+
+		local select_index = self.selected
+		local tab = tabs[new_index]
+
+		surface:removeChild(tab)
+		surface:removeChild(tab.scrollbar_v)
+		surface:removeChild(tab.scrollbar_h)
+		table.remove(tabs, new_index)
+
+		if new_index <= select_index then
+			self.selected = select_index - 1
+		end
+
+		table.remove(self.tabs, new_index)
+		self:pressed(self.selected)
+		self.dirty = true
+
+		return true
+	end
+
+	clicked_index = new_index
+
 	return true
 end
 
-tabbar.pressed = function (self, index, destroy)
+tabbar.onMouseDrag = function (self, btn, x, y)
+	local local_x = x - self.x + 1
+	local new_index = _ceil(local_x / self.max_w)
+
+	if new_index > #self.tabs then return end
+
+	if clicked_index == new_index then return end
+
+	self.tabs[clicked_index], self.tabs[new_index] = self.tabs[new_index], self.tabs[clicked_index]
+	tabs[clicked_index], tabs[new_index] = tabs[new_index], tabs[clicked_index]
+
+    if self.selected == clicked_index then
+        self.selected = new_index
+    elseif self.selected == new_index then
+        self.selected = clicked_index
+    end
+
+	clicked_index = new_index
+	self.dirty = true
+
+	return true
+end
+
+tabbar.pressed = function (self, index)
 	local tab = tabs[index]
-	if destroy then
-		surface:removeChild(tab)
-		table.remove(tabs, index)
-		return
-	end
 
 	if tab_buffer and tab_buffer ~= tab then
 		surface:removeChild(tab_buffer)
@@ -338,6 +392,7 @@ surface.onResize = function (width, height)
 		box.scrollbar_h.w = width - 6
 		box.scrollbar_h.local_y = height
 	end
+	tabbar.w = width
 end
 
 local temp_pressed = window.close.pressed

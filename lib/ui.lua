@@ -1519,6 +1519,57 @@ local function delete_selected_text(self)
 	return false
 end
 
+local function select_text(self, new_x, new_y)
+	local oX = self.click_pos.x
+	local oY = self.click_pos.y
+	local p1 = self.selected.pos1
+	local p2 = self.selected.pos2
+	local max_lines = #self.lines
+	local nY = _max(1, _min(max_lines + 1, new_y))
+	local current_line = #self.lines[_min(max_lines, nY)]
+	local nX = _max(1, _min(current_line, new_x))
+	if (nX < oX and nY == oY) or nY < oY then
+		p1.x = nX
+		p2.x = oX - 1
+		p1.y = nY
+		p2.y = oY
+		--self:moveCursorPos(p1.x, nY)
+	else
+		p1.x = oX
+		p2.x = nX
+		p1.y = oY
+		p2.y = nY
+		--self:moveCursorPos(p2.x + 1, nY)
+	end
+	self:moveCursorPos(nX, nY)
+	self.selected.status = true
+	self.dirty = true
+end
+
+local function clipboard_paste(self)
+	delete_selected_text(self)
+	local paste = clipboard.paste()
+	local y = self.cursor.y
+	local lines = self.lines
+	local t_line = self.lines[self.cursor.y]
+	local i = 0
+	local ostatok
+	for line in paste:gmatch("[^\n]+") do
+		if i == 0 then
+			ostatok = _sub(t_line, self.cursor.x, #t_line)
+			t_line = _sub(t_line, 1, self.cursor.x - 1)..line
+			self:setLine(t_line, y)
+		else
+			table.insert(lines, y + i, line)
+		end
+		i = i + 1
+	end
+	local prev_line = lines[y + i - 1]
+	lines[y + i - 1] = _sub(prev_line, 1, #prev_line)..ostatok
+	self:moveCursorPos(#prev_line + 1, y + i - 1)
+	self.dirty = true
+end
+
 local function TextBox_draw(self)
 	local x, y, w, h = screen.clip_get()
 	local cx, cy, cw, ch = clip_calc(x, y, w, h, self.x, self.y, self.x + self.w - 1, self.y + self.h - 1)
@@ -1570,6 +1621,7 @@ local function TextBox_moveCursorPos(self, posX, posY)
 	elseif self.cursor.y - self.scroll.pos_y < 1 then
 		self:setScrollPosY(self.cursor.y - 1)
 	end
+
 	self.cursor.x = clamp(posX, 1, #(self.lines[self.cursor.y] or "") + 1)
 	if self.cursor.x - self.scroll.pos_x > self.w then
 		self:setScrollPosX(self.cursor.x - self.w)
@@ -1634,33 +1686,6 @@ end
 	return true
 end]]
 
-local function select_text(self, new_x, new_y)
-	local oX = self.click_pos.x
-	local oY = self.click_pos.y
-	local p1 = self.selected.pos1
-	local p2 = self.selected.pos2
-	local max_lines = #self.lines
-	local nY = _max(1, _min(max_lines + 1, new_y))
-	local current_line = #self.lines[_min(max_lines, nY)]
-	local nX = _max(1, _min(current_line, new_x))
-	if (nX < oX and nY == oY) or nY < oY then
-		p1.x = nX
-		p2.x = oX - 1
-		p1.y = nY
-		p2.y = oY
-		--self:moveCursorPos(p1.x, nY)
-	else
-		p1.x = oX
-		p2.x = nX
-		p1.y = oY
-		p2.y = nY
-		--self:moveCursorPos(p2.x + 1, nY)
-	end
-	self:moveCursorPos(nX, nY)
-	self.selected.status = true
-	self.dirty = true
-end
-
 local function TextBox_onMouseDrag(self, btn, x, y)
 	local click_pos = self.click_pos
 	local nY = y - self.y + 1 + self.scroll.pos_y
@@ -1677,30 +1702,6 @@ local function TextBox_onMouseScroll(self, dir, x, y)
 		return self:scrollX(dir)
 	end
 	return self:scrollY(dir)
-end
-
-local function clipboard_paste(self)
-	delete_selected_text(self)
-	local paste = clipboard.paste()
-	local y = self.cursor.y
-	local lines = self.lines
-	local t_line = self.lines[self.cursor.y]
-	local i = 0
-	local ostatok
-	for line in paste:gmatch("[^\n]+") do
-		if i == 0 then
-			ostatok = _sub(t_line, self.cursor.x, #t_line)
-			t_line = _sub(t_line, 1, self.cursor.x - 1)..line
-			self:setLine(t_line, y)
-		else
-			table.insert(lines, y + i, line)
-		end
-		i = i + 1
-	end
-	local prev_line = lines[y + i - 1]
-	lines[y + i - 1] = _sub(prev_line, 1, #prev_line)..ostatok
-	self:moveCursorPos(#prev_line + 1, y + i - 1)
-	self.dirty = true
 end
 
 local function TextBox_onKeyUp(self, key)
@@ -2403,27 +2404,14 @@ local function TabBar_draw(self)
 	local offset = 1
 	for i, text in ipairs(self.tabs) do
 		if i == self.selected then
-			screen.write(text.._rep(" ", self.max_w - #text - 1).."x", offset, self.y, self_color_txt, colors.white)
-			--screen.write("x", self.max_w*i, self.y, self_color_txt, colors.gray)
+			screen.write(_sub(text, 1, self.max_w - 1).._rep(" ", self.max_w - #text - 1).."x", offset, self.y, self_color_txt, colors.white)
+			screen.write("x", self.max_w * i, self.y, self_color_txt, colors.gray)
 		else
-			screen.write(text.._rep(" ", self.max_w - #text - 1).."x", offset, self.y, self_color_bg, self_color_txt)
+			screen.write(_sub(text, 1, self.max_w - 1).._rep(" ", self.max_w - #text - 1).."x", offset, self.y, self_color_bg, self_color_txt)
 			screen.write("x", self.max_w * i, self.y, self_color_bg, colors.gray)
 		end
 		offset = i * self.max_w + 1
 	end
-end
-
-local function TabBar_onMouseDown(self, btn, x, y)
-	local local_x = x - self.x + 1
-	local new_index = _ceil(local_x / self.max_w)
-	if new_index > #self.tabs then return end
-	if local_x % self.max_w == 0 then
-		self:pressed(new_index, true)
-		self:removeTab(new_index)
-		return true
-	end
-	self.temp = new_index
-	return true
 end
 
 local function TabBar_onMouseUp(self, btn, x, y)
@@ -2443,16 +2431,6 @@ local function TabBar_addTab(self, name, pos)
 	table.insert(self.tabs, name)
 end
 
-local function TabBar_removeTab(self, index)
-	local select_index = self.selected
-	if index <= select_index then
-		self.selected = select_index - 1
-	end
-	table.remove(self.tabs, index)
-	self:pressed(self.selected)
-	self.dirty = true
-end
-
 function UI.New_TabBar(x, y, w, h, color_bg, color_txt)
 	local instance = New_Widget(x, y, w, h, color_bg, color_txt)
 	instance.selected = 0
@@ -2460,10 +2438,8 @@ function UI.New_TabBar(x, y, w, h, color_bg, color_txt)
 	instance.offset = 0
 	instance.max_w = 10
 
-	instance.onMouseDown = TabBar_onMouseDown
 	instance.onMouseUp = TabBar_onMouseUp
 	instance.addTab = TabBar_addTab
-	instance.removeTab = TabBar_removeTab
 	instance.draw = TabBar_draw
 	instance.pressed = pressed
 
