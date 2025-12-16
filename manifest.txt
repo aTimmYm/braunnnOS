@@ -11,10 +11,9 @@ baf412094dba60b0ec05fd7932f0f207   lib/Screen.lua
 5ae089e2f3d9120b92ca828470ef5d98   lib/deskManager.lua
 0e8430925597fb135103b506fe2c669f   lib/palette
 23d2f219050bfcdfcdb1e93bb8d00971   lib/ui.lua
-eb3a72eff81a1ca9757ad7e9b2e43ff7   sbin/CEditor/Data/Glowstone.lua
-2eb92297b030385841d3611cf992bdc6   sbin/CEditor/Data/lex.lua
+fa9e2211ae473b02f178ecda08216941   sbin/CEditor/Data/lex.lua
 99db974632becd62ed0d1c709ba8b6b8   sbin/CEditor/icon.ico
-03ea8ff23272b4c769c0008b856c14a0   sbin/CEditor/main.lua
+3ff1cba7933ea53bf28de9ba825f0a3a   sbin/CEditor/main.lua
 cf6bc7d1cbee2c1c07b78bc0d91e9565   sbin/Calculator/icon.ico
 8764849f29964f44e953c1df8f9f5418   sbin/Calculator/main.lua
 968998ba5ac4eecf3f9d21b317069d64   sbin/Converter/Data/id3_meta.lua
