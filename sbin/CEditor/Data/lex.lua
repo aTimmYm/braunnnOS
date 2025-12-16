@@ -1,4 +1,3 @@
--- filename: lex.lua
 -- Lex, by LoganDark
 -- Can be loaded using os.loadAPI, has only a single function: lex.lex('code here')
 -- If loaded using dofile(), it returns the lex function (for environments outside ComputerCraft)

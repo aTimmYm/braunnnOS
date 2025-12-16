@@ -1,4 +1,3 @@
--- filename: main.lua
 ------------| СЕКЦИЯ ЛОКАЛИЗАЦИИ ФУНКЦИЙ |-----------
 local _min = math.min
 local _max = math.max
@@ -12,7 +11,6 @@ local system = require("braunnnsys")
 local screen = require("Screen")
 local UI = require("ui")
 local _lex = require("/sbin/CEditor/Data/lex")
--- local _lex = require("/sbin/CEditor/Data/Glowstone")
 -----------------------------------------------------
 -----| СЕКЦИЯ ОБЪЯВЛЕНИЯ ПЕРЕМЕННЫХ ПРОГРАММЫ |------
 local COLORS = {
