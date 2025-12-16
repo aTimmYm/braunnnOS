@@ -1,3 +1,4 @@
+-- filename: main.lua
 ------------| СЕКЦИЯ ЛОКАЛИЗАЦИИ ФУНКЦИЙ |-----------
 local _min = math.min
 local _max = math.max
@@ -64,17 +65,32 @@ local function textbox_draw(self)
 	screen.draw_rectangle(1, self_y, 4, self.h + 1, gray)
 	screen.clip_set(1, self_y, self_w + self_x - 1, self_h + self_y - 1)
 	screen.draw_rectangle(self_x, self_y, self_w, self_h, self_color_bg)
-	for j = self_scroll_pos_y + 1, _min(self_h + self_scroll_pos_y, #self.lines) do
-		local tokens = table.unpack(_lex(self.lines[j]))
-		for _, token in ipairs(tokens) do
-			screen.write(token.data, token.posFirst + self_x - self_scroll_pos_x - 1, j - self_scroll_pos_y + self_y - 1, self_color_bg, COLORS[token.type])
+
+	local prevState = { type = "normal", level = 0 }  -- Начальное состояние
+	local visible_start = self_scroll_pos_y + 1
+	local visible_end = _min(self_h + self_scroll_pos_y, #self.lines)
+	for j = 1, #self.lines do
+		if not self.tokenCache[j] or self.dirtyLines[j] then
+			local tokens, newState = _lex(self.lines[j] or "", prevState)
+			self.tokenCache[j] = { tokens = tokens, stateIn = prevState, stateOut = newState }
+			self.dirtyLines[j] = nil
+			prevState = newState
+		else
+			prevState = self.tokenCache[j].stateOut
 		end
-		local num = #tostring(j)
-		local color_txt = lightGray
-		if self.cursor.y == j then
-			color_txt = white
+
+		if j >= visible_start and j <= visible_end then
+			local tokens = self.tokenCache[j].tokens
+			for _, token in ipairs(tokens) do
+				screen.write(token.data, token.posFirst + self_x - self_scroll_pos_x - 1, j - self_scroll_pos_y + self_y - 1, self_color_bg, COLORS[token.type] or colors.white)
+			end
+			local num = #tostring(j)
+			local color_txt = lightGray
+			if self.cursor.y == j then
+				color_txt = white
+			end
+			screen.write(_rep(" ", 4 - num) .. tostring(j), 1, j - self_scroll_pos_y + self_y - 1, gray, color_txt)
 		end
-		screen.write(_rep(" ", 4 - num) .. tostring(j), 1, j - self_scroll_pos_y + self_y - 1, gray, color_txt)
 	end
 	screen.clip_remove()
 
@@ -115,6 +131,45 @@ local function create_textbox(path)
 	local textbox = UI.New_TextBox(6, 2, surface.w - 6, surface.h - 2, colors.black, colors.white)
 	textbox.path = path
 	textbox.draw = textbox_draw
+	textbox.tokenCache = {}  -- { [lineNum] = {tokens = {}, stateIn = {}, stateOut = {} } }
+	textbox.dirtyLines = setmetatable({}, {__index = function() return false end})  -- Флаги dirty
+
+	function textbox:invalidateCacheFrom(y)
+		for i = y, #self.lines do
+			self.tokenCache[i] = nil
+			self.dirtyLines[i] = true
+		end
+	end
+
+	function textbox:cleanCache()
+		local max = 0
+		for k in pairs(self.tokenCache) do
+			if type(k) == "number" then
+				max = math.max(max, k)
+			end
+		end
+		for i = #self.lines + 1, max do
+			self.tokenCache[i] = nil
+			self.dirtyLines[i] = nil
+		end
+	end
+
+	local temp_char = textbox.onCharTyped
+	if temp_char then
+		textbox.onCharTyped = function(self, chr)
+			local min_y = self.cursor.y
+			temp_char(self, chr)
+			self:invalidateCacheFrom(min_y)
+			self:cleanCache()
+		end
+	end
+
+	local temp_setLine = textbox.setLine
+	textbox.setLine = function(self, line, y)
+		temp_setLine(self, line, y)
+		self:invalidateCacheFrom(y)
+		self:cleanCache()
+	end
 
 	local temp = textbox.moveCursorPos
 	textbox.moveCursorPos = function (self, x, y)
@@ -126,6 +181,13 @@ local function create_textbox(path)
 	local alt_held = false
 	local temp_key = textbox.onKeyDown
 	textbox.onKeyDown = function (self, key, held)
+		local min_y
+		if self.selected.status then
+			min_y = math.min(self.selected.pos1.y, self.selected.pos2.y, self.cursor.y)
+		else
+			min_y = self.cursor.y
+		end
+
 		if not preff_x then preff_x = self.cursor.x end
 		if key == keys.leftAlt then
 			alt_held = true
@@ -147,6 +209,8 @@ local function create_textbox(path)
 							self:scrollY(-1 / self.scroll.sensitivity_y)
 						end
 						self:moveCursorPos(preff_x, self.cursor.y - 1)
+						self:invalidateCacheFrom(p1.y)
+						self:cleanCache()
 					end
 					return true
 				end
@@ -154,6 +218,8 @@ local function create_textbox(path)
 				local line = self.lines[cp.y - 1]
 				table.move(self.lines, cp.y, cp.y, cp.y - 1)
 				self:setLine(line, cp.y)
+				self:invalidateCacheFrom(cp.y - 1)
+				self:cleanCache()
 			end
 		elseif key == keys.down then
 			local cp = self.cursor
@@ -174,6 +240,8 @@ local function create_textbox(path)
 							self:scrollY(1 / self.scroll.sensitivity_y)
 						end
 						self:moveCursorPos(preff_x, self.cursor.y + 1)
+						self:invalidateCacheFrom(p1.y)
+						self:cleanCache()
 					end
 					return true
 				end
@@ -181,11 +249,16 @@ local function create_textbox(path)
 				local line = self.lines[cp.y + 1]
 				table.move(self.lines, cp.y, cp.y, cp.y + 1)
 				self:setLine(line, cp.y)
+				self:invalidateCacheFrom(cp.y)
+				self:cleanCache()
 			end
 		else
 			preff_x = nil
 		end
-		return temp_key(self, key, held)
+		local result = temp_key(self, key, held)
+		self:cleanCache()
+		self:invalidateCacheFrom(_max(1, min_y - 1))
+		return result
 	end
 
 	local temp_keyUp = textbox.onKeyUp
@@ -362,21 +435,21 @@ tabbar.pressed = function (self, index)
 end
 
 surface.onMouseDown = function (self, btn, x, y)
-	if not textbox_buffer then return end
+	if not tab_buffer then return end
 	if x < 5 and y < self.y + self.h - 1 then
-		local igrik = y - self.y + 1 + textbox_buffer.scroll.pos_y
-		if textbox_buffer.lines[igrik] then
-			local selected = textbox_buffer.selected
+		local igrik = y - self.y + 1 + tab_buffer.scroll.pos_y
+		if tab_buffer.lines[igrik] then
+			local selected = tab_buffer.selected
 			selected.status = true
 			selected.pos1 = {x = 1, y = igrik}
-			selected.pos2 = {x = #textbox_buffer.lines[igrik], y = igrik}
-			if textbox_buffer.lines[igrik + 1] then
-				textbox_buffer:moveCursorPos(1, igrik + 1)
+			selected.pos2 = {x = #tab_buffer.lines[igrik], y = igrik}
+			if tab_buffer.lines[igrik + 1] then
+				tab_buffer:moveCursorPos(1, igrik + 1)
 			else
-				textbox_buffer:moveCursorPos(#textbox_buffer.lines[igrik] + 1, igrik)
+				tab_buffer:moveCursorPos(#tab_buffer.lines[igrik] + 1, igrik)
 			end
-			self.root.focus = textbox_buffer
-			textbox_buffer.dirty = true
+			self.root.focus = tab_buffer
+			tab_buffer.dirty = true
 		end
 		return true
 	end

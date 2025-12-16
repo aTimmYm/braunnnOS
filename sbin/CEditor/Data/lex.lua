@@ -1,3 +1,4 @@
+-- filename: lex.lua
 -- Lex, by LoganDark
 -- Can be loaded using os.loadAPI, has only a single function: lex.lex('code here')
 -- If loaded using dofile(), it returns the lex function (for environments outside ComputerCraft)
@@ -274,399 +275,313 @@ local keywords = {
 	}
 }
 
-function lex(text)
-	local pos = 1
-	local start = 1
-	local len = #text
-	local buffer = {}
-	local lines = {}
+local states = {
+    NORMAL = "normal",
+    STRING = "string",
+    COMMENT = "comment"
+}
 
-	local function look(delta)
-		delta = pos + (delta or 0)
+local function lex(line, prevState)
+    local pos = 1
+    local start = 1
+    local len = #line
+    local buffer = {}
+    local currentState = prevState or { type = states.NORMAL, level = 0 }
 
-		return text:sub(delta, delta)
-	end
+    local function look(delta)
+        delta = pos + (delta or 0)
+        return line:sub(delta, delta)
+    end
 
-	local function get()
-		local char = text:sub(pos, pos)
+    local function get()
+        local char = line:sub(pos, pos)
+        pos = pos + 1
+        return char
+    end
 
-		pos = pos + 1
+    local function getLevel()
+        local num = 0
+        while look(num) == '=' do
+            num = num + 1
+        end
+        if look(num) == '[' then
+            pos = pos + num
+            return num
+        else
+            return nil
+        end
+    end
 
-		return char
-	end
+    local function token(type, text)
+        local tk = buffer[#buffer]
+        if not tk or tk.type ~= type then
+            local tk = {
+                type = type,
+                data = text or line:sub(start, pos - 1),
+                posFirst = start,
+                posLast = pos - 1
+            }
+            if tk.data ~= '' then
+                buffer[#buffer + 1] = tk
+            end
+        else
+            tk.data = tk.data .. (text or line:sub(start, pos - 1))
+            tk.posLast = tk.posFirst + #tk.data - 1
+        end
+        start = pos
+        return tk
+    end
 
-	local function getLevel()
-		local num = 0
+    local function processMultiline(type_str)
+        local level = currentState.level
+        while pos <= len do
+            local char = get()
+            if char == ']' then
+                local valid = true
+                for i = 1, level do
+                    if look() == '=' then
+                        pos = pos + 1
+                    else
+                        valid = false
+                        break
+                    end
+                end
+                if valid and look() == ']' then
+                    pos = pos + 1
+                    token(type_str)
+                    currentState = { type = states.NORMAL, level = 0 }
+                    return true  -- Closed
+                end
+            end
+        end
+        token(type_str)
+        return false  -- Not closed
+    end
 
-		while look(num) == '=' do
-			num = num + 1
-		end
+    while pos <= len do
+        if currentState.type ~= states.NORMAL then
+            processMultiline(currentState.type == states.STRING and 'string' or 'comment')
+        else
+            -- Нормальное состояние
+            while true do
+                local char = look()
+                if chars.whitespace[char] then
+                    pos = pos + 1
+                else
+                    break
+                end
+            end
+            token('whitespace')
 
-		if look(num) == '[' then
-			pos = pos + num
+            if pos > len then break end
 
-			return num
-		else
-			return nil
-		end
-	end
+            char = get()
 
-	local function getToken()
-		return text:sub(start, pos - 1)
-	end
+            if char == '-' and look() == '-' then
+                pos = pos + 1
+                if look() == '[' then
+                    pos = pos + 1
+                    local level = getLevel()
+                    if level then
+                        currentState = { type = states.COMMENT, level = level }
+                        processMultiline('comment')
+                    else
+                        -- Однострочный комментарий
+                        while pos <= len do get() end
+                        token('comment')
+                    end
+                else
+                    -- Однострочный комментарий
+                    while pos <= len do get() end
+                    token('comment')
+                end
+            elseif char == '\'' or char == '"' then
+                local quote = char
+                while true do
+                    local char2 = get()
+                    if char2 == '\\' then
+                        pos = pos - 1
+                        token('string')
+                        get()
+                        local char3 = get()
+                        if chars.digits[char3] then
+                            for i = 1, 2 do
+                                if chars.digits[look()] then pos = pos + 1 end
+                            end
+                        elseif char3 == 'x' then
+                            if chars.digits.hex[look()] and chars.digits.hex[look(1)] then
+                                pos = pos + 2
+                            else
+                                token('unidentified')
+                            end
+                        elseif not chars.validEscapes[char3] then
+                            token('unidentified')
+                        end
+                        token('escape')
+                    elseif char2 == quote then
+                        break
+                    elseif pos > len then
+                        break
+                    end
+                end
+                token('string')
+            elseif chars.ident.start[char] then
+                while chars.ident[look()] do
+                    pos = pos + 1
+                end
+                local word = line:sub(start, pos - 1)
+                if word == 'self' or word == '_ENV' or word == "_G" then
+                    token('arg')
+                elseif word == 'function' then
+                    local findBracket = false
+                    local c = 0
+                    while true do
+                        local lChar = look(c)
+                        if lChar == " " or lChar == "\t" then
+                            c = c + 1
+                        elseif lChar == "(" then
+                            findBracket = true
+                            break
+                        else
+                            break
+                        end
+                    end
+                    if findBracket then
+                        local cbuf = #buffer
+                        local findEquals = false
+                        while true do
+                            if not buffer[cbuf] then
+                                break
+                            elseif buffer[cbuf].type == "whitespace" then
+                                cbuf = cbuf - 1
+                            elseif buffer[cbuf].data == "=" and not findEquals then
+                                cbuf = cbuf - 1
+                                findEquals = true
+                            elseif buffer[cbuf].type == "ident" and findEquals then
+                                buffer[cbuf].type = "nfunction"
+                                break
+                            else
+                                break
+                            end
+                        end
+                    end
+                    token('function')
+                elseif keywords.structure[word] then
+                    token('keyword')
+                elseif keywords.values[word] then
+                    token('value')
+                else
+                    local findBracket = false
+                    local c = 0
+                    while true do
+                        local lChar = look(c)
+                        if lChar == " " or lChar == "\t" then
+                            c = c + 1
+                        elseif lChar == "(" then
+                            findBracket = true
+                            break
+                        else
+                            break
+                        end
+                    end
+                    if findBracket then
+                        if buffer[#buffer-1] and buffer[#buffer-1].data == "function" and buffer[#buffer].type == "whitespace" then
+                            token('nfunction')
+                        else
+                            token('function')
+                        end
+                    else
+                        local b = #buffer
+                        local isArg = true
+                        local closedArgs = false
+                        while true do
+                            local buf = buffer[b]
+                            if not buf then
+                                isArg = false
+                                break
+                            elseif buf.data == "(" or buf.type == "whitespace" or buf.data == "," or buf.type == "arg" then
+                                if buf.data == "(" then
+                                    closedArgs = true
+                                end
+                                b = b - 1
+                            elseif (buf.data == "function" or buf.type == "nfunction") and closedArgs then
+                                token('arg')
+                                break
+                            else
+                                isArg = false
+                                break
+                            end
+                        end
+                        if not isArg then
+                            token('ident')
+                        end
+                    end
+                end
+            elseif chars.digits[char] or (char == '.' and chars.digits[look()]) then
+                if char == '0' and look() == 'x' then
+                    pos = pos + 1
+                    while chars.digits.hex[look()] do
+                        pos = pos + 1
+                    end
+                else
+                    while chars.digits[look()] do
+                        pos = pos + 1
+                    end
+                    if look() == '.' then
+                        pos = pos + 1
+                        while chars.digits[look()] do
+                            pos = pos + 1
+                        end
+                    end
+                    if look():lower() == 'e' then
+                        pos = pos + 1
+                        if look() == '-' then
+                            pos = pos + 1
+                        end
+                        while chars.digits[look()] do
+                            pos = pos + 1
+                        end
+                    end
+                end
+                token('number')
+            elseif char == '[' then
+                local level = getLevel()
+                if level then
+                    currentState = { type = states.STRING, level = level }
+                    processMultiline('string')
+                else
+                    token('symbol')
+                end
+            elseif char == '.' then
+                if look() == '.' then
+                    pos = pos + 1
+                    if look() == '.' then
+                        pos = pos + 1
+                        token('value')
+                    else
+                        token('operator')
+                    end
+                else
+                    token('symbol')
+                end
+            elseif chars.symbols.equality[char] then
+                if look() == '=' then
+                    pos = pos + 1
+                end
+                token('operator')
+            elseif chars.symbols[char] then
+                if chars.symbols.operators[char] then
+                    token('operator')
+                else
+                    token('symbol')
+                end
+            else
+                token('unidentified')
+            end
+        end
+    end
 
-	local currentLineLength = 0
-	local lineoffset = 0
-
-	local function token(type, text)
-		local tk = buffer[#buffer]
-
-		if not tk or tk.type ~= type then
-			local tk = {
-				type = type,
-				data = text or getToken(),
-				posFirst = start - lineoffset,
-				posLast = pos - 1 - lineoffset
-			}
-
-			if tk.data ~= '' then
-				buffer[#buffer + 1] = tk
-			end
-		else
-			tk.data = tk.data .. (text or getToken())
-			tk.posLast = tk.posFirst + #tk.data - 1
-			--tk.posLast = getCol(pos - 1)
-		end
-
-		currentLineLength = currentLineLength + (text or getToken()):len()
-
-		start = pos
-		return tk
-	end
-
-	local function newline()
-		lines[#lines + 1] = buffer
-		buffer = {}
-		get()
-		token('newline')
-		buffer[1] = nil
-		lineoffset = lineoffset + currentLineLength
-		currentLineLength = 0
-	end
-
-	local function getData(level, type)
-		while true do
-			local char = get()
-
-			if char == '' then
-				return
-			elseif char == '\n' then
-				pos = pos - 1
-				token(type)
-				newline()
-			elseif char == ']' then
-				local valid = true
-
-				for i = 1, level do
-					if look() == '=' then
-						pos = pos + 1
-					else
-						valid = false
-						break
-					end
-				end
-
-				if valid and look() == ']' then
-					pos = pos + 1
-
-					return
-				end
-			end
-		end
-	end
-
-	while true do
-		while true do
-			local char = look()
-
-			if char == '\n' then
-				token('whitespace')
-				newline()
-			elseif chars.whitespace[char] then
-				pos = pos + 1
-			else
-				break
-			end
-		end
-
-		token('whitespace')
-
-		local char = get()
-
-		if char == '' then
-			break
-		elseif char == '-' and look() == '-' then
-			pos = pos + 1
-
-			if look() == '[' then
-				pos = pos + 1
-
-				local level = getLevel()
-
-				if level then
-					getData(level, 'comment')
-				else
-					while true do
-						local char2 = get()
-
-						if char2 == '' or char2 == '\n' then
-							pos = pos - 1
-							token('comment')
-
-							if char2 == '\n' then
-								newline()
-							end
-
-							break
-						end
-					end
-				end
-			else
-				while true do
-					local char2 = get()
-
-					if char2 == '' or char2 == '\n' then
-						pos = pos - 1
-						token('comment')
-
-						if char2 == '\n' then
-							newline()
-						end
-
-						break
-					end
-				end
-			end
-
-			token('comment')
-		elseif char == '\'' or char == '"' then
-			while true do
-				local char2 = get()
-
-				if char2 == '\\' then
-					pos = pos - 1
-					token('string')
-					get()
-
-					local char3 = get()
-
-					if chars.digits[char3] then
-						for i = 1, 2 do
-							if chars.digits[look()] then
-								pos = pos + 1
-							end
-						end
-					elseif char3 == 'x' then
-						if chars.digits.hex[look()] and chars.digits.hex[look(1)] then
-							pos = pos + 2
-						else
-							token('unidentified')
-						end
-					elseif char3 == '\n' then
-						pos = pos - 1
-						token('escape')
-						newline()
-					elseif not chars.validEscapes[char3] then
-                        token('unidentified')
-					end
-
-					token('escape')
-				elseif char2 == '\n' then
-					pos = pos - 1
-					token('string')
-					newline()
-
-					break
-				elseif char2 == char or char2 == '' then
-					break
-				end
-			end
-
-			token('string')
-		elseif chars.ident.start[char] then
-			while chars.ident[look()] do
-				pos = pos + 1
-			end
-
-			local word = getToken()
-			if word == 'self' or word == '_ENV' or word == "_G" then
-				token('arg')
-			elseif word == 'function' then
-				local findBracket = false
-				local c = 0
-				while true do
-					_G.debugstr = ""
-					local lChar = look(c)
-					_G.debugstr = debugstr..lChar
-					if lChar == " " or lChar == "\t" then
-						c = c+1
-					elseif lChar == "(" then
-						findBracket = true
-						break
-					else
-						break
-					end
-				end
-				if findBracket then
-					local cbuf = #buffer
-					local findEquals = false
-					while true do
-						--_G.debugstr = debugstr..buffer[cbuf].type
-						if not buffer[cbuf] then
-							break
-						elseif buffer[cbuf].type == "whitespace" then
-							cbuf = cbuf-1
-						elseif buffer[cbuf].data == "=" and not findEquals then
-							cbuf = cbuf-1
-							findEquals = true
-						elseif buffer[cbuf].type == "ident" and findEquals then
-							buffer[cbuf].type = "nfunction"
-							break
-						else
-							break
-						end
-					end
-				end
-				token('function')
-			elseif keywords.structure[word] then
-				token('keyword')
-			elseif keywords.values[word] then
-				token('value')
-			else
-				local findBracket = false
-				local c = 0
-				while true do
-					local lChar = look(c)
-					if lChar == " " or lChar == "\t" then
-						c = c+1
-					elseif lChar == "(" then
-						findBracket = true
-						break
-					else
-						break
-					end
-				end
-				if findBracket then
-					if buffer[#buffer-1] and buffer[#buffer-1].data == "function" and buffer[#buffer].type == "whitespace" then
-						token('nfunction')
-					else
-						token('function')
-					end
-				else
-					local b = #buffer
-					local isArg = true
-					local closedArgs = false
-					while true do
-						local buf = buffer[b]
-						if not buf then
-							isArg = false
-							break
-						elseif buf.data == "(" or buf.type == "whitespace" or buf.data == "," or buf.type == "arg" then
-							if buf.data == "(" then
-								closedArgs = true
-							end
-							b = b-1
-						elseif (buf.data == "function" or buf.type == "nfunction") and closedArgs then
-							token('arg')
-							break
-						else
-							isArg = false
-							break
-						end
-					end
-					if not isArg then
-						token('ident')
-					end
-				end
-			end
-		elseif chars.digits[char] or (char == '.' and chars.digits[look()]) then
-			if char == '0' and look() == 'x' then
-				pos = pos + 1
-
-				while chars.digits.hex[look()] do
-					pos = pos + 1
-				end
-			else
-				while chars.digits[look()] do
-					pos = pos + 1
-				end
-
-				if look() == '.' then
-					pos = pos + 1
-
-					while chars.digits[look()] do
-						pos = pos + 1
-					end
-				end
-
-				if look():lower() == 'e' then
-					pos = pos + 1
-
-					if look() == '-' then
-						pos = pos + 1
-					end
-
-					while chars.digits[look()] do
-						pos = pos + 1
-					end
-				end
-			end
-
-			token('number')
-		elseif char == '[' then
-			local level = getLevel()
-
-			if level then
-				getData(level, 'string')
-				token('string')
-			else
-				token('symbol')
-			end
-		elseif char == '.' then
-			if look() == '.' then
-				pos = pos + 1
-
-				if look() == '.' then
-					pos = pos + 1
-					token('value')
-				else
-					token('operator')
-				end
-			else
-				token('symbol')
-			end
-		elseif chars.symbols.equality[char] then
-			if look() == '=' then
-				pos = pos + 1
-			else
-
-			end
-
-			token('operator')
-		elseif chars.symbols[char] then
-			if chars.symbols.operators[char] then
-				token('operator')
-			else
-				token('symbol')
-			end
-		else
-			token('unidentified')
-		end
-	end
-
-	lines[#lines + 1] = buffer
-
-	return lines
+    return buffer, currentState
 end
 
 return lex
