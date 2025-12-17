@@ -2074,8 +2074,12 @@ end
 local function Dropdown_onMouseDown(self, btn, x, y)
 	if (y - self.y) > 0 then self.item_index = _min(_max(y - self.y, 1), #self.array) end
 	self.expanded = not self.expanded
-	if self.expanded == false then self.parent:onLayout() else self.dirty = true end
-	self:pressed()
+	if self.expanded == false then
+		self.parent:onLayout()
+		self:pressed(self.array[self.item_index])
+	else
+		self.dirty = true
+	end
 	return true
 end
 
@@ -2878,7 +2882,6 @@ function UI.New_ScrollBox(x, y, w, h, color_bg)
 	local instance = UI.New_Container(x, y, w, h, color_bg)
 	add_mixin(instance, ScrollableMixin)
 	instance:initScroll(3, 3)
-	instance.term = term.current()
 	instance.visibleChild = {}
 
 	instance.draw = ScrollBox_draw

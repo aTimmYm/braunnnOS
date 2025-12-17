@@ -32,7 +32,7 @@ local EVENTS = {
 }
 
 local expect = require("cc.expect")
-local blittle = require("blittle_extended")
+--local blittle = require("blittle_extended")
 
 local function clip_calc(x1, y1, w1, h1, x2, y2, w2, h2)
 	return _max(x1, x2), _max(y1, y2), _min(w1, w2), _min(h1, h2)
@@ -344,43 +344,153 @@ function UI.New_RadioButton(x, y, count, text, color_bg, color_txt)
 	return instance
 end
 
+-- local function Label_draw(self, bg_override, txtcol_override)
+-- 	bg_override = bg_override or self.color_bg
+-- 	txtcol_override = txtcol_override or self.color_txt
+-- 	local lines = {}
+-- 	if #self.text <= self.w then
+-- 		table_insert(lines, self.text)
+-- 	else
+-- 		local mass = {}
+-- 		for w in string_gmatch(self.text, "%S+") do
+-- 			table_insert(mass, w)
+-- 		end
+-- 		local row_txt = ""
+-- 		local i = 1
+-- 		while i <= #mass do
+-- 			local word = mass[i]
+-- 			if #word > self.w then
+-- 				local remainder = _sub(word, self.w + 1)
+-- 				if remainder ~= "" then
+-- 					table_insert(mass, i + 1, remainder)
+-- 				end
+-- 				mass[i] = _sub(word, 1, self.w)
+-- 				word = mass[i]
+-- 			end
+-- 			local space_len = (row_txt == "" and 0 or 1)
+-- 			if #row_txt + space_len + #word <= self.w then
+-- 				row_txt = row_txt .. (row_txt == "" and "" or " ") .. word
+-- 				i = i + 1
+-- 			else
+-- 				if row_txt ~= "" then
+-- 					table_insert(lines, row_txt)
+-- 					row_txt = ""
+-- 				end
+-- 			end
+-- 			if #lines >= self.h then break end
+-- 		end
+-- 		if row_txt ~= "" and #lines < self.h then
+-- 			table_insert(lines, row_txt)
+-- 		end
+-- 	end
+
+-- 	local horiz_align = "center"
+-- 	if string_find(self.align, "left") then
+-- 		horiz_align = "left"
+-- 	elseif string_find(self.align, "right") then
+-- 		horiz_align = "right"
+-- 	end
+
+-- 	local num_lines = #lines
+-- 	local vert_align = "center"
+-- 	if string_find(self.align, "top") then
+-- 		vert_align = "top"
+-- 	elseif string_find(self.align, "bottom") then
+-- 		vert_align = "bottom"
+-- 	end
+
+-- 	local start_y = self.y
+-- 	if vert_align == "top" then
+-- 		start_y = self.y
+-- 	elseif vert_align == "bottom" then
+-- 		start_y = self.y + self.h - num_lines
+-- 	else  -- center
+-- 		start_y = self.y + _floor((self.h - num_lines) / 2)
+-- 	end
+-- 	start_y = _max(start_y, self.y)
+
+-- 	for i = self.y, start_y - 1 do
+-- 		term.setBackgroundColor(bg_override); term.setCursorPos(self.x, i); term.setTextColor(txtcol_override); term.write(_rep(" ", self.w))
+-- 	end
+
+-- 	for j = 1, num_lines do
+-- 		local line = lines[j]
+-- 		local line_len = #line
+-- 		local x_pos = self.x
+-- 		if horiz_align == "left" then
+-- 			x_pos = self.x
+-- 		elseif horiz_align == "right" then
+-- 			x_pos = self.x + self.w - line_len
+-- 		else  -- center
+-- 			x_pos = self.x + _floor((self.w - line_len) / 2)
+-- 		end
+-- 		local left_pad = _rep(" ", x_pos - self.x)
+-- 		local right_pad = _rep(" ", self.w - (x_pos - self.x + line_len))
+-- 		local full_line = left_pad .. line .. right_pad
+-- 		term.setBackgroundColor(bg_override); term.setCursorPos(self.x, start_y + j - 1); term.setTextColor(txtcol_override); term.write(full_line)
+-- 	end
+
+-- 	local end_y = start_y + num_lines - 1
+-- 	for i = end_y + 1, self.y + self.h - 1 do
+-- 		term.setBackgroundColor(bg_override); term.setCursorPos(self.x, i); term.setTextColor(txtcol_override); term.write(_rep(" ", self.w))
+-- 	end
+-- end
+
 local function Label_draw(self, bg_override, txtcol_override)
 	bg_override = bg_override or self.color_bg
 	txtcol_override = txtcol_override or self.color_txt
 	local lines = {}
-	if #self.text <= self.w then
-		table_insert(lines, self.text)
-	else
+	
+	-- Split text into paragraphs based on explicit newlines
+	local paragraphs = {}
+	local start = 1
+	local pos = string.find(self.text, "\n", start, true)
+	while pos do
+		table.insert(paragraphs, string.sub(self.text, start, pos - 1))
+		start = pos + 1
+		pos = string.find(self.text, "\n", start, true)
+	end
+	table.insert(paragraphs, string.sub(self.text, start))
+	
+	for _, para in ipairs(paragraphs) do
+		if #lines >= self.h then break end
 		local mass = {}
-		for w in string_gmatch(self.text, "%S+") do
-			table_insert(mass, w)
+		for w in string.gmatch(para, "%S+") do
+			table.insert(mass, w)
 		end
-		local row_txt = ""
-		local i = 1
-		while i <= #mass do
-			local word = mass[i]
-			if #word > self.w then
-				local remainder = _sub(word, self.w + 1)
-				if remainder ~= "" then
-					table_insert(mass, i + 1, remainder)
-				end
-				mass[i] = _sub(word, 1, self.w)
-				word = mass[i]
+		if #mass == 0 then
+			-- Empty paragraph (or only whitespace), add a blank line
+			if #lines < self.h then
+				table.insert(lines, "")
 			end
-			local space_len = (row_txt == "" and 0 or 1)
-			if #row_txt + space_len + #word <= self.w then
-				row_txt = row_txt .. (row_txt == "" and "" or " ") .. word
-				i = i + 1
-			else
-				if row_txt ~= "" then
-					table_insert(lines, row_txt)
-					row_txt = ""
+		else
+			local row_txt = ""
+			local i = 1
+			while i <= #mass do
+				if #lines >= self.h then break end
+				local word = mass[i]
+				if #word > self.w then
+					local remainder = _sub(word, self.w + 1)
+					if remainder ~= "" then
+						table.insert(mass, i + 1, remainder)
+					end
+					mass[i] = _sub(word, 1, self.w)
+					word = mass[i]
+				end
+				local space_len = (row_txt == "" and 0 or 1)
+				if #row_txt + space_len + #word <= self.w then
+					row_txt = row_txt .. (row_txt == "" and "" or " ") .. word
+					i = i + 1
+				else
+					if row_txt ~= "" then
+						table.insert(lines, row_txt)
+						row_txt = ""
+					end
 				end
 			end
-			if #lines >= self.h then break end
-		end
-		if row_txt ~= "" and #lines < self.h then
-			table_insert(lines, row_txt)
+			if row_txt ~= "" and #lines < self.h then
+				table.insert(lines, row_txt)
+			end
 		end
 	end
 
@@ -2199,8 +2309,12 @@ end
 local function Dropdown_onMouseDown(self, btn, x, y)
 	if (y - self.y) > 0 then self.item_index = _min(_max(y - self.y, 1), #self.array) end
 	self.expanded = not self.expanded
-	if self.expanded == false then self.parent:onLayout() else self.dirty = true end
-	self:pressed()
+	if self.expanded == false then
+		self.parent:onLayout()
+		self:pressed(self.array[self.item_index])
+	else
+		self.dirty = true
+	end
 	return true
 end
 
@@ -2449,7 +2563,7 @@ local function Container_removeChild(self, child)
 		if v == child then
 			child.parent = nil
 			table.remove(self.children, i)
-			self:onLayout()
+			-- self:onLayout()
 			return true
 		end
 	end
@@ -3016,18 +3130,27 @@ function UI.New_Box(x, y, w, h, color_bg)
 end
 
 local function ScrollBox_draw(self)
-	paintutils.drawFilledBox(self.x, self.y, self.x + self.w - 1, self.y + self.h - 1, self.color_bg)
+	paintutils.drawFilledBox(self.x - 1, self.y - 1, self.x + self.w - 1, self.y + self.h - 1, self.color_bg)
+	self.win.redraw()
 end
 
 local function ScrollBox_redraw(self)
-	-- screen.clip_set(self.x, self.y, self.w + self.x - 1, self.h + self.y - 1)
-
-	if self.dirty then self:draw() self.dirty = false end
-
-	for _, child in ipairs(self.visibleChild) do
-		child:redraw()
-	end
-	-- screen.clip_remove()
+    -- local OldCurPos = {term.getCursorPos()}
+    term.redirect(self.win)
+    -- term.setTextColor(self.term.getTextColor())
+    -- term.setBackgroundColor(self.term.getBackgroundColor())
+    -- term.setCursorBlink(self.term.getCursorBlink())
+    if self.dirty then self:draw() self.dirty = false end
+    for _,child in pairs(self.visibleChild) do
+        local tempX, tempY = child.x, child.y
+        child.x = child.local_x - self.scroll.pos_y
+        child.y = child.local_y - self.scroll.pos_y
+        child:redraw()
+        child.x = tempX
+        child.y = tempY
+    end
+    term.redirect(self.term)
+    -- term.setCursorPos(OldCurPos[1], OldCurPos[2])
 end
 
 local function ScrollBox_onLayout(self)
@@ -3041,7 +3164,6 @@ local function ScrollBox_onLayout(self)
 			table_insert(self.visibleChild, child)
 		end
 	end
-	-- self.len = self.scroll.max_y + self.h
 end
 
 local function ScrollBox_updateDirty(self)
@@ -3056,26 +3178,21 @@ end
 ---@param h number
 ---@param color_bg color|number|nil
 ---@return table object ScrollBox
-function UI.New_ScrollBox(x, y, w, h, color_bg)
-	expect(1, x, "number")
-	expect(2, y, "number")
-	expect(3, w, "number")
-	expect(4, h, "number")
-	expect(5, color_bg, "number", "nil")
-
-	local instance = UI.New_Container(x, y, w, h, color_bg)
+function UI.New_ScrollBox(x, y, w, h, win, color_bg)
+    local instance = UI.New_Container(x, y, w, h, color_bg)
+    instance.term = term.current()
+    instance.win = win
 	add_mixin(instance, ScrollableMixin)
 	instance:initScroll(3, 3)
-	instance.term = term.current()
-	instance.visibleChild = {}
+    instance.visibleChild = {}
 
-	instance.draw = ScrollBox_draw
-	instance.redraw = ScrollBox_redraw
-	instance.onLayout = ScrollBox_onLayout
-	instance.onMouseScroll = List_onMouseScroll
-	instance.updateDirty = ScrollBox_updateDirty
+    instance.draw = ScrollBox_draw
+    instance.redraw = ScrollBox_redraw
+    instance.onLayout = ScrollBox_onLayout
+    instance.onMouseScroll = List_onMouseScroll
+    instance.updateDirty = ScrollBox_updateDirty
 
-	return instance
+    return instance
 end
 
 local function Root_show(self)
@@ -3147,16 +3264,18 @@ local function Root_mainloop(self)
 			break
 		end
 
-		if #self.processes > 0 then
-			local status, ret = coroutine.resume(self.processes[1], table.unpack(evt))
-			if not status then UI.New_MsgWin("INFO", " ERROR ", ret) self:onLayout() end
-			if coroutine.status(self.processes[1]) == "dead" then
-				table.remove(self.processes, 1)
-			end
-		end
+		-- if #self.processes > 0 then
+		-- 	local status, ret = coroutine.resume(self.processes[1], table.unpack(evt))
+		-- 	if not status then UI.New_MsgWin("INFO", " ERROR ", ret) self:onLayout() end
+		-- 	if coroutine.status(self.processes[1]) == "dead" then
+		-- 		table.remove(self.processes, 1)
+		-- 	end
+		-- end
 
 		self:onEvent(evt)
 	end
+	term.clear()
+	term.setCursorPos(1,1)
 end
 
 ---Creating new *object* of *class* root - event handler, to use root:mainloop()
