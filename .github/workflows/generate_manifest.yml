@@ -29,6 +29,7 @@ jobs:
             -not -name "README.md" \
             -not -name "installer_dev.lua" \
             -not -name "installer_release.lua" \
+            -not -path "./installer/*" \
             -exec md5sum {} + | sed 's| \./|  |' | sort -k2 > new_manifest.txt
 
       - name: Check for changes
