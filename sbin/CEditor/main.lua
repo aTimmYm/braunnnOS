@@ -64,10 +64,22 @@ local function textbox_draw(self)
 	screen.clip_set(1, self_y, self_w + self_x - 1, self_h + self_y - 1)
 	screen.draw_rectangle(self_x, self_y, self_w, self_h, self_color_bg)
 
-	local prevState = { type = "normal", level = 0 }  -- Начальное состояние
 	local visible_start = self_scroll_pos_y + 1
 	local visible_end = _min(self_h + self_scroll_pos_y, #self.lines)
-	for j = 1, #self.lines do
+
+	local start_lex = visible_start
+	while start_lex > 1 and (not self.tokenCache[start_lex - 1] or self.dirtyLines[start_lex - 1]) do
+		start_lex = start_lex - 1
+	end
+
+	local prevState
+	if start_lex == 1 then
+		prevState = { type = "normal", level = 0 }
+	else
+		prevState = self.tokenCache[start_lex - 1].stateOut
+	end
+
+	for j = start_lex, visible_end do
 		if not self.tokenCache[j] or self.dirtyLines[j] then
 			local tokens, newState = _lex(self.lines[j] or "", prevState)
 			self.tokenCache[j] = { tokens = tokens, stateIn = prevState, stateOut = newState }
@@ -76,19 +88,19 @@ local function textbox_draw(self)
 		else
 			prevState = self.tokenCache[j].stateOut
 		end
+	end
 
-		if j >= visible_start and j <= visible_end then
-			local tokens = self.tokenCache[j].tokens
-			for _, token in ipairs(tokens) do
-				screen.write(token.data, token.posFirst + self_x - self_scroll_pos_x - 1, j - self_scroll_pos_y + self_y - 1, self_color_bg, COLORS[token.type] or colors.white)
-			end
-			local num = #tostring(j)
-			local color_txt = lightGray
-			if self.cursor.y == j then
-				color_txt = white
-			end
-			screen.write(_rep(" ", 4 - num) .. tostring(j), 1, j - self_scroll_pos_y + self_y - 1, gray, color_txt)
+	for j = visible_start, visible_end do
+		local tokens = self.tokenCache[j].tokens
+		for _, token in ipairs(tokens) do
+			screen.write(token.data, token.posFirst + self_x - self_scroll_pos_x - 1, j - self_scroll_pos_y + self_y - 1, self_color_bg, COLORS[token.type] or colors.white)
 		end
+		local num = #tostring(j)
+		local color_txt = lightGray
+		if self.cursor.y == j then
+			color_txt = white
+		end
+		screen.write(_rep(" ", 4 - num) .. tostring(j), 1, j - self_scroll_pos_y + self_y - 1, gray, color_txt)
 	end
 	screen.clip_remove()
 
