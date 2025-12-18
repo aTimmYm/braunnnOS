@@ -1739,15 +1739,26 @@ local function TextBox_onKeyDown(self, key, held)
 			self.lines[y] = _sub(line, 1, self.cursor.x - 1) .. _sub(line, self.cursor.x + 1, #line)
 		end
 	elseif key == keys.left then
-		self:moveCursorPos(self.cursor.x - 1, y)
+		if self.cursor.x > 1 then
+			self:moveCursorPos(self.cursor.x - 1, y)
+		elseif self.lines[self.cursor.y - 1] then
+			self:moveCursorPos(#self.lines[self.cursor.y - 1] + 1, y - 1)
+		end
 		if self.shift_held then select_text(self, self.cursor.x, self.cursor.y) end
 		if not self.shift_held then self.selected.status = false end
 	elseif key == keys.right then
-		self:moveCursorPos(self.cursor.x + 1, y)
+		if self.cursor.x <= #self.lines[y] then
+			self:moveCursorPos(self.cursor.x + 1, y)
+		elseif self.lines[y + 1] then
+			self:moveCursorPos(1, y + 1)
+		end
 		if self.shift_held then
-			local a = self.cursor.x
-			if not self.selected.status then a = a - 1 end
-			select_text(self, a, self.cursor.y)
+			if not self.selected.status then self.cursor.x = self.cursor.x - 1 end
+			if self.cursor.x <= #self.lines[y] then
+				select_text(self, self.cursor.x, y)
+			elseif self.lines[y + 1] then
+				select_text(self, 1, y + 1)
+			end
 		end
 		if not self.shift_held then self.selected.status = false end
 	elseif key == keys.c and self.ctrl_held then

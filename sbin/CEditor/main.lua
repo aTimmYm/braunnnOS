@@ -447,10 +447,12 @@ end
 surface.onMouseDown = function (self, btn, x, y)
 	if not tab_buffer then return end
 	if x < 5 and y < self.y + self.h - 1 then
-		local igrik = y - self.y + 1 + tab_buffer.scroll.pos_y
+		local igrik = y - self.y --[[+ 1 ]]+ tab_buffer.scroll.pos_y
 		if tab_buffer.lines[igrik] then
 			local selected = tab_buffer.selected
 			selected.status = true
+
+			tab_buffer.click_pos = {x = 1, y = igrik}
 			selected.pos1 = {x = 1, y = igrik}
 			selected.pos2 = {x = #tab_buffer.lines[igrik], y = igrik}
 			if tab_buffer.lines[igrik + 1] then
