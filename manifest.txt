@@ -10,10 +10,10 @@ baf412094dba60b0ec05fd7932f0f207   lib/Screen.lua
 29fe20c860de95ff3dfb8b660a7a0897   lib/cfunc.lua
 5ae089e2f3d9120b92ca828470ef5d98   lib/deskManager.lua
 0e8430925597fb135103b506fe2c669f   lib/palette
-9705dbd4df9e57f8a383737553b04710   lib/ui.lua
+a36fdc9afb696c297ac8b2d37b92d566   lib/ui.lua
 fa9e2211ae473b02f178ecda08216941   sbin/CEditor/Data/lex.lua
 99db974632becd62ed0d1c709ba8b6b8   sbin/CEditor/icon.ico
-22c309ee73312640c2f6a510f71417be   sbin/CEditor/main.lua
+0a5bd7659f9d44c438829d7e4fdd1604   sbin/CEditor/main.lua
 cf6bc7d1cbee2c1c07b78bc0d91e9565   sbin/Calculator/icon.ico
 8764849f29964f44e953c1df8f9f5418   sbin/Calculator/main.lua
 968998ba5ac4eecf3f9d21b317069d64   sbin/Converter/Data/id3_meta.lua
