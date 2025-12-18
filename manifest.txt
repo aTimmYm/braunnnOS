@@ -36,6 +36,6 @@ bbbb8a0f7aab18dc6179ff64a6dae421   sbin/Settings/icon_old.ico
 08efae0ae90d2c9ec97e76693f05e3f0   sbin/Settings/main.lua
 6ed2a7fb4889e2386c81ce3be2fc42b4   sbin/Shell/icon.ico
 59e11930ca44ac3c1368f3de7ffbdf36   sbin/Shell/main.lua
-61b0aad77c436f4d46ea12d6478d7b50   startup.lua
+d7a3caec139d669e738f99e00e686534   startup.lua
 d85ee7513ea6d48e84ddb2323ef64052   usr/icon_default.ico
 1ffae75ad55cf26b6f385c610133677c   utility/ImageBLITTLE.lua
