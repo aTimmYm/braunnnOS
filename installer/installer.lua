@@ -26,12 +26,7 @@ local scrollbar = UI.New_Scrollbar(user_agreement_box)
 surface:addChild(scrollbar)
 
 user_agreement_box:addChild(UI.New_Label(1, 1, user_agreement_box.w, 1, "USER AGREEMENTS", _, user_agreement_box.color_bg))
-user_agreement_box:addChild(UI.New_Label(1, 3, user_agreement_box.w, 12, [[ braunnnOS
- Copyright (C) 2025 braunnnOS
- SPDX-License-Identifier: GPL-3.0-or-later
-
-This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
-]], "left top", user_agreement_box.color_bg))
+user_agreement_box:addChild(UI.New_Label(1, 3, user_agreement_box.w, 12, "braunnnOS\n\tCopyright (C) 2025 braunnnOS\n\tSPDX-License-Identifier: GPL-3.0-or-later\n\n\tThis program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.", "left top", user_agreement_box.color_bg))
 
 local checkbox = UI.New_Checkbox(2, root.h - 2, _, colors.black, colors.white)
 surface:addChild(checkbox)
@@ -82,6 +77,7 @@ inst_next.pressed = function (self)
 	if next then
 		local msg = UI.New_MsgWin("YES,NO", "Install", "All files will be deleted.\nAre you sure?")
 		surface:onLayout()
+		surface:redraw()
 		if not msg then return end
 
 		for _, name in ipairs(fs.list("/")) do
