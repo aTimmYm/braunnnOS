@@ -13,7 +13,7 @@ baf412094dba60b0ec05fd7932f0f207   lib/Screen.lua
 a36fdc9afb696c297ac8b2d37b92d566   lib/ui.lua
 fa9e2211ae473b02f178ecda08216941   sbin/CEditor/Data/lex.lua
 99db974632becd62ed0d1c709ba8b6b8   sbin/CEditor/icon.ico
-0a5bd7659f9d44c438829d7e4fdd1604   sbin/CEditor/main.lua
+55fa5b0613da32e740524ffbcc13b3bd   sbin/CEditor/main.lua
 cf6bc7d1cbee2c1c07b78bc0d91e9565   sbin/Calculator/icon.ico
 8764849f29964f44e953c1df8f9f5418   sbin/Calculator/main.lua
 968998ba5ac4eecf3f9d21b317069d64   sbin/Converter/Data/id3_meta.lua
