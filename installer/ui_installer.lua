@@ -440,7 +440,7 @@ local function Label_draw(self, bg_override, txtcol_override)
 	bg_override = bg_override or self.color_bg
 	txtcol_override = txtcol_override or self.color_txt
 	local lines = {}
-	
+
 	-- Split text into paragraphs based on explicit newlines
 	local paragraphs = {}
 	local start = 1
@@ -451,7 +451,7 @@ local function Label_draw(self, bg_override, txtcol_override)
 		pos = string.find(self.text, "\n", start, true)
 	end
 	table.insert(paragraphs, string.sub(self.text, start))
-	
+
 	for _, para in ipairs(paragraphs) do
 		if #lines >= self.h then break end
 		local mass = {}
@@ -3143,7 +3143,7 @@ local function ScrollBox_redraw(self)
     if self.dirty then self:draw() self.dirty = false end
     for _,child in pairs(self.visibleChild) do
         local tempX, tempY = child.x, child.y
-        child.x = child.local_x - self.scroll.pos_y
+        child.x = child.local_x - self.scroll.pos_x
         child.y = child.local_y - self.scroll.pos_y
         child:redraw()
         child.x = tempX

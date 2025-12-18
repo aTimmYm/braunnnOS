@@ -30,10 +30,7 @@ user_agreement_box:addChild(UI.New_Label(1, 3, user_agreement_box.w, 12, [[-- br
 -- Copyright (C) 2025 braunnnOS
 -- SPDX-License-Identifier: GPL-3.0-or-later
 
--- This program is free software: you can redistribute it and/or modify
--- it under the terms of the GNU General Public License as published by
--- the Free Software Foundation, either version 3 of the License, or
--- (at your option) any later version.
+-- This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 ]], "left top", user_agreement_box.color_bg))
 
 local checkbox = UI.New_Checkbox(2, root.h - 2, _, colors.black, colors.white)
@@ -120,6 +117,12 @@ end
 
 canc.pressed = function (self)
 	root.running_program = false
+end
+
+local s_draw = surface.draw
+surface.draw = function (self)
+	s_draw(self)
+	if terM then terM.redraw() end
 end
 
 root:mainloop()
