@@ -5,6 +5,7 @@ local _sub = string.sub
 local _rep = string.rep
 local _gsub = string.gsub
 local _ceil = math.ceil
+local _win = window
 -----------------------------------------------------
 -------| СЕКЦИЯ ПОДКЛЮЧЕНИЯ БИБЛИОТЕК И ROOT |-------
 local system = require("braunnnsys")
@@ -46,6 +47,9 @@ local window, surface = system.add_window("Titled", colors.black, "CEditor")
 
 local menu = UI.New_Menu(1, 1, "File", {"New", "Open", "Save", "Save as"}, colors.white, colors.black)
 window:addChild(menu)
+
+local run = UI.New_Button(5, 1, 3, 1, string.char(16), "center", window.color_bg, colors.gray)
+window:addChild(run)
 
 local tabbar = UI.New_TabBar(1, 1, surface.w, 1, colors.black, colors.lightGray)
 surface:addChild(tabbar)
@@ -399,6 +403,35 @@ tabbar.onMouseDown = function (self, btn, x, y)
 	clicked_index = new_index
 
 	return true
+end
+
+run.pressed = function (self)
+	if not tab_buffer or tab_buffer.lines == {""} then return end
+
+	local W, H = term.getSize()
+	local T = term.current()
+
+	local win = _win.create(T, 1, 2, W, H - 1, true)
+	term.redirect(win)
+
+	local def = term.getTextColor()
+	local source = table.concat(tab_buffer.lines, "\n")
+	local fn, err = load(source, "textbox", "t", _G)
+	if not fn then
+		term.setTextColor(colors.red)
+		print(tostring(err))
+	else
+		fn()
+	end
+	term.setTextColor(colors.yellow)
+	print("Press any key to continue.")
+	term.setTextColor(def)
+	local filter = {
+		["mouse_click"] = true,
+		["key"] = true
+	}
+	while not filter[os.pullEvent()] do end
+	term.redirect(T)
 end
 
 tabbar.onMouseDrag = function (self, btn, x, y)
