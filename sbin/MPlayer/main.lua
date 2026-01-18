@@ -10,34 +10,39 @@ local _min = math.min
 local math_floor = math.floor
 -----------------------------------------------------
 -------| СЕКЦИЯ ПОДКЛЮЧЕНИЯ БИБЛИОТЕК И ROOT |-------
-local screen = require("Screen")
-local dfpwm = require("cc.audio.dfpwm")
-local system = require("braunnnsys")
-local blittle = require("blittle_extended")
-local c = require("cfunc")
-local UI = require("ui")
+-- local screen = require("Screen")
+local dfpwm = require "cc.audio.dfpwm"
+local sys = require "sys"
+local blittle = require "blittle_extended"
+local c = require "cfunc"
+local UI = require "ui2"
 -----------------------------------------------------
 -----| СЕКЦИЯ ОБЪЯВЛЕНИЯ ПЕРЕМЕННЫХ ПРОГРАММЫ |------
-if bOS.shell or bOS.Explorer then return end
+-- if bOS.shell or bOS.Explorer then return end
 
-if periphemu then periphemu.create("right", "speaker") end
-bOS.speaker = peripheral.find("speaker")
+local speaker
+if periphemu then periphemu.create("right", "speaker"); speaker = peripheral.find("speaker") end
+-- bOS.speaker = peripheral.find("speaker")
 
 local CHUNK_SIZE = 512
 local SAMPLE_RATE = 48000  -- Новый: фиксированный sample rate для speaker в CC:Tweaked
 local SAMPLES_PER_BYTE = 8  -- Новый: для DFPWM
 
+-- local RUNNING_PATH = shell.getRunningProgram()
+-- log(RUNNING_PATH)
 local sortedCache = {}
 local trackButtons = {}
 local artistS = {}
 local currentTrackIndex = 0
+local speaker_play
 
 if not fs.exists("sbin/MPlayer/Data/cache") then
 	local file = fs.open("sbin/MPlayer/Data/cache","w")
 	file.write("return {}")
 	file.close()
 end
-local cache = require("sbin/MPlayer/Data/cache")
+-- local cache = require("sbin/MPlayer/Data/cache")
+local cache = dofile("sbin/MPlayer/Data/cache")
 local confPath = "sbin/MPlayer/Data/player.conf"
 if not fs.exists(confPath) then
 	local file = fs.open(confPath,"w")
@@ -51,27 +56,33 @@ local volumes = {0, 0.05, 0.1, 0.25, 0.5, 0.75, 1, 1.5, 2, 3}
 local volume = conf["volume"]
 -----------------------------------------------------
 ----------| СЕКЦИЯ ИНИЦИАЛИЗАЦИИ ОБЪЕКТОВ |----------
-local window, surface = system.add_window("Titled", colors.black, "MPlayer")
+-- local window, root = sys.add_window("Titled", colors.black, "MPlayer")
+sys.register_window("MPlayer", 1, 1, 51, 18, true)
 
-local btnAll = UI.New_Button(1, 1, 3, 1, "All", _, colors.white, colors.black)
-window:addChild(btnAll)
+local root = UI.Root()
 
-local btnAlbum = UI.New_Button(btnAll.x + btnAll.w + 1, 1, 5, 1, "Album", _, colors.white, colors.lightGray)
-window:addChild(btnAlbum)
+local surface = UI.Box(1, 1, root.w, root.h, colors.black, colors.white)
+root:addChild(surface)
 
-local boxAll = UI.New_ScrollBox(1, 1, surface.w - 1, surface.h - 5, colors.black)
+-- local btnAll = UI.Button(1, 1, 3, 1, "All", _, colors.white, colors.black)
+-- window:addChild(btnAll)
+
+-- local btnAlbum = UI.Button(btnAll.x + btnAll.w + 1, 1, 5, 1, "Album", _, colors.white, colors.lightGray)
+-- window:addChild(btnAlbum)
+
+local boxAll = UI.ScrollBox(1, 1, surface.w - 1, surface.h - 5, colors.black)
 surface:addChild(boxAll)
 
-local scrollbar = UI.New_Scrollbar(boxAll)
+local scrollbar = UI.Scrollbar(boxAll)
 surface:addChild(scrollbar)
 --[[
-local boxAlbum = UI.New_Box(root)
+local boxAlbum = UI.Box(root)
 boxAlbum.reSize = function (self)
 	self.pos = {x = self.parent.pos.x, y = self.parent.pos.y+1}
 	self.size = {w = self.parent.size.w - self.pos.x, h = self.parent.size.h - self.pos.y + 1 - 5}
 end
 
-local scrollboxAlbum = UI.New_ScrollBox(root)
+local scrollboxAlbum = UI.ScrollBox(root)
 scrollboxAlbum.draw = function (self)
 	c.drawFilledBox(1,1,self.size.w,self.size.h,self.bg)
 	for i=1,self.size.h do
@@ -86,7 +97,7 @@ scrollboxAlbum.reSize = function (self)
 end
 boxAlbum:addChild(scrollboxAlbum)
 
-local scrollArtist = UI.New_ScrollBox(root)
+local scrollArtist = UI.ScrollBox(root)
 scrollArtist.reSize = function (self)
 	self.pos.y = 2
 	self.size = {w = scrollboxAlbum.pos.x-1, h = self.parent.size.h}
@@ -95,28 +106,28 @@ scrollArtist.reSize = function (self)
 end
 boxAlbum:addChild(scrollArtist)
 
-local IMG = UI.New_Label(root,_,colors.white,colors.white)
+local IMG = UI.Label(root,_,colors.white,colors.white)
 IMG.reSize = function (self)
 	self.pos = {x = self.parent.pos.x+2, y = self.parent.pos.y+1}
 	self.size = {w=9,h=5}
 end
 scrollboxAlbum:addChild(IMG)
 
-local AlbumName = UI.New_Label(root,"Album Name",colors.black,colors.white,"left")
+local AlbumName = UI.Label(root,"Album Name",colors.black,colors.white,"left")
 AlbumName.reSize = function (self)
 	self.pos = {x = IMG.pos.x+IMG.size.w+1, y = IMG.pos.y+2}
 	self.size.w = 15
 end
 scrollboxAlbum:addChild(AlbumName)
 
-local AlbumArtistName = UI.New_Label(root,"Artist Name",colors.black,colors.lightGray,"left")
+local AlbumArtistName = UI.Label(root,"Artist Name",colors.black,colors.lightGray,"left")
 AlbumArtistName.reSize = function (self)
 	self.pos = {x = AlbumName.pos.x, y = AlbumName.pos.y+1}
 	self.size.w = 15
 end
 scrollboxAlbum:addChild(AlbumArtistName)
 
-local numCompose = UI.New_Label(root,"5 - Tracks",colors.black,colors.lightGray,"left")
+local numCompose = UI.Label(root,"5 - Tracks",colors.black,colors.lightGray,"left")
 numCompose.reSize = function (self)
 	self.pos = {x = AlbumArtistName.pos.x, y = AlbumArtistName.pos.y+1}
 	self.size.w = 15
@@ -124,50 +135,52 @@ end
 scrollboxAlbum:addChild(numCompose)
 ]]
 
-local box2 = UI.New_Box(1, surface.h - 4, surface.w, 5, colors.gray)
+local box2 = UI.Box(1, surface.h - 4, surface.w, 5, colors.gray)
+box2.ico = blittle.load("sbin/MPlayer/Data/MusicAlbum.ico")
 box2.draw = function (self)
-	screen.draw_rectangle(self.x, self.y, self.x + self.w - 1, self.y + self.h - 1, self.color_bg)
-	if surface.w > 41 then screen.draw_blittle(blittle.load("sbin/MPlayer/Data/MusicAlbum.ico"), self.x + 1, self.y) end
+	paintutils.drawFilledBox(self.x, self.y, self.x + self.w - 1, self.y + self.h - 1, self.color_bg)
+	if surface.w > 41 then blittle.draw(self.ico, self.x + 1, self.y) end
 end
 surface:addChild(box2)
 
-local currentTimeLabel = UI.New_Label(box2.w > 41 and 10 or 2, box2.h - 1, 5, 1, "00:00", _, box2.color_bg, colors.lightGray, "right")
+local currentTimeLabel = UI.Label(box2.w > 41 and 10 or 2, box2.h - 1, 5, 1, "00:00", _, box2.color_bg, colors.lightGray, "right")
 box2:addChild(currentTimeLabel)
 
-local pause = UI.New_Button(math_floor((box2.w - 2) / 2) + 1, 2, 2, 1, "|"..string_char(16), _, box2.color_bg, colors.white)
+local pause = UI.Button(math_floor((box2.w - 2) / 2) + 1, 2, 2, 1, "|"..string_char(16), _, _, box2.color_bg, colors.white)
 pause.play = false
 pause.draw = function (self)
 	local color_bg, color_txt, text = self.parent.color_bg, self.color_txt, "|"..string_char(16)
 	if self.play then text = "||" end
-	if self.held then
-		color_txt = self.color_bg
-		color_bg = self.color_txt
-	end
-	screen.write(text, self.x, self.y, color_bg, color_txt)
+	if self.held then color_txt, color_bg = self.color_bg, self.color_txt end
+	term.setBackgroundColor(color_bg)
+	term.setTextColor(color_txt)
+	term.setCursorPos(self.x, self.y)
+	term.write(text)
+	-- screen.write(text, self.x, self.y, color_bg, color_txt)
 end
 box2:addChild(pause)
 
-local btnNext = UI.New_Button(pause.x + pause.w + 1, pause.y, 2, 1, string_char(16).."|", _, box2.color_bg, colors.white)
+local btnNext = UI.Button(pause.x + pause.w + 1, pause.y, 2, 1, string_char(16).."|", _, _, box2.color_bg, colors.white)
 box2:addChild(btnNext)
 
-local btnPrev = UI.New_Button(pause.x - 3, pause.y, 2, 1, "|"..string_char(17), _, box2.color_bg, colors.white)
+local btnPrev = UI.Button(pause.x - 3, pause.y, 2, 1, "|"..string_char(17), _, _, box2.color_bg, colors.white)
 box2:addChild(btnPrev)
 
-local btnOptionAutoNext = UI.New_Button(btnNext.x + btnNext.w + 1, btnNext.y, 1, 1, " ", _, box2.color_bg, colors.white)
+local btnOptionAutoNext = UI.Button(btnNext.x + btnNext.w + 1, btnNext.y, 1, 1, " ", _, _, box2.color_bg, colors.white)
 box2:addChild(btnOptionAutoNext)
 
 local AN_X = box2.w > 41 and 10 or 2
-local ArtistName = UI.New_Running_Label(AN_X, 2, btnPrev.x - AN_X - 1, 1, "Unknown", "left", _, _, box2.color_bg, colors.lightGray)
+local ArtistName = UI.Running_Label(AN_X, 2, btnPrev.x - AN_X - 1, 1, "Unknown", "left", _, _, box2.color_bg, colors.lightGray)
 box2:addChild(ArtistName)
 
-local trackName = UI.New_Running_Label(ArtistName.x, ArtistName.y + 1, ArtistName.w, 1, "Unknown", "left", _, _, box2.color_bg, colors.lightGray)
+local trackName = UI.Running_Label(ArtistName.x, ArtistName.y + 1, ArtistName.w, 1, "Unknown", "left", _, _, box2.color_bg, colors.lightGray)
 box2:addChild(trackName)
 
-local totalTimeLabel = UI.New_Label(box2.w > 41 and box2.w - 11 or box2.w - 5, box2.h - 1, 5, 1, "00:00", _, box2.color_bg, colors.lightGray)
+local totalTimeLabel = UI.Label(box2.w > 41 and box2.w - 11 or box2.w - 5, box2.h - 1, 5, 1, "00:00", _, box2.color_bg, colors.lightGray)
 box2:addChild(totalTimeLabel)
 
 local TL_X = box2.w > 41 and 16 or 8
-local timeLine = UI.New_Slider(TL_X, box2.h - 1, totalTimeLabel.local_x - TL_X - 1, {}, 1, colors.lightGray, box2.color_bg, colors.white)
+local timeLine = UI.Slider(TL_X, box2.h - 1, totalTimeLabel.local_x - TL_X - 1, {}, 1, colors.lightGray, box2.color_bg, colors.white)
 box2:addChild(timeLine)
 
 local btnVolume, volumeSlider -- Для широкого режима
@@ -187,24 +200,24 @@ local function getTotalChunks(path)
 end
 
 local function checkSpeaker()
-	if bOS.speaker then return true end
-	if peripheral.find("speaker") then
-		bOS.speaker = peripheral.find("speaker")
-		return true
-	end
-	local speakerWin = UI.New_MsgWin(root,"INFO")
+	-- if bOS.speaker then return true end
+	-- if peripheral.find("speaker") then
+	-- 	bOS.speaker = peripheral.find("speaker")
+	-- 	return true
+	-- end
+	local speakerWin = UI.MsgWin(root,"INFO")
 	speakerWin:callWin(" INFO ","Speaker not found. Please, put speaker near computer.")
 	return false
 end
 
 local function play_at_chunk(start_chunk)
 	local start_pos = (start_chunk - 1) * CHUNK_SIZE
-	window.music_file.seek("set", start_pos)
-	window.current_chunk = start_chunk
+	root.music_file.seek("set", start_pos)
+	root.current_chunk = start_chunk
 end
 
 local function play(self, path)
-	if not checkSpeaker() then return end
+	-- if not checkSpeaker() then return end
 	self.filePath = path or self.filePath
 	local total_chunks = getTotalChunks(self.filePath)
 	timeLine.arr = {}
@@ -255,7 +268,7 @@ local function play_next_chunk(self)
 	local chunk = self.music_file.read(to_read)
 	if not chunk then return false end
 	local buffer = self.decoder(chunk)
-	bOS.speaker.playAudio(buffer, volume)
+	speaker_play = speaker.playAudio(buffer, volume)
 	self.current_chunk = self.current_chunk + 1
 	timeLine.slidePosition = self.current_chunk
 	timeLine.dirty = true
@@ -265,8 +278,8 @@ local function play_next_chunk(self)
 end
 
 local function set_pause(bool)
-	if window.pause == bool then return end
-	window.pause = bool
+	if root.pause == bool then return end
+	root.pause = bool
 	pause.play = not bool
 	pause.dirty = true
 end
@@ -288,31 +301,31 @@ local function updateTrackIcons(newIndex)
 	end
 end
 
-local temp_pressed = window.close.pressed
-local function pressed(self)
-	if self.parent.music_file then
-		self.parent.music_file.close()
-	end
-	package.loaded["cc.audio.dfpwm"] = nil
-	package.loaded["sbin/MPlayer/Data/cache"] = nil
-	return temp_pressed(self)
-end
+-- local temp_pressed = window.close.pressed
+-- local function pressed(self)
+-- 	if self.parent.music_file then
+-- 		self.parent.music_file.close()
+-- 	end
+-- 	package.loaded["cc.audio.dfpwm"] = nil
+-- 	package.loaded["sbin/MPlayer/Data/cache"] = nil
+-- 	return temp_pressed(self)
+-- end
 
-local temp_onEvent = window.onEvent
+local temp_onEvent = root.onEvent
 local function onEvent(self, evt)
 	local event = evt[1]
 	if event == "speaker_audio_empty" and not self.pause then
 		self:play_next_chunk()
-		return true
+		--return true
 	elseif event == "unpause_music" then
 		local cur_pos = self.music_file.seek("cur")
 		set_pause(false)
 		if cur_pos >= self.data_end then
 			self:play()
-			return true
+			--return true
 		end
 		self:play_next_chunk()
-		return true
+		--return true
 	elseif event == "play_music" then
 		local trackIdx = evt[3]
 		if trackIdx then
@@ -320,22 +333,22 @@ local function onEvent(self, evt)
 		end
 		self:play(evt[2])
 		set_pause(false)
-		return true
+		--return true
 	elseif event == "pause_music" then
 		set_pause(true)
-		return true
+		--return true
 	elseif event == "play_next" then
 		btnNext:pressed()
-		return true
+		--return true
 	end
 	return temp_onEvent(self, evt)
 end
 
-window.decoder = dfpwm.make_decoder()
-window.onEvent = onEvent
-window.play = play
-window.play_next_chunk = play_next_chunk
-window.close.pressed = pressed
+root.decoder = dfpwm.make_decoder()
+root.onEvent = onEvent
+root.play = play
+root.play_next_chunk = play_next_chunk
+-- window.close.pressed = pressed
 
 local function getConf()
 	local val = ""
@@ -484,13 +497,17 @@ table_sort(sortedCache)
 table_sort(artistS)
 
 for i, v in pairs(sortedCache) do
-	local trackPlay = UI.New_Button(1, 1 + i, 3, 1, string_char(16), _, boxAll.color_bg, colors.white)
+	local trackPlay = UI.Button(1, 1 + i, 3, 1, string_char(16), _, _, boxAll.color_bg, colors.white)
 	trackPlay.play = false
 	trackPlay.draw = function (self)
 		local color_bg, color_txt, text = self.color_bg, self.color_txt, string_char(16)
 		if self.play then text = string_char(15) end
 		if self.held then color_bg, color_txt = self.color_txt, self.color_bg end
-		screen.write(" "..text.." ", self.x, self.y, color_bg, color_txt)
+		term.setBackgroundColor(color_bg)
+		term.setTextColor(color_txt)
+		term.setCursorPos(self.x, self.y)
+		term.write(" "..text.." ")
+		-- screen.write(" "..text.." ", self.x, self.y, color_bg, color_txt)
 	end
 	trackPlay.pressed = function (self)
 		os.queueEvent("play_music", Path..v, i)
@@ -499,15 +516,15 @@ for i, v in pairs(sortedCache) do
 	table_insert(trackButtons, trackPlay)
 
 	local name = v:match("(.+)%..-$")
-	local trackLabel = UI.New_Label(trackPlay.x + trackPlay.w, trackPlay.y, boxAll.w - 10, 1, name, "left", boxAll.color_bg, colors.white)
+	local trackLabel = UI.Label(trackPlay.x + trackPlay.w, trackPlay.y, boxAll.w - 10, 1, name, "left", boxAll.color_bg, colors.white)
 	boxAll:addChild(trackLabel)
 
-	local trackTime = UI.New_Label(boxAll.w - 5, trackPlay.y, 5, 1, cache[v].time, "left", boxAll.color_bg, colors.lightGray)
+	local trackTime = UI.Label(boxAll.w - 5, trackPlay.y, 5, 1, cache[v].time, "left", boxAll.color_bg, colors.lightGray)
 	boxAll:addChild(trackTime)
 end
 --[[
 for i,v in pairs(artistS) do
-	local buttonArtist = UI.New_Button(root,v,_,_,"left")
+	local buttonArtist = UI.Button(root,v,_,_,"left")
 	buttonArtist.reSize = function (self)
 		self.pos.y = i+2
 		self.size.w = self.parent.size.w
@@ -553,17 +570,31 @@ local function initWideMode(width)
 	clearVolumeWidgets()
 
 	-- 1. Создаем кнопку Mute
-	btnVolume = UI.New_Button(width - 13, 2, 3, 1, "", _, box2.color_bg, colors.white)
+	btnVolume = UI.Button(width - 13, 2, 3, 1, "", _, _, box2.color_bg, colors.white)
 	btnVolume.PrevStatus = 1
 
 	-- Логика отрисовки
 	btnVolume.draw = function (self)
-		screen.write(string_char(145), self.x, self.y, self.color_txt, self.color_bg)
+		term.setBackgroundColor(self.color_txt)
+		term.setTextColor(self.color_bg)
+		term.setCursorPos(self.x, self.y)
+		term.write(string_char(145))
+		-- screen.write(string_char(145), self.x, self.y, self.color_txt, self.color_bg)
 		if conf["volume"] ~= 0 then
-			screen.write(string_char(157), self.x + 1, self.y, self.color_txt, self.color_bg)
-			screen.write(string_char(132), self.x + 2, self.y, self.color_bg, self.color_txt)
+			term.setCursorPos(self.x + 1, self.y)
+			term.write(string_char(157))
+			term.setBackgroundColor(self.color_bg)
+			term.setTextColor(self.color_txt)
+			term.setCursorPos(self.x + 2, self.y)
+			term.write(string_char(132))
+			-- screen.write(string_char(157), self.x + 1, self.y, self.color_txt, self.color_bg)
+			-- screen.write(string_char(132), self.x + 2, self.y, self.color_bg, self.color_txt)
 		else
-			screen.write("x ", self.x + 1, self.y, self.parent.color_bg, self.color_txt)
+			term.setBackgroundColor(self.parent.color_bg)
+			term.setTextColor(self.color_txt)
+			term.setCursorPos(self.x + 1, self.y)
+			term.write("x ")
+			-- screen.write("x ", self.x + 1, self.y, self.parent.color_bg, self.color_txt)
 		end
 	end
 
@@ -597,7 +628,7 @@ local function initWideMode(width)
 		if v == conf["volume"] then currentIdx = i break end
 	end
 
-	volumeSlider = UI.New_Slider(width - 10, 2, 10, volumes, currentIdx, colors.lightGray, box2.color_bg, colors.white)
+	volumeSlider = UI.Slider(width - 10, 2, 10, volumes, currentIdx, colors.lightGray, box2.color_bg, colors.white)
 
 	volumeSlider.pressed = function (self, btn, x, y)
 		volume = self.arr[self.slidePosition]
@@ -633,13 +664,13 @@ local function initNarrowMode(width)
 	end
 
 	-- 1. Кнопка Вверх
-	btnVolumeUp = UI.New_Button(volX, 1, 3, 1, string_char(30), _, box2.color_bg, colors.white)
+	btnVolumeUp = UI.Button(volX, 1, 3, 1, string_char(30), _, _, box2.color_bg, colors.white)
 
 	-- 2. Лейбл
-	volumeLabel = UI.New_Label(volX, 2, 3, 1, tostring(currentIdx - 1), "center", box2.color_bg, colors.lightGray)
+	volumeLabel = UI.Label(volX, 2, 3, 1, tostring(currentIdx - 1), "center", box2.color_bg, colors.lightGray)
 
 	-- 3. Кнопка Вниз
-	btnVolumeDown = UI.New_Button(volX, 3, 3, 1, string_char(31), _, box2.color_bg, colors.white)
+	btnVolumeDown = UI.Button(volX, 3, 3, 1, string_char(31), _, _, box2.color_bg, colors.white)
 
 	-- Логика кнопок
 	btnVolumeUp.pressed = function (self)
@@ -666,30 +697,30 @@ local function initNarrowMode(width)
 end
 -----------------------------------------------------
 --| СЕКЦИЯ ПЕРЕОПРЕДЕЛЕНИЯ ФУНКЦИОНАЛЬНЫХ МЕТОДОВ |--
-btnAll.pressed = function (self)
-	if surface:removeChild(boxAlbum) then
-		btnAlbum.txtcol = colors.lightGray
-		self.txtcol = colors.black
-		surface:addChild(boxAll)
-		boxAll:onLayout()
-		scrollbar:setObj(boxAll)
-	end
-end
+-- btnAll.pressed = function (self)
+-- 	if root:removeChild(boxAlbum) then
+-- 		btnAlbum.txtcol = colors.lightGray
+-- 		self.txtcol = colors.black
+-- 		root:addChild(boxAll)
+-- 		boxAll:onLayout()
+-- 		scrollbar:setObj(boxAll)
+-- 	end
+-- end
 
-btnAlbum.pressed = function (self)
-	if surface:removeChild(boxAll) then
-		btnAll.txtcol = colors.lightGray
-		self.txtcol = colors.black
-		surface:addChild(boxAlbum)
-		boxAlbum:onLayout()
-		scrollbar:setObj(scrollboxAlbum)
-	end
-end
+-- btnAlbum.pressed = function (self)
+-- 	if root:removeChild(boxAll) then
+-- 		btnAll.txtcol = colors.lightGray
+-- 		self.txtcol = colors.black
+-- 		root:addChild(boxAlbum)
+-- 		boxAlbum:onLayout()
+-- 		scrollbar:setObj(scrollboxAlbum)
+-- 	end
+-- end
 
 pause.pressed = function (self)
 	if self.play then
 		os.queueEvent("pause_music")
-	elseif not self.play and window.pause then
+	elseif not self.play and root.pause then
 		os.queueEvent("unpause_music")
 	end
 end
@@ -732,7 +763,7 @@ btnOptionAutoNext.pressed = function (self)
 end
 
 timeLine.pressed = function (self, btn, x, y)
-	if not window.music_file then return end
+	if not root.music_file then return end
 	local relative_x = x - self.x
 	local width_range = _max(1, self.w - 1)
 	local percentage = relative_x / width_range
@@ -772,12 +803,14 @@ box2.onResize = function (width, height)
 end
 
 surface.onResize = function (width, height)
+	surface.w, surface.h = width, height
 	boxAll.w, boxAll.h = width - 1, height - 5
+	boxAll.win.reposition(boxAll.x, boxAll.y,boxAll.w, boxAll.h)
 	scrollbar.local_x, scrollbar.h = boxAll.w + 1, boxAll.h
 	box2.local_y, box2.w = height - 4, width
 	box2.onResize(box2.w, box2.h)
 	boxAll.onResize(boxAll.w, boxAll.h)
-	if window.music_file then play_next_chunk(window) end
+	if root.music_file and not speaker_play then play_next_chunk(root) end
 end
 -----------------------------------------------------
 local compact = box2.w > 41
@@ -788,4 +821,4 @@ else
 	initNarrowMode(box2.w)
 end
 
-surface:onLayout()
+root:mainloop()

@@ -1,4 +1,6 @@
-if bOS.modem then rednet.open(peripheral.getName(bOS.modem)) end
+local modem
+if periphemu then periphemu.create("top", "modem"); modem = peripheral.find("modem") end
+rednet.open(peripheral.getName(modem))
 ------------| СЕКЦИЯ ЛОКАЛИЗАЦИИ ФУНКЦИЙ |-----------
 local string_sub = string.sub
 local string_gmatch = string.gmatch
@@ -8,10 +10,11 @@ local math_floor = math.floor
 local math_ceil = math.ceil
 -----------------------------------------------------
 -------| СЕКЦИЯ ПОДКЛЮЧЕНИЯ БИБЛИОТЕК И ROOT |-------
-local system = require("braunnnsys")
-local c = require("cfunc")
-local UI = require("ui")
+local sys = require "sys"
+local c = require "cfunc"
+local UI = require "ui2"
 -----------------------------------------------------
+sys.register_window("Messenger", 1, 2, 39, 14, true)
 -----| СЕКЦИЯ ОБЪЯВЛЕНИЯ ПЕРЕМЕННЫХ ПРОГРАММЫ |------
 local currentChatHeight = 1
 if not fs.exists("sbin/Messenger/Data/account_key") then
@@ -24,14 +27,17 @@ if not fs.exists("sbin/Messenger/Data/friends") then
 	file.write("return {}")
 	file.close()
 end
-local friends = require("sbin.Messenger.Data.friends")
+local friends = dofile("sbin/Messenger/Data/friends")
 local protocol = "messenger"
 local friendsSort = {}
 local selectedFriend = {}
 local serverID = rednet.lookup(protocol, "messenger_main")
 -----------------------------------------------------
 ----------| СЕКЦИЯ ИНИЦИАЛИЗАЦИИ ОБЪЕКТОВ |----------
-local window, surface = system.add_window("Titled", colors.black, "Messenger")
+local root = UI.Root()
+
+local surface = UI.Box(1, 1, root.w, root.h, colors.black, colors.white)
+root:addChild(surface)
 
 local usersList, msgScrollBox, textOut, msgLabel, timer
 -----------------------------------------------------
@@ -76,7 +82,7 @@ local function drawMessage(msg, direction)
 		end
 	end
 
-	local label = UI.New_Label(1, currentChatHeight, msgScrollBox.w, #lines, msg, direction, color_bg, color_txt)
+	local label = UI.Label(1, currentChatHeight, msgScrollBox.w, #lines, msg, direction, color_bg, color_txt)
 
 	msgScrollBox:addChild(label)
 	msgScrollBox:onLayout()
@@ -106,7 +112,7 @@ local function drawFriendsButtons()
 	table_sort(friendsSort)
 	usersList.children = {}
 	for i, v in pairs(friendsSort) do
-		local userButton = UI.New_Button(1, i, usersList.w, 1, " "..tostring(v), "left", usersList.color_bg, colors.white)
+		local userButton = UI.Button(1, i, usersList.w, 1, " "..tostring(v), "left", usersList.color_bg, colors.white)
 		userButton.selectedFriend = friends[v]
 		userButton.pressed = userButton_pressed
 		usersList:addChild(userButton)
@@ -115,19 +121,19 @@ local function drawFriendsButtons()
 end
 
 local function initAuthUI()
-	msgLabel = UI.New_Label(1, math_floor(surface.h/2) - 3, surface.w, 1, "", "center", surface.color_bg, colors.white)
+	msgLabel = UI.Label(1, math_floor(surface.h/2) - 3, surface.w, 1, "", "center", surface.color_bg, colors.white)
 	surface:addChild(msgLabel)
 
-	local textfieldLogin = UI.New_Textfield(math_floor((surface.w - 10)/2) + 1, msgLabel.local_y + 2, 10, 1, "Login", _, colors.gray, colors.white)
+	local textfieldLogin = UI.Textfield(math_floor((surface.w - 10)/2) + 1, msgLabel.local_y + 2, 10, 1, "Login", _, colors.gray, colors.white)
 	surface:addChild(textfieldLogin)
 
-	local textfieldPassword = UI.New_Textfield(textfieldLogin.local_x, textfieldLogin.local_y + 2, 10, 1, "Password", true, colors.gray, colors.white)
+	local textfieldPassword = UI.Textfield(textfieldLogin.local_x, textfieldLogin.local_y + 2, 10, 1, "Password", true, colors.gray, colors.white)
 	surface:addChild(textfieldPassword)
 
-	local buttonRegister = UI.New_Button(math_floor((surface.w - 10)/2) - 5, textfieldPassword.local_y + 2, 10, 1, "Register", _, colors.lightGray, colors.white)
+	local buttonRegister = UI.Button(math_floor((surface.w - 10)/2) - 5, textfieldPassword.local_y + 2, 10, 1, "Register", _, colors.lightGray, colors.white)
 	surface:addChild(buttonRegister)
 
-	local buttonLogin = UI.New_Button(buttonRegister.local_x + buttonRegister.w + 1, textfieldPassword.local_y + 2, 10, 1, "Login", _, colors.lightGray, colors.white)
+	local buttonLogin = UI.Button(buttonRegister.local_x + buttonRegister.w + 1, textfieldPassword.local_y + 2, 10, 1, "Login", _, colors.lightGray, colors.white)
 	surface:addChild(buttonLogin)
 
 	buttonLogin.pressed = function (self)
@@ -154,29 +160,29 @@ local function initAuthUI()
 end
 
 local function initMainUI()
-	local buttonAddFriend = UI.New_Button(1, 1, 1, 1, "+", _, window.color_bg, colors.black)
-	window:addChild(buttonAddFriend)
+	-- local buttonAddFriend = UI.Button(1, 1, 1, 1, "+", _, window.color_bg, colors.black)
+	-- window:addChild(buttonAddFriend)
 
-	local myKey = UI.New_Button(2, 1, 1, 1, "?", _, window.color_bg, colors.black)
-	window:addChild(myKey)
+	-- local myKey = UI.Button(2, 1, 1, 1, "?", _, window.color_bg, colors.black)
+	-- window:addChild(myKey)
 
-	usersList = UI.New_ScrollBox(1,1, math_ceil(surface.w/4), surface.h, surface.color_bg)
+	usersList = UI.ScrollBox(1,1, math_ceil(surface.w/4), surface.h, surface.color_bg)
 	surface:addChild(usersList)
 
-	msgScrollBox = UI.New_ScrollBox(usersList.w + 1, 1, surface.w - usersList.w, surface.h - 1, colors.gray)
+	msgScrollBox = UI.ScrollBox(usersList.w + 1, 1, surface.w - usersList.w, surface.h - 1, colors.gray)
 
-	textOut = UI.New_Textfield(msgScrollBox.x, surface.h, msgScrollBox.w, 1, "Type message", _, colors.black, colors.white)
+	textOut = UI.Textfield(msgScrollBox.x, surface.h, msgScrollBox.w, 1, "Type message", _, colors.black, colors.white)
 
-	buttonAddFriend.pressed = function (self)
-		local friend = UI.New_DialWin(" Add a friend ", "Type user identifier")
-		window:onLayout()
-		if friend then rednet.send(serverID, {cType = "user_add", user = account_key, added_user = friend}, protocol) end
-	end
+	-- buttonAddFriend.pressed = function (self)
+	-- 	local friend = UI.DialWin(" Add a friend ", "Type user identifier")
+	-- 	window:onLayout()
+	-- 	if friend then rednet.send(serverID, {cType = "user_add", user = account_key, added_user = friend}, protocol) end
+	-- end
 
-	myKey.pressed = function (self)
-		UI.New_MsgWin("INFO", " Your identificator ", account_key.." "..serverID)
-		window:onLayout()
-	end
+	-- myKey.pressed = function (self)
+	-- 	UI.MsgWin("INFO", " Your identificator ", account_key.." "..serverID)
+	-- 	window:onLayout()
+	-- end
 
 	textOut.pressed = function (self)
 		drawMessage(self.text, "right")
@@ -207,7 +213,7 @@ local function switchToApp()
 		initMainUI()
 	end
 
-	window:onLayout()
+	-- window:onLayout()
 end
 
 local function switchToAuth()
@@ -274,25 +280,25 @@ local client_handler = {
 }
 -----------------------------------------------------
 --| СЕКЦИЯ ПЕРЕОПРЕДЕЛЕНИЯ ФУНКЦИОНАЛЬНЫХ МЕТОДОВ |--
-local temp_onEvent = window.onEvent
-window.onEvent = function (self, evt)
+local surface_onEvent = surface.onEvent
+surface.onEvent = function (self, evt)
 	if evt[1] == "rednet_message" then
 		--print(textutils.serialise(evt))
 		local sType = evt[3].sType
 		if client_handler[sType] then
 			client_handler[sType](evt[3], evt[2])
-			return
+			return true
 		end
 	end
 	if msgLabel and evt[1] == "timer" and evt[2] == timer then msgLabel:setText("Server do not response.") end
-	return temp_onEvent(self, evt)
+	return surface_onEvent(self, evt)
 end
 
-local temp_pressed = window.close.pressed
-window.close.pressed = function (self)
-	package.loaded["sbin.Messenger.Data.friends"] = nil
-	return temp_pressed(self)
-end
+-- local temp_pressed = window.close.pressed
+-- window.close.pressed = function (self)
+-- 	package.loaded["sbin.Messenger.Data.friends"] = nil
+-- 	return temp_pressed(self)
+-- end
 
 -----------------------------------------------------
 if not account_key then
@@ -301,3 +307,5 @@ else
 	switchToApp()
 	drawFriendsButtons()
 end
+
+root:mainloop()

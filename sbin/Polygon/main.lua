@@ -1,93 +1,98 @@
 -------| СЕКЦИЯ ПОДКЛЮЧЕНИЯ БИБЛИОТЕК И ROOT |-------
 package.path = package.path .. ";/lib/?" .. ";/lib/?.lua"
 local c = require("cfunc")
-local UI = require("ui")
-local system = require("braunnnsys")
+local UI = require("ui2")
+local sys = require("sys")
 -----------------------------------------------------
 -----| СЕКЦИЯ ОБЪЯВЛЕНИЯ ПЕРЕМЕННЫХ ПРОГРАММЫ |------
 local fslist = {} for i=1,64 do fslist[i]="Item - "..i end
 local conf = c.readConf("usr/settings.conf")
 local dropdown_array = {
-	"One","Two","Three","Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven"
+	"One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven"
 }
 local box_buffer = nil
 -----------------------------------------------------
 ----------| СЕКЦИЯ ИНИЦИАЛИЗАЦИИ ОБЪЕКТОВ |----------
+sys.register_window("Polygon", 1, 1, 51, 18, true)
+
 local function add_scrollbar(obj)
-	obj.parent:addChild(UI.New_Scrollbar(obj))
+	obj.parent:addChild(UI.Scrollbar(obj))
 end
 
-local window, surface = system.add_window("Titled", colors.lightGray, "Polygon")
+local root = UI.Root()
 
-local buttonError = UI.New_Button(1, 1, 5, 1, "Error", _, colors.white, colors.red)
-window:addChild(buttonError)
+local surface = UI.Box(1, 1, root.w, root.h, colors.lightGray, colors.white)
+root:addChild(surface)
 
-local buttonInfo = UI.New_Button(buttonError.x + buttonError.w + 1, 1, 1, 1, "?", _, colors.white, colors.blue)
-window:addChild(buttonInfo)
+local buttonError = UI.Button(1, 1, 5, 1, "Error", _, colors.white, colors.red)
+-- window:addChild(buttonError)
 
-local list = UI.New_List(math.ceil(surface.w/2), 2, math.floor(surface.w/2) - 1, surface.h - 2, fslist, colors.white, colors.black)
+local buttonInfo = UI.Button(buttonError.x + buttonError.w + 1, 1, 1, 1, "?", _, colors.white, colors.blue)
+-- window:addChild(buttonInfo)
+
+local list = UI.List(math.ceil(surface.w/2), 2, math.floor(surface.w/2) - 1, surface.h - 2, fslist, colors.white, colors.black)
 surface:addChild(list)
 
 add_scrollbar(list)
 
-local clock = UI.New_Clock(list.x, 1, conf["show_seconds"], conf["24format"], surface.color_bg, colors.white)
+local clock = UI.Clock(list.x, 1, conf["show_seconds"], conf["24format"], surface.color_bg, colors.white)
 surface:addChild(clock)
 
-local label = UI.New_Label(2, 2, list.x - 1 - 2, 1, "Label", _, colors.white, colors.black)
+local label = UI.Label(2, 2, list.x - 1 - 2, 1, "Label", _, colors.white, colors.black)
 surface:addChild(label)
 
-local textfield = UI.New_Textfield(label.x, label.y + 2, label.w, 1, _, _,colors.white,colors.black)
+local textfield = UI.Textfield(label.x, label.y + 2, label.w, 1, _, _,colors.white,colors.black)
 surface:addChild(textfield)
 
-local tabbar = UI.New_TabBar(2, textfield.y + 2, textfield.w, 1, 1, {"ScrollBox", "SEST"}, colors.brown, colors.white)
+local tabbar = UI.TabBar(2, textfield.y + 2, textfield.w, 1, 1, {"ScrollBox", "SEST"}, colors.brown, colors.white)
 tabbar.tab_w = 11
 surface:addChild(tabbar)
 
-local scrollBox = UI.New_ScrollBox(2, tabbar.y + 1, list.x - 4, surface.h - 7, colors.brown)
+local scrollBox = UI.ScrollBox(2, tabbar.y + 1, list.x - 4, surface.h - 7, colors.brown)
 surface:addChild(scrollBox)
 box_buffer = scrollBox
 
 add_scrollbar(scrollBox)
 
-local radioButton = UI.New_RadioButton(1, 1, _, {"CAT","DOG"}, scrollBox.color_bg)
+local radioButton = UI.RadioButton(1, 1, _, {"CAT","DOG"}, scrollBox.color_bg)
 scrollBox:addChild(radioButton)
 
-local radioButton_horizontal = UI.New_RadioButton_horizontal(scrollBox.w - 9, 1, 10, scrollBox.color_bg)
+local radioButton_horizontal = UI.RadioButton_horizontal(scrollBox.w - 9, 1, 10, scrollBox.color_bg)
 scrollBox:addChild(radioButton_horizontal)
 
-local radioLabel = UI.New_Label(radioButton_horizontal.x, radioButton_horizontal.y + 1, radioButton_horizontal.w, 1, tostring(radioButton_horizontal.item), _, colors.white, colors.black)
+local radioLabel = UI.Label(radioButton_horizontal.x, radioButton_horizontal.y + 1, radioButton_horizontal.w, 1, tostring(radioButton_horizontal.item), _, colors.white, colors.black)
 scrollBox:addChild(radioLabel)
 
-local tumbler = UI.New_Tumbler(radioButton.x, radioButton.h + radioButton.y + 1, colors.white, colors.gray, colors.black, true)
+local tumbler = UI.Tumbler(radioButton.x, radioButton.h + radioButton.y + 1, colors.white, colors.gray, colors.black, true)
 scrollBox:addChild(tumbler)
 
-local tumblerLabel = UI.New_Label(tumbler.x + tumbler.w + 1, tumbler.y, 3, 1, "ON", _, scrollBox.color_bg)
+local tumblerLabel = UI.Label(tumbler.x + tumbler.w + 1, tumbler.y, 3, 1, "ON", _, scrollBox.color_bg)
 scrollBox:addChild(tumblerLabel)
 
-local checkbox = UI.New_Checkbox(list.x - 7, radioLabel.y + 2, true, colors.black)
+local checkbox = UI.Checkbox(list.x - 7, radioLabel.y + 2, true, colors.black)
 scrollBox:addChild(checkbox)
 
-local checkboxLabel = UI.New_Label(checkbox.x + checkbox.w + 1, checkbox.y, 3, 1, "ON", _, scrollBox.color_bg)
+local checkboxLabel = UI.Label(checkbox.x + checkbox.w + 1, checkbox.y, 3, 1, "ON", _, scrollBox.color_bg)
 scrollBox:addChild(checkboxLabel)
 
-local running_label = UI.New_Running_Label(list.x - 7, checkbox.y + 2, 5, 1, "Some text here ")
+local running_label = UI.Running_Label(list.x - 7, checkbox.y + 2, 5, 1, "Some text here ")
 scrollBox:addChild(running_label)
 
-local slider = UI.New_Slider(1, running_label.y + 2, scrollBox.w, {1,2,3,4,5,6,7,8,9,10}, 5, colors.red, scrollBox.color_bg, colors.white)
+local slider = UI.Slider(1, running_label.y + 2, scrollBox.w, {1,2,3,4,5,6,7,8,9,10}, 5, colors.red, scrollBox.color_bg, colors.white)
 scrollBox:addChild(slider)
 
-local dropdown = UI.New_Dropdown(1, tumbler.y + 2, dropdown_array, _, _, _, colors.white, colors.black)
+local dropdown = UI.Dropdown(1, tumbler.y + 2, dropdown_array, _, _, _, colors.white, colors.black)
 scrollBox:addChild(dropdown)
 
-local textbox = UI.New_TextBox(2, slider.y + 2, scrollBox.w - 2, 7, colors.gray, colors.white)
+local textbox = UI.TextBox(2, slider.y + 2, scrollBox.w - 2, 7, colors.gray, colors.white)
 scrollBox:addChild(textbox)
 
 add_scrollbar(textbox)
 
-local Xscrollbar = UI.New_Scrollbar_Horizontal(textbox)
+local Xscrollbar = UI.Scrollbar_Horizontal(textbox)
 scrollBox:addChild(Xscrollbar)
 
-local btnReadFile = UI.New_Button(textbox.x, textbox.y + textbox.h + 2, 4, 1, "Read", "center", colors.black, colors.yellow)
+local btnReadFile = UI.Button(textbox.x, textbox.y + textbox.h + 2, 4, 1, "Read", "center", colors.black, colors.yellow)
 scrollBox:addChild(btnReadFile)
 -----------------------------------------------------
 ------| СЕКЦИЯ ОБЪЯВЛЕНИЯ ФУНКЦИЙ ПРОГРАММЫ |--------
@@ -95,7 +100,7 @@ scrollBox:addChild(btnReadFile)
 -----------------------------------------------------
 --| СЕКЦИЯ ПЕРЕОПРЕДЕЛЕНИЯ ФУНКЦИОНАЛЬНЫХ МЕТОДОВ |--
 buttonInfo.pressed = function (self)
-	UI.New_MsgWin("INFO", " INFO ", "This is a polygon. A test file that displays all interface elements except shortcuts, as they are represented on the desktop you accessed (most likely).")
+	UI.MsgWin("INFO", " INFO ", "This is a polygon. A test file that displays all interface elements except shortcuts, as they are represented on the desktop you accessed (most likely).")
 	window:onLayout()
 end
 
@@ -117,7 +122,7 @@ tabbar.pressed = function (self, name, index)
 		surface:removeChild(box_buffer)
 		surface:addChild(scrollBox)
 		surface:addChild(scrollBox.scrollbar_v)
-		surface:onLayout()
+		rosurfaceot:onLayout()
 	elseif name == "SEST" then
 		surface:removeChild(box_buffer)
 		surface:removeChild(box_buffer.scrollbar_v)
@@ -177,4 +182,4 @@ surface.onResize = function (width, height)
 	end
 end
 -----------------------------------------------------
-surface:onLayout()
+root:mainloop()

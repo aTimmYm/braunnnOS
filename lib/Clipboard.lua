@@ -1,10 +1,11 @@
-local _clipboard = {}
+local system = require "lib.sys"
+
 if not fs.exists("Clipboard.txt") then
 	local file = fs.open("Clipboard.txt", "w")
 	file.close()
 end
 
-function _clipboard.copy(arg)
+local function copy(arg)
 	local file = fs.open("Clipboard.txt", "w")
 	if type(arg) == "table" then
 		for _, line in ipairs(arg) do
@@ -18,11 +19,12 @@ function _clipboard.copy(arg)
 	file.close()
 end
 
-function _clipboard.paste()
+local function paste()
 	local file = fs.open("Clipboard.txt", "r")
 	local clipboard = file.readAll()
 	file.close()
 	return clipboard
 end
 
-return _clipboard
+system.add_hook("clipboard_paste", paste)
+system.add_hook("clipboard_copy", copy)

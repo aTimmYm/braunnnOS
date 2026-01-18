@@ -5,13 +5,12 @@ local _sub = string.sub
 local _rep = string.rep
 local _gsub = string.gsub
 local _ceil = math.ceil
-local _win = window
 -----------------------------------------------------
 -------| СЕКЦИЯ ПОДКЛЮЧЕНИЯ БИБЛИОТЕК И ROOT |-------
-local system = require("braunnnsys")
-local screen = require("Screen")
-local UI = require("ui")
-local _lex = require("/sbin/CEditor/Data/lex")
+local sys = require "sys"
+-- local screen = require("Screen")
+local UI = require "ui2"
+local _lex = require "/sbin/CEditor/Data/lex"
 -----------------------------------------------------
 -----| СЕКЦИЯ ОБЪЯВЛЕНИЯ ПЕРЕМЕННЫХ ПРОГРАММЫ |------
 local COLORS = {
@@ -19,15 +18,15 @@ local COLORS = {
 	["comment"] = colors.gray, --  comment: Either multi-line or single-line comments.
 	["string"] = colors.green, --  string: A string. Usually the part of the string that is not an escape.
 	["escape"] = colors.white, --  escape: Can only be found within strings (although they are separate tokens)
-	["keyword"] = colors.blue, --  keyword: Keywords. Like "while", "end", "do", etc
-	["value"] = colors.pink, --  value: Special values. Only true, false, and nil.
+	["keyword"] = colors.brown, --  keyword: Keywords. Like "while", "end", "do", etc
+	["value"] = colors.white, --  value: Special values. Only true, false, and nil.
 	["ident"] = colors.cyan, --  ident: Identifier. Variables, function names, etc..
 	["number"] = colors.white, --  number: Numbers!
-	["symbol"] = colors.white, --  symbol: Symbols, like brackets, parenthesis, ., .., ... etc
+	["symbol"] = colors.yellow, --  symbol: Symbols, like brackets, parenthesis, ., .., ... etc
 	["operator"] = colors.white, --  operator: Operators, like =, ==, >=, <=, ~=, etc
 	["unidentified"] = colors.red, --  unidentified: Anything that isn't one of the above tokens. Consider them ERRORS.
-	["function"] = colors.purple,
-	["nfunction"] = colors.yellow,
+	["function"] = colors.orange,
+	["nfunction"] = colors.purple,
 	["values"] = colors.red,
 	["equality"] = colors.red,
 	["arg"] = colors.white
@@ -43,15 +42,22 @@ local tabs = {}
 local tab_buffer = nil
 -----------------------------------------------------
 ----------| СЕКЦИЯ ИНИЦИАЛИЗАЦИИ ОБЪЕКТОВ |----------
-local window, surface = system.add_window("Titled", colors.black, "CEditor")
+local global_menu = UI.Menu()
 
-local menu = UI.New_Menu(1, 1, "File", {"New", "Open", "Save", "Save as"}, colors.white, colors.black)
-window:addChild(menu)
+sys.register_window("CEditor", 1, 1, 51, 18, true, global_menu)
 
-local run = UI.New_Button(5, 1, 3, 1, string.char(16), "center", window.color_bg, colors.gray)
-window:addChild(run)
+local root = UI.Root(colors.black)
 
-local tabbar = UI.New_TabBar(1, 1, surface.w, 1, colors.black, colors.lightGray)
+local surface = UI.Box(1, 1, root.w, root.h, colors.black, colors.white)
+root:addChild(surface)
+
+-- local menu = UI.Menu(1, 1, "File", {"New", "Open", "Save", "Save as"}, colors.white, colors.black)
+-- window:addChild(menu)
+
+-- local run = UI.Button(5, 1, 3, 1, string.char(16), "center", window.color_bg, colors.gray)
+-- window:addChild(run)
+
+local tabbar = UI.TabBar(1, 1, surface.w, 1, colors.black, colors.lightGray)
 surface:addChild(tabbar)
 -----------------------------------------------------
 ------| СЕКЦИЯ ОБЪЯВЛЕНИЯ ФУНКЦИЙ ПРОГРАММЫ |--------
@@ -64,9 +70,9 @@ local function textbox_draw(self)
 	local self_color_bg = self.color_bg
 	local self_scroll_pos_x, self_scroll_pos_y = self.scroll.pos_x, self.scroll.pos_y
 
-	screen.draw_rectangle(1, self_y, 4, self.h + 1, gray)
-	screen.clip_set(1, self_y, self_w + self_x - 1, self_h + self_y - 1)
-	screen.draw_rectangle(self_x, self_y, self_w, self_h, self_color_bg)
+	paintutils.drawFilledBox(1, self_y, 4, self_h + self_y, gray)
+	-- screen.clip_set(1, self_y, self_w + self_x - 1, self_h + self_y - 1)
+	paintutils.drawFilledBox(self_x, self_y, self_w + self_x - 1, self_h + self_y - 1, self_color_bg)
 
 	local visible_start = self_scroll_pos_y + 1
 	local visible_end = _min(self_h + self_scroll_pos_y, #self.lines)
@@ -96,24 +102,38 @@ local function textbox_draw(self)
 
 	for j = visible_start, visible_end do
 		local tokens = self.tokenCache[j].tokens
+		term.setBackgroundColor(self_color_bg)
 		for _, token in ipairs(tokens) do
-			screen.write(token.data, token.posFirst + self_x - self_scroll_pos_x - 1, j - self_scroll_pos_y + self_y - 1, self_color_bg, COLORS[token.type] or colors.white)
+			term.setTextColor(COLORS[token.type] or colors.white)
+			term.setCursorPos(token.posFirst + self_x - self_scroll_pos_x - 1, j - self_scroll_pos_y + self_y - 1)
+			term.write(token.data)
+			-- screen.write(token.data, token.posFirst + self_x - self_scroll_pos_x - 1, j - self_scroll_pos_y + self_y - 1, self_color_bg, COLORS[token.type] or colors.white)
 		end
 		local num = #tostring(j)
 		local color_txt = lightGray
 		if self.cursor.y == j then
 			color_txt = white
 		end
-		screen.write(_rep(" ", 4 - num) .. tostring(j), 1, j - self_scroll_pos_y + self_y - 1, gray, color_txt)
+		term.setBackgroundColor(colors.gray)
+		term.setTextColor(color_txt)
+		term.setCursorPos(1, j - self_scroll_pos_y + self_y - 1)
+		term.write(_rep(" ", 4 - num) .. tostring(j))
+		-- screen.write(_rep(" ", 4 - num) .. tostring(j), 1, j - self_scroll_pos_y + self_y - 1, gray, color_txt)
 	end
-	screen.clip_remove()
+	-- screen.clip_remove()
 
+	term.setBackgroundColor(self_color_bg)
+	term.setTextColor(colors.gray)
 	local char = string.char(149)
 	for i = self_y, self_y + self_h do
-		screen.write(char, 5, i, self_color_bg, gray)
+		term.setCursorPos(5, i)
+		term.write(char)
+		-- screen.write(char, 5, i, self_color_bg, gray)
 	end
 
-	screen.clip_set(self_x, self_y, self_w + self_x - 1, self_h + self_y - 1)
+	term.setBackgroundColor(colors.lightGray)
+	term.setTextColor(colors.white)
+	-- screen.clip_set(self_x, self_y, self_w + self_x - 1, self_h + self_y - 1)
 	if self.selected.status then
 		local p1 = self.selected.pos1
 		local p2 = self.selected.pos2
@@ -134,15 +154,17 @@ local function textbox_draw(self)
 				sel_text = _gsub(sel_text, "\t", string.char(26))
 				local draw_x = self_x + (sel_x_start - 1) - self_scroll_pos_x
 				local draw_y = self_y + (i - self_scroll_pos_y) - 1
-				screen.write(sel_text, draw_x, draw_y, lightGray, white)
+				term.setCursorPos(draw_x, draw_y)
+				term.write(sel_text)
+				-- screen.write(sel_text, draw_x, draw_y, lightGray, white)
 			end
 		end
 	end
-	screen.clip_remove()
+	-- screen.clip_remove()
 end
 
 local function create_textbox(path)
-	local textbox = UI.New_TextBox(6, 2, surface.w - 6, surface.h - 2, colors.black, colors.white)
+	local textbox = UI.TextBox(6, 2, surface.w - 6, surface.h - 2, colors.black, colors.white)
 	textbox.path = path
 	textbox.draw = textbox_draw
 	textbox.tokenCache = {}  -- { [lineNum] = {tokens = {}, stateIn = {}, stateOut = {} } }
@@ -284,8 +306,8 @@ local function create_textbox(path)
 		return temp_keyUp(self, key)
 	end
 
-	UI.New_Scrollbar(textbox)
-	UI.New_Scrollbar_Horizontal(textbox)
+	UI.Scrollbar(textbox)
+	UI.Scrollbar_Horizontal(textbox)
 
 	return textbox
 end
@@ -299,77 +321,77 @@ local function add_tab(name, path, pos)
 end
 -----------------------------------------------------
 --| СЕКЦИЯ ПЕРЕОПРЕДЕЛЕНИЯ ФУНКЦИОНАЛЬНЫХ МЕТОДОВ |--
-menu.pressed = function (self, id)
-	if id == "New" then
-		local str_new = "NEW - "..tostring(#new_tabs + 1)
-		if not new_tabs[str_new] then
-			new_tabs[str_new] = true
-		else
-			str_new = "NEW - "..tostring(#new_tabs)
-			new_tabs[str_new] = true
-		end
-		local new_selected = tabbar.selected + 1
-		add_tab(str_new, _, new_selected)
-		tabbar.selected = new_selected
-		tabbar:pressed(new_selected)
-	elseif id == "Open" then
-		local path = UI.New_DialWin(" Open ", "Enter path to file:")
-		if not path then
-			window:onLayout()
-			return
-		end
-		if not fs.exists(path) then
-			UI.New_MsgWin("INFO", " Error ", "File not found")
-			window:onLayout()
-			return
-		end
-		local name = path:match("([^/%\\]+)$")
-		for i, v in ipairs(tabbar.tabs) do
-			if v == name and tabs[i].path == path then
-				tabbar.selected = i
-				tabbar:pressed(i)
-				return
-			end
-		end
-		local new_selected = tabbar.selected + 1
-		local box = add_tab(name, path, new_selected)
-		tabbar.selected = new_selected
-		tabbar:pressed(new_selected)
-		local i = 1
-		for line in io.lines(path) do
-			box:setLine(line, i)
-			i = i + 1
-		end
-	elseif id == "Save" then
-		if tab_buffer.path then
-			local file = fs.open(tab_buffer.path, "w")
-			for _, v in pairs(tab_buffer.lines) do
-				file.writeLine(v)
-			end
-			file.close()
-		end
-	elseif id == "Save as" then
-		local path = UI.New_DialWin(" Save as ", "Enter path to save:")
-		if not path then
-			window:onLayout()
-			return
-		end
-		if fs.exists(path) then
-			local answ = UI.New_MsgWin("YES,NO", " Message ", "File is already exists. Do you want to override it?")
-			window:onLayout()
-			if not answ then return end
-		end
-		local name = path:match("([^/%\\]+)$")
-		local file = fs.open(path, "w")
-		new_tabs[tabbar.tabs[tabbar.selected]] = nil
-		tabbar.tabs[tabbar.selected] = name
-		for _, v in pairs(tab_buffer.lines) do
-			file.writeLine(v)
-		end
-		file.close()
-		if not tab_buffer.path then tab_buffer.path = path end
-	end
-end
+-- menu.pressed = function (self, id)
+-- 	if id == "New" then
+-- 		local str_new = "NEW - "..tostring(#new_tabs + 1)
+-- 		if not new_tabs[str_new] then
+-- 			new_tabs[str_new] = true
+-- 		else
+-- 			str_new = "NEW - "..tostring(#new_tabs)
+-- 			new_tabs[str_new] = true
+-- 		end
+-- 		local new_selected = tabbar.selected + 1
+-- 		add_tab(str_new, _, new_selected)
+-- 		tabbar.selected = new_selected
+-- 		tabbar:pressed(new_selected)
+-- 	elseif id == "Open" then
+-- 		local path = UI.DialWin(" Open ", "Enter path to file:")
+-- 		if not path then
+-- 			window:onLayout()
+-- 			return
+-- 		end
+-- 		if not fs.exists(path) then
+-- 			UI.MsgWin("INFO", " Error ", "File not found")
+-- 			window:onLayout()
+-- 			return
+-- 		end
+-- 		local name = path:match("([^/%\\]+)$")
+-- 		for i, v in ipairs(tabbar.tabs) do
+-- 			if v == name and tabs[i].path == path then
+-- 				tabbar.selected = i
+-- 				tabbar:pressed(i)
+-- 				return
+-- 			end
+-- 		end
+-- 		local new_selected = tabbar.selected + 1
+-- 		local box = add_tab(name, path, new_selected)
+-- 		tabbar.selected = new_selected
+-- 		tabbar:pressed(new_selected)
+-- 		local i = 1
+-- 		for line in io.lines(path) do
+-- 			box:setLine(line, i)
+-- 			i = i + 1
+-- 		end
+-- 	elseif id == "Save" then
+-- 		if tab_buffer.path then
+-- 			local file = fs.open(tab_buffer.path, "w")
+-- 			for _, v in pairs(tab_buffer.lines) do
+-- 				file.writeLine(v)
+-- 			end
+-- 			file.close()
+-- 		end
+-- 	elseif id == "Save as" then
+-- 		local path = UI.DialWin(" Save as ", "Enter path to save:")
+-- 		if not path then
+-- 			window:onLayout()
+-- 			return
+-- 		end
+-- 		if fs.exists(path) then
+-- 			local answ = UI.MsgWin("YES,NO", " Message ", "File is already exists. Do you want to override it?")
+-- 			window:onLayout()
+-- 			if not answ then return end
+-- 		end
+-- 		local name = path:match("([^/%\\]+)$")
+-- 		local file = fs.open(path, "w")
+-- 		new_tabs[tabbar.tabs[tabbar.selected]] = nil
+-- 		tabbar.tabs[tabbar.selected] = name
+-- 		for _, v in pairs(tab_buffer.lines) do
+-- 			file.writeLine(v)
+-- 		end
+-- 		file.close()
+-- 		if not tab_buffer.path then tab_buffer.path = path end
+-- 	end
+-- end
 
 local clicked_index
 tabbar.onMouseDown = function (self, btn, x, y)
@@ -405,33 +427,107 @@ tabbar.onMouseDown = function (self, btn, x, y)
 	return true
 end
 
-run.pressed = function (self)
-	if not tab_buffer or tab_buffer.lines == {""} then return end
+-- run.pressed = function (self)
+-- 	if not tab_buffer or tab_buffer.lines == {""} then return end
 
-	local W, H = term.getSize()
-	local T = term.current()
+-- 	local W, H = term.getSize()
+-- 	local T = term.current()
 
-	local win = _win.create(T, 1, 2, W, H - 1, true)
-	term.redirect(win)
+-- 	local win = _win.create(T, 1, 2, W, H - 1, true)
+-- 	term.redirect(win)
 
-	local def = term.getTextColor()
-	local source = table.concat(tab_buffer.lines, "\n")
-	local fn, err = load(source, "textbox", "t", _G)
-	if not fn then
-		term.setTextColor(colors.red)
-		print(tostring(err))
+-- 	local def = term.getTextColor()
+-- 	local source = table.concat(tab_buffer.lines, "\n")
+-- 	local fn, err = load(source, "textbox", "t", _G)
+-- 	if not fn then
+-- 		term.setTextColor(colors.red)
+-- 		print(tostring(err))
+-- 	else
+-- 		fn()
+-- 	end
+-- 	term.setTextColor(colors.yellow)
+-- 	print("Press any key to continue.")
+-- 	term.setTextColor(def)
+-- 	local filter = {
+-- 		["mouse_click"] = true,
+-- 		["key"] = true
+-- 	}
+-- 	while not filter[os.pullEvent()] do end
+-- 	term.redirect(T)
+-- end
+local file = global_menu:add_context("File")
+file:add_item("New").pressed = function (self)
+	local str_new = "NEW - "..tostring(#new_tabs + 1)
+	if not new_tabs[str_new] then
+		new_tabs[str_new] = true
 	else
-		fn()
+		str_new = "NEW - "..tostring(#new_tabs)
+		new_tabs[str_new] = true
 	end
-	term.setTextColor(colors.yellow)
-	print("Press any key to continue.")
-	term.setTextColor(def)
-	local filter = {
-		["mouse_click"] = true,
-		["key"] = true
-	}
-	while not filter[os.pullEvent()] do end
-	term.redirect(T)
+	local new_selected = tabbar.selected + 1
+	add_tab(str_new, _, new_selected)
+	tabbar.selected = new_selected
+	tabbar:pressed(new_selected)
+	os.queueEvent("redraw")
+end
+file:add_item("Open").pressed = function (self)
+	local path = UI.DialWin(" Open ", "Enter path to file:")
+	if not path then
+		window:onLayout()
+		return
+	end
+	if not fs.exists(path) then
+		UI.MsgWin("INFO", " Error ", "File not found")
+		window:onLayout()
+		return
+	end
+	local name = path:match("([^/%\\]+)$")
+	for i, v in ipairs(tabbar.tabs) do
+		if v == name and tabs[i].path == path then
+			tabbar.selected = i
+			tabbar:pressed(i)
+			return
+		end
+	end
+	local new_selected = tabbar.selected + 1
+	local box = add_tab(name, path, new_selected)
+	tabbar.selected = new_selected
+	tabbar:pressed(new_selected)
+	local i = 1
+	for line in io.lines(path) do
+		box:setLine(line, i)
+		i = i + 1
+	end
+end
+file:add_item("Save").pressed = function (self)
+	if tab_buffer.path then
+		local file = fs.open(tab_buffer.path, "w")
+		for _, v in pairs(tab_buffer.lines) do
+			file.writeLine(v)
+		end
+		file.close()
+	end
+end
+file:add_item("Save as").pressed = function (self)
+	local path = UI.DialWin(" Save as ", "Enter path to save:")
+	if not path then
+		window:onLayout()
+		return
+	end
+	if fs.exists(path) then
+		local answ = UI.MsgWin("YES,NO", " Message ", "File is already exists. Do you want to override it?")
+		window:onLayout()
+		if not answ then return end
+	end
+	local name = path:match("([^/%\\]+)$")
+	local file = fs.open(path, "w")
+	new_tabs[tabbar.tabs[tabbar.selected]] = nil
+	tabbar.tabs[tabbar.selected] = name
+	for _, v in pairs(tab_buffer.lines) do
+		file.writeLine(v)
+	end
+	file.close()
+	if not tab_buffer.path then tab_buffer.path = path end
 end
 
 tabbar.onMouseDrag = function (self, btn, x, y)
@@ -473,8 +569,9 @@ tabbar.pressed = function (self, index)
 		surface:addChild(tab.scrollbar_v)
 		surface:addChild(tab.scrollbar_h)
 		tab:onLayout()
-		window.root.focus = tab
+		surface.focus = tab
 	end
+	self.dirty = true
 end
 
 surface.onMouseDown = function (self, btn, x, y)
@@ -513,10 +610,10 @@ surface.onResize = function (width, height)
 	tabbar.w = width
 end
 
-local temp_pressed = window.close.pressed
-window.close.pressed = function (self)
-	package.loaded["/sbin/CEditor/Data/lex"] = nil
-	return temp_pressed(self)
-end
+-- local temp_pressed = window.close.pressed
+-- window.close.pressed = function (self)
+-- 	package.loaded["/sbin/CEditor/Data/lex"] = nil
+-- 	return temp_pressed(self)
+-- end
 -----------------------------------------------------
-surface:onLayout()
+root:mainloop()

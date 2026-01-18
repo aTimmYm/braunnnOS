@@ -1,6 +1,6 @@
--------| СЕКЦИЯ ПОДКЛЮЧЕНИЯ БИБЛИОТЕК И ROOT |-------
-local system = require("braunnnsys")
-local UI = require("ui")
+-------| СЕКЦИЯ ПОДКЛЮЧЕНИЯ БИБЛИОТЕК И surface |-------
+local sys = require "sys"
+local UI = require "ui2"
 -----------------------------------------------------
 -----| СЕКЦИЯ ОБЪЯВЛЕНИЯ ПЕРЕМЕННЫХ ПРОГРАММЫ |------
 local expr = ""
@@ -15,9 +15,14 @@ local btnTexts = {
 }
 -----------------------------------------------------
 ----------| СЕКЦИЯ ИНИЦИАЛИЗАЦИИ ОБЪЕКТОВ |----------
-local window, surface = system.add_window("Titled", colors.black, "Calculator")
+sys.register_window("Calculator", 1, 1, 23, 14, true)
 
-local display = UI.New_Label(1, 1, math.max(10, surface.w - 2), 3, "0", "right", surface.color_bg, colors.white)
+local root = UI.Root()
+
+local surface = UI.Box(1, 1, root.w, root.h, colors.gray, colors.white)
+root:addChild(surface)
+
+local display = UI.Label(2, 1, math.max(10, surface.w - 2), 3, "0", "right", colors.black, colors.white)
 surface:addChild(display)
 -----------------------------------------------------
 ------| СЕКЦИЯ ОБЪЯВЛЕНИЯ ФУНКЦИЙ ПРОГРАММЫ |--------
@@ -57,7 +62,7 @@ for row = 1, #btnTexts do
 		local x = surface.x + (col - 1) * w + 1
 		local y = display.h + (row - 1) * h + 1
 
-		local btn = UI.New_Button(x, y, w, h, txt)
+		local btn = UI.Button(x, y, w, h, txt, _, _, surface.color_bg, colors.white)
 
 		btn.pressed = function(self)
 			if txt == "C" then
@@ -95,6 +100,7 @@ end
 -----------------------------------------------------
 --| СЕКЦИЯ ПЕРЕОПРЕДЕЛЕНИЯ ФУНКЦИОНАЛЬНЫХ МЕТОДОВ |--
 surface.onResize = function (width, height)
+	surface.w, surface.h = width, height
 	display.w = math.max(10, width - 2)
 	for row = 1, #btnTexts do
 		for col = 1, #btnTexts[row] do
@@ -102,10 +108,10 @@ surface.onResize = function (width, height)
 			local btn = buttons[(row - 1) * totalCols + col]
 			btn.w = math.floor((width - (totalCols - 1)) / totalCols)
 			btn.h = math.floor((height - 3)/5)
-			btn.local_x = surface.local_x + (col - 1) * btn.w + 1
+			btn.local_x = surface.x + (col - 1) * btn.w + 1
 			btn.local_y = display.h + (row - 1) * btn.h + 1
 		end
 	end
 end
 -----------------------------------------------------
-surface:onLayout()
+root:mainloop()

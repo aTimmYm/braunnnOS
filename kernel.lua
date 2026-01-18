@@ -1,0 +1,246 @@
+package.path = package.path .. ";/lib/?" .. ";/lib/?.lua"
+local co_resume = coroutine.resume
+local co_create = coroutine.create
+local co_status = coroutine.status
+local co_yield	= coroutine.yield
+local co_running= coroutine.running
+local unpack	= table.unpack
+local t_remove	= table.remove
+local t_insert	= table.insert
+
+-- local _kernel = {}
+local processes = {}
+local kernel_running = true
+local t_native = term.native()
+-- local dummy_term = window.create(term.current(), 1, 1, 51, 19, false)
+local ids = 1
+local instructions = 100000
+-- local line_count = 0
+local event_queue = {}
+local interruption, need_resume = true
+
+local sys = require "sys"
+local wm = require "WManager"
+package.loaded["WManager"] = nil
+
+local dummy_term = {
+    write = function() end,
+    blit = function() end,
+    clear = function() end,
+    clearLine = function() end,
+    setCursorPos = function() end,
+    setCursorBlink = function() end,
+    getCursorPos = function() return 1, 1 end,
+    setTextColor = function() end,
+    setTextColour = function() end,
+    setBackgroundColor = function() end,
+    setBackgroundColour = function() end,
+    isColor = function() return true end,
+    isColour = function() return true end,
+    getSize = function() return 51, 19 end,
+    scroll = function() end,
+    redirect = function(target) return target end,
+    current = function() return dummy_term end,
+    native = function() return dummy_term end,
+	getPaletteColor = function () return 1 end,
+	getPaletteColour = function () return 1 end,
+	setPaletteColour = function () end,
+	setPaletteColor = function () end
+}
+
+local function hook()
+	if coroutine.isyieldable() then
+		need_resume = true
+		co_yield("__interrupts")
+	end
+end
+
+local function register_window(title, x, y, w, h, border, order)
+	if not wm then return end
+	local running_co = co_running()
+
+	for pid, process in pairs(processes) do
+		if process.co == running_co then
+			process.win = wm.create(title, x, y, w, h, border, pid, order)
+			term.redirect(process.win.term)
+			return process.win
+			-- break
+		end
+	end
+end
+sys.register_window = register_window
+
+local function process_end(pid)
+	if wm then wm.close_window(pid) end
+	processes[pid] = nil
+end
+sys.process_end = process_end
+
+local function get_processes_info()
+	local info = {}
+	for pid, process in pairs(processes) do
+		local temp = {
+			pid = pid,
+			title = process.win and process.win.title or process.name
+		}
+		table.insert(info, temp)
+	end
+	return info
+end
+sys.get_processes_info = get_processes_info
+
+local function get_proc_name(pid)
+	return processes[pid].name
+end
+sys.get_proc_name = get_proc_name
+
+local function get_proc_path(pid)
+	return processes[pid].path
+end
+sys.get_proc_path = get_proc_path
+
+local function getpid()
+	local co = co_running()
+	for pid, process in pairs(processes) do
+		if process.co == co then
+			return pid
+		end
+	end
+end
+sys.getpid = getpid
+
+local function screen_get_size()
+	return t_native.getSize()
+end
+sys.screen_get_size = screen_get_size
+
+local function process_resume(pid, args)
+	if not pid then return end
+	local process = processes[pid]
+	local old_term = term.current()
+	local win_term = process.win and process.win.term
+
+	if process.filter and args[1] ~= process.filter or args[1] == "terminate" then return end
+	-- local status, filter
+
+	if win_term then term.redirect(win_term) end
+
+	-- if args[1] ~= "__interrupts" then
+	-- 	status, filter = co_resume(process.co, t_unpack(args))
+	-- else
+	-- 	status, filter = co_resume(process.co)
+	-- end
+	local status, filter = co_resume(process.co, unpack(args))
+
+	term.redirect(old_term)
+
+	if status then
+		process.filter = filter
+
+		if co_status(process.co) == "dead" then
+			log(filter)
+			process_end(pid)
+		end
+		-- debug.sethook(process.co, hook, "", instructions)
+	else
+		log(filter)
+		process_end(pid)
+	end
+end
+
+local function ipc(pid, ...)
+	-- process_resume(pid, {...})
+	t_insert(event_queue, {pid, {...}})
+	-- os.queueEvent("ipc")
+end
+sys.ipc = ipc
+
+local function get_parent_path()
+	local p_co = co_running()
+	for _, process in pairs(processes) do
+		if p_co == process.co then
+			return process.path
+		end
+	end
+end
+
+local function process_create(func, args, name, path)
+	local pid = ids
+	ids = ids + 1
+	local process = {}
+	processes[pid] = process
+
+	process.co = co_create(func)
+	process.path = path or get_parent_path()
+	process.name = name or process.path
+
+	-- debug.sethook(process.co, hook, "", instructions)
+	process_resume(pid, args)
+
+	return pid
+end
+sys.process_create = process_create
+
+local function execute(path, name, env, args)
+	args = args or {}
+	local func, err = loadfile(path, env)
+	if func then
+		return process_create(func, args, name, path)
+	else
+		log(tostring(err))
+	end
+end
+sys.execute = execute
+
+local function event_handler(evt)
+	-- if evt[1] == "ipc" then return end
+	local wm_dispatch = wm.dispatch_event(evt)
+
+	if not wm_dispatch then
+		for pid, _ in pairs(processes) do
+			t_insert(event_queue, 1, {pid, evt})
+		end
+	else
+		if wm_dispatch ~= true then
+			t_insert(event_queue, 1, wm_dispatch)
+		end
+	end
+end
+
+local function kernel_run()
+	wm.docker_pid = execute("sbin/Docker/main.lua", "docker", _ENV)
+	wm.panel_pid = execute("lib/panel.lua", "panel", _ENV)
+	while kernel_running do
+		if wm then wm.redraw_all() end
+		local evt = {os.pullEventRaw()}
+		local event_name = evt[1]
+
+		if event_name == "term_resize" then evt[2], evt[3] = t_native.getSize() end
+		if event_name == "terminate" then kernel_running = false end
+		if event_name == "__interrupts" then interruption = true end
+
+		event_handler(evt)
+
+		while #event_queue > 0 do
+			local queue = t_remove(event_queue, #event_queue)
+			process_resume(queue[1], queue[2])
+		end
+
+		if need_resume and interruption then
+			os.queueEvent("__interrupts")
+			need_resume = false
+			interruption = false
+		end
+	end
+end
+
+local function TEST()
+	while true do
+		term.write("A")
+		os.sleep(1)
+	end
+end
+
+kernel_run()
+
+term.redirect(t_native)

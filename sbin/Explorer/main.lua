@@ -9,33 +9,39 @@ local table_sort = table.sort
 local fs = fs
 -----------------------------------------------------
 -------| СЕКЦИЯ ПОДКЛЮЧЕНИЯ БИБЛИОТЕК И ROOT |-------
-local system = require("braunnnsys")
-local c = require("cfunc")
-local UI = require("ui")
+local sys = require "sys"
+local c = require "cfunc"
+local UI = require "ui2"
 -----------------------------------------------------
 -----| СЕКЦИЯ ОБЪЯВЛЕНИЯ ПЕРЕМЕННЫХ ПРОГРАММЫ |------
 local fslist = fs.list("")
 local mode = ""
 -----------------------------------------------------
 ----------| СЕКЦИЯ ИНИЦИАЛИЗАЦИИ ОБЪЕКТОВ |----------
-local window, surface = system.add_window("Titled", colors.black, "Explorer")
+-- local window, root = sys.add_window("Titled", colors.black, "Explorer")
+sys.register_window("Explorer", 1, 1, 51, 18, true)
 
-local buttonAdd = UI.New_Button(1, 1, 1, 1, "+", _, colors.white, colors.black)
-window:addChild(buttonAdd)
+local root = UI.Root()
 
-local buttonDelete = UI.New_Button(buttonAdd.x + 1, 1, 1, 1, "-", _, colors.white, colors.black)
-window:addChild(buttonDelete)
+local surface = UI.Box(1, 1, root.w, root.h, colors.black, colors.white)
+root:addChild(surface)
 
-local buttonMove = UI.New_Button(buttonDelete.x + 1, 1, 1, 1, string_char(187), _, colors.white, colors.black)
-window:addChild(buttonMove)
+local buttonAdd = UI.Button(1, 1, 1, 1, "+", _, colors.white, colors.black)
+-- window:addChild(buttonAdd)
 
-local buttonRet = UI.New_Button(1, 1, surface.w, 1, "...", "left", surface.color_bg, colors.white)
+local buttonDelete = UI.Button(buttonAdd.x + 1, 1, 1, 1, "-", _, colors.white, colors.black)
+-- window:addChild(buttonDelete)
+
+local buttonMove = UI.Button(buttonDelete.x + 1, 1, 1, 1, string_char(187), _, colors.white, colors.black)
+-- window:addChild(buttonMove)
+
+local buttonRet = UI.Button(1, 1, surface.w, 1, "...", "left", _, surface.color_bg, colors.white)
 surface:addChild(buttonRet)
 
-local list = UI.New_List(1, buttonRet.y + 1, surface.w - 1, surface.h-1, {}, colors.black, colors.white)
+local list = UI.List(1, buttonRet.y + 1, surface.w - 1, surface.h-1, {}, surface.color_bg, colors.white)
 surface:addChild(list)
 
-local scrollbar = UI.New_Scrollbar(list)
+local scrollbar = UI.Scrollbar(list)
 surface:addChild(scrollbar)
 -----------------------------------------------------
 ------| СЕКЦИЯ ОБЪЯВЛЕНИЯ ФУНКЦИЙ ПРОГРАММЫ |--------
@@ -43,12 +49,9 @@ local extensions = {
 	[".txt"] = function (item, fullPath)
 		local func, load_err = loadfile("sbin/Notepad/main.lua", _ENV)  -- "t" для text, или "bt" если нужно
 		if not func then
-			UI.New_MsgWin("INFO", "Error", load_err)
+			UI.MsgWin("INFO", "Error", load_err)
 		else
-			local ret, exec_err = pcall(func, fullPath)
-			if not ret then
-				UI.New_MsgWin("INFO", "Error", exec_err)
-			end
+			sys.process_run(func, {fullPath})
 		end
 		return true
 	end,
@@ -121,10 +124,10 @@ list:updateArr(fslist)
 --| СЕКЦИЯ ПЕРЕОПРЕДЕЛЕНИЯ ФУНКЦИОНАЛЬНЫХ МЕТОДОВ |--
 buttonAdd.pressed = function (self)
 	if mode == "delete" then return end
-	local text = UI.New_DialWin(" Creating directory ", "Enter the directory name")
+	local text = UI.DialWin(" Creating directory ", "Enter the directory name")
 	window:onLayout()
 	if text and text == "" then
-		UI.New_MsgWin("INFO", " ERROR ","Invalid directory name")
+		UI.MsgWin("INFO", " ERROR ","Invalid directory name")
 		window:onLayout()
 	elseif text and text ~= "" then
 		fs.makeDir(shell.resolve(text))
@@ -151,15 +154,15 @@ list.pressed = function (self, item, index)
 		sort()
 		self.scrollpos = 1
 		self:updateArr(fslist)
-		window.label:setText(shell.dir())
+		-- window.label:setText(shell.dir())
 
 	elseif fs.exists(fullPath) then
 		local extension = item:match("^.+(%..+)$") or ""
 		if extensions[extension] then
 			extensions[extension](item, fullPath)
 		else
-			UI.New_MsgWin("INFO", " ERROR ", "Can't open current file extension.")
-			window:onLayout()
+			UI.MsgWin("INFO", " ERROR ", "Can't open current file extension.")
+			root:onLayout()
 		end
 	end
 end
@@ -172,9 +175,9 @@ buttonRet.pressed = function (self)
 		list.scrollpos = 1
 		list:updateArr(fslist)
 		if shell.dir() == "" then
-			window.label:setText("Explorer")
+			-- window.label:setText("Explorer")
 		else
-			window.label:setText(shell.dir())
+			-- window.label:setText(shell.dir())
 		end
 	end
 end
@@ -187,7 +190,7 @@ buttonDelete.pressed = function (self)
 			if string_find(v, string_char(4)) then table_insert(toDel, string_sub(v, 2, #v)) end
 		end
 		if toDel and #toDel > 0 then
-			local bool = UI.New_MsgWin("YES,NO", " DELETE ", "Are you sure?")
+			local bool = UI.MsgWin("YES,NO", " DELETE ", "Are you sure?")
 			window:onLayout()
 			if bool then
 				for _, v in pairs(toDel) do
@@ -226,7 +229,7 @@ buttonMove.pressed = function (self)
 			if string_find(v, string_char(4)) then table_insert(moveBuffer, string_sub(v, 2, #v)) end
 		end
 		if moveBuffer and #moveBuffer > 0 then
-			local text = UI.New_DialWin(" MOVE ", "Write a path to move")
+			local text = UI.DialWin(" MOVE ", "Write a path to move")
 			window:onLayout()
 			if text then
 				for _,v in pairs(moveBuffer) do
@@ -262,12 +265,12 @@ surface.onResize = function (width, height)
 	scrollbar.local_x, scrollbar.h = list.w + 1, list.h
 end
 
-local temp_close = window.close.pressed
-window.close.pressed = function (self)
-	shell.setDir("")
-	return temp_close(self)
-end
+-- local temp_close = window.close.pressed
+-- window.close.pressed = function (self)
+-- 	shell.setDir("")
+-- 	return temp_close(self)
+-- end
 -----------------------------------------------------
 ---------| MAINLOOP И ДЕЙСТВИЯ ПОСЛЕ НЕГО |----------
-surface:onLayout()
+root:mainloop()
 -----------------------------------------------------

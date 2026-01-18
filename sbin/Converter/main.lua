@@ -3,8 +3,8 @@ local math_min = math.min
 local string_byte = string.byte
 local string_sub = string.sub
 -----------------------------------------------------
-local system = require("braunnnsys")
-local UI = require("ui")
+local sys = require "sys"
+local UI = require "ui2"
 local lib
 
 lib = require("sbin/Converter/Data/id3_meta")
@@ -14,42 +14,47 @@ local readID3v2 = lib.readID3v2
 lib = require("sbin/Converter/Data/mp4_meta")
 local readMP4Metadata = lib.readMP4Metadata
 
-local termTxtcol = term.getTextColor()
+sys.register_window("Converter", 1, 1, 26, 10, true)
 
-local window, surface = system.add_window("Titled", colors.black, "Converter")
+local root = UI.Root()
+
+local surface = UI.Box(1, 1, root.w, root.h, colors.black, colors.white)
+root:addChild(surface)
+
+local termTxtcol = term.getTextColor()
 
 local W = math_min(24, surface.w - 3)
 
-local textfield_filePath = UI.New_Textfield(2, 2, W, 1, "Path to the audio file", false, colors.gray, colors.white)
+local textfield_filePath = UI.Textfield(2, 2, W, 1, "Path to the audio file", false, colors.gray, colors.white)
 surface:addChild(textfield_filePath)
 
-local textfield_saveTo = UI.New_Textfield(2, 4, W, 1, "Path to save new file", false, colors.gray, colors.white)
+local textfield_saveTo = UI.Textfield(2, 4, W, 1, "Path to save new file", false, colors.gray, colors.white)
 surface:addChild(textfield_saveTo)
 
-local btnConvert = UI.New_Button(2, 6, 14, 3, "Convert", "center", colors.lightGray, colors.white)
+local btnConvert = UI.Button(2, 6, 14, 3, "Convert", "center", _, colors.lightGray, colors.white)
 surface:addChild(btnConvert)
 
-local btnDef = UI.New_Button(17, 6, 7, 1, "DefPath", "center", colors.lightGray, colors.white)
+local btnDef = UI.Button(17, 6, 7, 1, "DefPath", "center", _, colors.lightGray, colors.white)
 surface:addChild(btnDef)
 
-local progress_convert = UI.New_LoadingBar(2, 3, W, colors.black, colors.blue, colors.black, "center", 0)
+local progress_convert = UI.LoadingBar(2, 3, W, colors.black, colors.blue, colors.black, "center", 0)
 surface:addChild(progress_convert)
 
 btnConvert.pressed = function (self)
 	local filePath = textfield_filePath.text
 	if filePath == "" or not fs.exists(filePath) then
-		UI.New_MsgWin("INFO", " Error ", "File not found! Try again.")
+		UI.MsgWin("INFO", " Error ", "File not found! Try again.")
 		window:onLayout()
 		return
 	end
 	local fileSave = textfield_saveTo.text
 	if fileSave == "" then
-		UI.New_MsgWin("INFO", " Error ", "Enter the path to save file.")
+		UI.MsgWin("INFO", " Error ", "Enter the path to save file.")
 		window:onLayout()
 		return
 	end
 	if fileSave:sub(-1) == "/" then
-		UI.New_MsgWin("INFO", " Error ", "Incorrect name of file to save.")
+		UI.MsgWin("INFO", " Error ", "Incorrect name of file to save.")
 		window:onLayout()
 		return
 	end
@@ -80,7 +85,7 @@ btnConvert.pressed = function (self)
 
 	local success, response = pcall(http.post, "https://remote.craftos-pc.cc/music/upload", data, {["Content-Type"] = "application/octet-stream"})
 	if not success then
-		UI.New_MsgWin("INFO", " Error ", "http.post error: " .. response .. ", try again.")
+		UI.MsgWin("INFO", " Error ", "http.post error: " .. response .. ", try again.")
 		window:onLayout()
 		return
 	end
@@ -93,7 +98,7 @@ btnConvert.pressed = function (self)
 	local wavUrl = "https://remote.craftos-pc.cc/music/content/" .. id .. ".wav"
 	local request = http.get(wavUrl)
 	if not request then
-		UI.New_MsgWin("INFO", " Error ", "Downloading error, try again.")
+		UI.MsgWin("INFO", " Error ", "Downloading error, try again.")
 		window:onLayout()
 		return
 	end
@@ -112,7 +117,7 @@ btnConvert.pressed = function (self)
 
 		dfpwmRaw = string_sub(wavData, dataPos + 8, dataPos + 7 + chunkSize)
 	else
-		UI.New_MsgWin("INFO", " Error ", "Chunck 'data' not found! Saving file...")
+		UI.MsgWin("INFO", " Error ", "Chunck 'data' not found! Saving file...")
 		window:onLayout()
 	end
 
@@ -128,7 +133,7 @@ btnConvert.pressed = function (self)
 	outputfile.close()
 
 	progress_convert:setValue(1)
-	UI.New_MsgWin("INFO", " Success ", "Filed converted and saved to " .. fileSave)
+	UI.MsgWin("INFO", " Success ", "Filed converted and saved to " .. fileSave)
 	progress_convert:setValue(0)
 	window:onLayout()
 end
@@ -140,4 +145,4 @@ btnDef.pressed = function (self)
 	textfield_saveTo:onPaste("home/Music/" .. fileName)
 end
 
-surface:onLayout()
+root:mainloop()

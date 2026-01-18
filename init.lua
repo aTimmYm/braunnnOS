@@ -2,7 +2,7 @@
 if bOS.init then error("bOS is already running!") end
 bOS.init = true
 package.path = package.path .. ";/lib/?" .. ";/lib/?.lua"
-local system = require("braunnnsys")
+local system = require("lib.sys")
 local clipboard = require("Clipboard")
 local UI = require("ui")
 local c = require("cfunc")
