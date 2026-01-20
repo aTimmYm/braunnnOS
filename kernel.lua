@@ -23,30 +23,30 @@ local sys = require "sys"
 local wm = require "WManager"
 package.loaded["WManager"] = nil
 
-local dummy_term = {
-    write = function() end,
-    blit = function() end,
-    clear = function() end,
-    clearLine = function() end,
-    setCursorPos = function() end,
-    setCursorBlink = function() end,
-    getCursorPos = function() return 1, 1 end,
-    setTextColor = function() end,
-    setTextColour = function() end,
-    setBackgroundColor = function() end,
-    setBackgroundColour = function() end,
-    isColor = function() return true end,
-    isColour = function() return true end,
-    getSize = function() return 51, 19 end,
-    scroll = function() end,
-    redirect = function(target) return target end,
-    current = function() return dummy_term end,
-    native = function() return dummy_term end,
-	getPaletteColor = function () return 1 end,
-	getPaletteColour = function () return 1 end,
-	setPaletteColour = function () end,
-	setPaletteColor = function () end
-}
+-- local dummy_term = {
+--     write = function() end,
+--     blit = function() end,
+--     clear = function() end,
+--     clearLine = function() end,
+--     setCursorPos = function() end,
+--     setCursorBlink = function() end,
+--     getCursorPos = function() return 1, 1 end,
+--     setTextColor = function() end,
+--     setTextColour = function() end,
+--     setBackgroundColor = function() end,
+--     setBackgroundColour = function() end,
+--     isColor = function() return true end,
+--     isColour = function() return true end,
+--     getSize = function() return 51, 19 end,
+--     scroll = function() end,
+--     redirect = function(target) return target end,
+--     current = function() return dummy_term end,
+--     native = function() return dummy_term end,
+-- 	getPaletteColor = function () return 1 end,
+-- 	getPaletteColour = function () return 1 end,
+-- 	setPaletteColour = function () end,
+-- 	setPaletteColor = function () end
+-- }
 
 local function hook()
 	if coroutine.isyieldable() then
@@ -55,7 +55,7 @@ local function hook()
 	end
 end
 
-local function register_window(title, x, y, w, h, border, order)
+function sys.register_window(title, x, y, w, h, border, order)
 	if not wm then return end
 	local running_co = co_running()
 
@@ -68,7 +68,6 @@ local function register_window(title, x, y, w, h, border, order)
 		end
 	end
 end
-sys.register_window = register_window
 
 local function process_end(pid)
 	if wm then wm.close_window(pid) end
@@ -76,7 +75,7 @@ local function process_end(pid)
 end
 sys.process_end = process_end
 
-local function get_processes_info()
+function sys.get_processes_info()
 	local info = {}
 	for pid, process in pairs(processes) do
 		local temp = {
@@ -87,19 +86,16 @@ local function get_processes_info()
 	end
 	return info
 end
-sys.get_processes_info = get_processes_info
 
-local function get_proc_name(pid)
+function sys.get_proc_name(pid)
 	return processes[pid].name
 end
-sys.get_proc_name = get_proc_name
 
-local function get_proc_path(pid)
+function sys.get_proc_path(pid)
 	return processes[pid].path
 end
-sys.get_proc_path = get_proc_path
 
-local function getpid()
+function sys.getpid()
 	local co = co_running()
 	for pid, process in pairs(processes) do
 		if process.co == co then
@@ -107,14 +103,14 @@ local function getpid()
 		end
 	end
 end
-sys.getpid = getpid
 
-local function screen_get_size()
+function sys.screen_get_size()
 	return t_native.getSize()
 end
-sys.screen_get_size = screen_get_size
 
 local function process_resume(pid, args)
+	-- log("PID: "..tostring(pid).."  ARGS: "..args[1])
+	-- log(args[1])
 	if not pid then return end
 	local process = processes[pid]
 	local old_term = term.current()
@@ -148,12 +144,11 @@ local function process_resume(pid, args)
 	end
 end
 
-local function ipc(pid, ...)
+function sys.ipc(pid, ...)
 	-- process_resume(pid, {...})
-	t_insert(event_queue, {pid, {...}})
+	t_insert(event_queue, 1, {pid, {...}})
 	-- os.queueEvent("ipc")
 end
-sys.ipc = ipc
 
 local function get_parent_path()
 	local p_co = co_running()
@@ -164,7 +159,7 @@ local function get_parent_path()
 	end
 end
 
-local function process_create(func, args, name, path)
+function sys.process_create(func, args, name, path)
 	local pid = ids
 	ids = ids + 1
 	local process = {}
@@ -179,18 +174,16 @@ local function process_create(func, args, name, path)
 
 	return pid
 end
-sys.process_create = process_create
 
-local function execute(path, name, env, args)
+function sys.execute(path, name, env, args)
 	args = args or {}
 	local func, err = loadfile(path, env)
 	if func then
-		return process_create(func, args, name, path)
+		return sys.process_create(func, args, name, path)
 	else
-		log(tostring(err))
+		log(err)
 	end
 end
-sys.execute = execute
 
 local function event_handler(evt)
 	-- if evt[1] == "ipc" then return end
@@ -208,8 +201,8 @@ local function event_handler(evt)
 end
 
 local function kernel_run()
-	wm.docker_pid = execute("sbin/Docker/main.lua", "docker", _ENV)
-	wm.panel_pid = execute("lib/panel.lua", "panel", _ENV)
+	wm.docker_pid = sys.execute("sbin/Docker/main.lua", "docker", _ENV)
+	wm.panel_pid = sys.execute("lib/panel.lua", "panel", _ENV)
 	while kernel_running do
 		if wm then wm.redraw_all() end
 		local evt = {os.pullEventRaw()}
@@ -217,20 +210,21 @@ local function kernel_run()
 
 		if event_name == "term_resize" then evt[2], evt[3] = t_native.getSize() end
 		if event_name == "terminate" then kernel_running = false end
-		if event_name == "__interrupts" then interruption = true end
+		-- if event_name == "__interrupts" then interruption = true end
 
 		event_handler(evt)
 
 		while #event_queue > 0 do
+			-- log(textutils.serialise(event_queue[#event_queue]))
 			local queue = t_remove(event_queue, #event_queue)
 			process_resume(queue[1], queue[2])
 		end
 
-		if need_resume and interruption then
-			os.queueEvent("__interrupts")
-			need_resume = false
-			interruption = false
-		end
+		-- if need_resume and interruption then
+		-- 	os.queueEvent("__interrupts")
+		-- 	need_resume = false
+		-- 	interruption = false
+		-- end
 	end
 end
 

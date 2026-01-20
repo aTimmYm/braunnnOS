@@ -44,7 +44,7 @@ local tab_buffer = nil
 ----------| СЕКЦИЯ ИНИЦИАЛИЗАЦИИ ОБЪЕКТОВ |----------
 local global_menu = UI.Menu()
 
-sys.register_window("CEditor", 1, 1, 51, 18, true, global_menu)
+sys.register_window("CEditor", 1, 1, 51, 18, true)
 
 local root = UI.Root(colors.black)
 

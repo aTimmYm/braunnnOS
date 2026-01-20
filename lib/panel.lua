@@ -4,7 +4,7 @@ local panel_pid = sys.getpid()
 
 local SCREEN_WIDTH, SCREEN_HEIGHT = sys.screen_get_size()
 
-sys.register_window("panel", 1, 1, SCREEN_WIDTH, 1, false, 0)
+sys.register_window("panel", 1, 1, SCREEN_WIDTH, 1, false, 1)
 
 local root = UI.Root()
 
@@ -18,10 +18,10 @@ local clock = UI.Clock(panel.w - 7, 1, true, true, panel.color_bg, panel.color_t
 panel:addChild(clock)
 
 panel.onResize = function (width, height)
-    SCREEN_WIDTH, SCREEN_HEIGHT = width, height
-    panel.w = width
-    clock.local_x = panel.w - 7
-    os.queueEvent("wm_reposition", panel_pid, 1, 1, width, 1)
+	SCREEN_WIDTH, SCREEN_HEIGHT = width, height
+	panel.w = width
+	clock.local_x = panel.w - 7
+	os.queueEvent("wm_reposition", panel_pid, 1, 1, width, 1)
 end
 
 root:mainloop()

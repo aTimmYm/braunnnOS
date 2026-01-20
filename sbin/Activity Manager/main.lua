@@ -21,11 +21,11 @@ local NETWORK = UI.Button(MEM.x+MEM.w,1, 10, 1, " NETWORK |", _, _, colors.light
 surface:addChild(NETWORK)
 
 for i, v in ipairs(processes) do
-    local color_bg = i % 2 == 0 and colors.gray or colors.black
-    local pid = UI.Label(1, i, 5, 1, tostring(v.pid), "right", color_bg, colors.white)
-    surface2:addChild(pid)
-    local title = UI.Label(6, i, surface2.w - 5, 1, "|"..v.title, "left", color_bg, colors.white)
-    surface2:addChild(title)
+	local color_bg = i % 2 == 0 and colors.gray or colors.black
+	local pid = UI.Label(1, i, 5, 1, tostring(v.pid), "right", color_bg, colors.white)
+	surface2:addChild(pid)
+	local title = UI.Label(6, i, surface2.w - 5, 1, "|"..v.title, "left", color_bg, colors.white)
+	surface2:addChild(title)
 end
 
 root:mainloop()

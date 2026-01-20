@@ -29,6 +29,7 @@ end
 
 local function Shortcut_pressed(self)
 	if self.pid then
+		if sys.get_proc_name(self.pid) == "Launchpad" then sys.process_end(self.pid) return end
 		os.queueEvent("wm_restore", self.pid)
 	else
 		self.pid = sys.execute(self.filePath, self.name, _ENV)
@@ -112,7 +113,7 @@ end
 
 function docker_functions.docker_add(pid)
 	local path = sys.get_proc_path(pid)
-
+	if sys.get_proc_name(pid) == "panel" then return end
 	for _, item in ipairs(dock_items) do
 		if item.path == path then
 			item.pid = pid
@@ -149,10 +150,10 @@ end
 -----------------------------------------------------
 --| СЕКЦИЯ ПЕРЕОПРЕДЕЛЕНИЯ ФУНКЦИОНАЛЬНЫХ МЕТОДОВ |--
 docker.onResize = function (width, hight)
-	WIDTH, HEIGHT = width, hight
+	WIDTH, HEIGHT = sys.screen_get_size()
 	local count = #dock_items
 	local dock_w = count * 3
-	local x = math.floor((width - dock_w)/2) + 1
+	local x = math.floor((WIDTH - dock_w)/2) + 1
 	os.queueEvent("wm_reposition", docker_pid, x, HEIGHT - 1)
 end
 

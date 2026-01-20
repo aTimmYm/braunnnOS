@@ -434,8 +434,8 @@ function UI.Box(x, y, w, h, color_bg, colors_txt)
 end
 
 local function ScrollBox_draw(self)
-	paintutils.drawFilledBox(self.local_x, self.local_y, self.w, self.h, self.color_bg)
-	--self.win.redraw()
+	paintutils.drawFilledBox(1, 1, self.w, self.h, self.color_bg)
+	self.win.reposition(self.x, self.y, self.w, self.h)
 end
 
 local function ScrollBox_redraw(self)

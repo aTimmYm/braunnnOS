@@ -12,7 +12,7 @@ local args = {...}
 -- local window, root = sys.add_window("Titled", colors.black, "Notepad")
 local global_menu = UI.Menu()
 
-sys.register_window("Notepad", 1, 1, 51, 18, true, global_menu)
+sys.register_window("Notepad", 1, 1, 39, 14, true)
 
 local root = UI.Root()
 

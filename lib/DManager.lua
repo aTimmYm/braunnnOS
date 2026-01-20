@@ -12,6 +12,11 @@ local UI = require "ui2"
 local sys = require "sys"
 -- local blittle = require "blittle_extended"
 
+local items = {
+	{text = "New", callback = function() log("New!") end},
+	{text = "Open", callback = function() log("Open!") end}
+}
+
 local root = UI.Root()
 local global_menu
 
@@ -49,16 +54,8 @@ end
 
 function dM.event_handler(evt)
 	if evt[1] == "mouse_click" and evt[2] == 2 then
-		context_menu.x = evt[3]
-		context_menu.y = evt[4]
-		-- context_menu.visible = true
-		root:addChild(context_menu)
-		root.focus = context_menu
-	-- else
-	-- 	if not context_menu.visible then
-	-- 		root:removeChild(context_menu)
-	-- 		context_menu.visible = false
-	-- 	end
+		sys.create_popup(items, evt[3], evt[4])
+		return true
 	end
 	root:onEvent(evt)
 end

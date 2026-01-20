@@ -156,6 +156,7 @@ btnReadFile.pressed = function (self)
 end
 
 surface.onResize = function (width, height)
+	surface.w, surface.h = width, height
 	list.local_x, list.local_y, list.w, list.h = math.ceil(width/2), 2, math.floor(width/2) - 1, height - 2
 	if list.scrollbar_v then
 		local scrollbar = list.scrollbar_v

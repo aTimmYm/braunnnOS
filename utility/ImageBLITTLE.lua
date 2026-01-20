@@ -1,6 +1,7 @@
 package.path = package.path .. ";/lib/?" .. ";/lib/?.lua"
 local c = require("cfunc")
-local blittle = require("/lib/blittle_extended")
+local blittle = require("blittle_extended")
+-- os.loadAPI("lib/blittle")
 term.setCursorPos(1,1)
 term.clear()
 print("Write filename/path without 'nfp'")

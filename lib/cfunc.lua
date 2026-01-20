@@ -65,7 +65,7 @@ function M.openFile(root,path,args)
 		end
 	end
 	term.setCursorBlink(false)
-	os.queueEvent("term_resize")
+	-- os.queueEvent("term_resize")
 end
 
 

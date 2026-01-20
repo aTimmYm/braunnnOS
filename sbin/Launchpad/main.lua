@@ -3,7 +3,7 @@ local UI = require "ui2"
 local launchpad_pid = sys.getpid()
 
 local SCREEN_WIDTH, SCREEN_HEIGHT = sys.screen_get_size()
-local win = sys.register_window("Launchpad", 1, 1, SCREEN_WIDTH, SCREEN_HEIGHT, false, 2)
+local win = sys.register_window("Launchpad", 1, 1, SCREEN_WIDTH, SCREEN_HEIGHT, false)
 win.maximize = true
 
 local WIDTH_SHORT, HEIGHT_SHORT = 7, 5
@@ -13,10 +13,11 @@ local APPS_LIST = fs.list(APPS_PATH)
 local pages = {}
 local shortcuts = {}
 local page_buffer
+local def_ico = "sbin/Shell/icon3.ico"
 
 local function Shortcut_pressed(self)
 	sys.execute(self.filePath, self.text, _ENV)
-	os.sleep(0.05)
+	-- os.sleep(0.05)
 	sys.process_end(launchpad_pid)
 end
 
@@ -32,7 +33,13 @@ local radio = UI.RadioButton_horizontal(math.floor((SCREEN_WIDTH -1)/2)+1, SCREE
 launchpad:addChild(radio)
 
 for _, v in ipairs(APPS_LIST) do
-	local shortcut = UI.Shortcut(1, 1, WIDTH_SHORT, HEIGHT_SHORT, v, "sbin/"..v.."/main.lua", "app_ico_small.ico", launchpad.color_bg, colors.white)
+	local path_ico
+	if fs.exists("sbin/"..v.."/icon3.ico") then
+		path_ico = "sbin/"..v.."/icon3.ico"
+	else
+		path_ico = def_ico
+	end
+	local shortcut = UI.Shortcut(1, 1, WIDTH_SHORT, HEIGHT_SHORT, v, "sbin/"..v.."/main.lua", path_ico, launchpad.color_bg, colors.white)
 	shortcut.pressed = Shortcut_pressed
 	table.insert(shortcuts, shortcut)
 end
@@ -64,7 +71,7 @@ local function build()
 	-- local maxRows = math.floor(SCREEN_HEIGHT/(HEIGHT_SHORT - 1))
 
 	-- local num_pages = make_desktops(maxRows, maxCols)
-	local page_width = math.floor((SCREEN_WIDTH - 3)/(WIDTH_SHORT + 1)) * (WIDTH_SHORT + 1) - 1
+	local page_width = math.floor((SCREEN_WIDTH - 9)/(WIDTH_SHORT + 1)) * (WIDTH_SHORT + 1) - 1
 	local page_height = math.floor((SCREEN_HEIGHT - 6)/HEIGHT_SHORT) * HEIGHT_SHORT
 	local max_rows = math.floor(page_height/HEIGHT_SHORT)
 	local max_cols = math.floor(page_width/WIDTH_SHORT)
@@ -74,6 +81,7 @@ local function build()
 	local num_pages = math.ceil(app_count / max_shorts)
 	radio:changeCount(num_pages)
 	radio.item = 1
+	radio.local_x = math.floor((SCREEN_WIDTH - num_pages)/2)+1
 
 	for i = 1, num_pages do
 		local page = UI.Box(page_x, page_y, page_width, page_height, launchpad.color_bg, colors.white)
@@ -100,8 +108,18 @@ launchpad.onResize = function (width, height)
 	launchpad.w, launchpad.h = width, height
 	search.local_x = math.floor((width - 10)/2)+1
 	build()
-	radio.local_x, radio.local_y = math.floor((width - radio.count)/2)+1, height - 2
+	radio.local_y = height - 2
 end
+
+-- local root_onEvent = root.onEvent
+-- root.onEvent = function (self, evt)
+-- 	local event_name = evt[1]
+-- 	local ret = root_onEvent(self, evt)
+-- 	if not ret and event_name == "mouse_click" then
+-- 		sys.process_end(launchpad_pid)
+-- 		-- log("true")
+-- 	end
+-- end
 
 build()
 

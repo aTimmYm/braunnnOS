@@ -62,9 +62,9 @@ local function check(win, x, y)
 end
 
 local function term_check(win, x, y)
-    local top = win.y + (win.border and 1 or 0)
-    return (x >= win.x and x < win.w + win.x and
-            y >= top and y < win.h + win.y)
+	local top = win.y + (win.border and 1 or 0)
+	return (x >= win.x and x < win.w + win.x and
+			y >= top and y < win.h + win.y)
 end
 
 
@@ -101,23 +101,6 @@ local function window_reposition(win, x, y, w, h)
 	-- else
 	-- 	docker.hide(false)
 	-- end
-end
-
-local function visible_sort()
-	local buffer = {table.unpack(windows_visible)}
-	local count = #buffer
-	local k = 0
-	windows_visible = {}
-	while true do
-		for _, win in ipairs(buffer) do
-			if win.order == k then
-				table.insert(windows_visible, win)
-				count = count - 1
-			end
-		end
-		k = k + 1
-		if count < 1 then break end
-	end
 end
 
 local function window_set_focus(win)
@@ -161,7 +144,8 @@ local function minimize_pressed(self)
 end
 
 --СОГЛАСИЕ СОЗДАТЕЛЯ BRAUNNOS
---Я РАЗРЕШАЮ НИКИТЕ ТРЕТЬЯКОВУ, ВНОСИТЬ ИЗМЕНЕНИЯ В КОД ПРОЕКТА WMANAGER ПОДПИСЬ: Артём
+--Я РАЗРЕШАЮ НИКИТЕ ТРЕТЬЯКОВУ, ВНОСИТЬ ИЗМЕНЕНИЯ В КОД ПРОЕКТА WMANAGER
+--ПОДПИСЬ: Артём
 
 local function maximize_pressed(self, c_x)
 	local win = self.root
@@ -244,7 +228,7 @@ function _wmanager.create(title, x, y, w, h, border, id, order)
 	win.offset_y = 0
 	win.maximize = (not desktop_mode)
 	win.children = {title_fill(win, menu)}
-	win.order = order or 1
+	win.order = order or 2
 
 	windows[id] = win
 	window_set_focus(win)
@@ -275,6 +259,26 @@ function _wmanager.close_window(pid, bool)
 	if bool then return end
 	windows[pid] = nil
 	if _wmanager.docker_pid then sys.ipc(_wmanager.docker_pid, "docker_remove", pid) end
+end
+
+local function visible_sort()
+	local t = {}
+	for i = 1, #windows_visible do
+		local win = windows_visible[i]
+		t[i] = {win = win, index = i}
+	end
+
+	table.sort(t, function(a, b)
+		if a.win.order ~= b.win.order then
+			return a.win.order < b.win.order
+		end
+
+		return a.index < b.index
+	end)
+
+	for i = 1, #t do
+		windows_visible[i] = t[i].win
+	end
 end
 
 function _wmanager.redraw_all()
@@ -359,6 +363,7 @@ function _wmanager.dispatch_event(evt)
 		if window_focus then
 			return {window_focus.id, evt}
 		end
+		-- return true
 	elseif event_name == "term_resize" then
 		local w, h = evt[2], evt[3]
 		MAXIMIZE_W, MAXIMIZE_H = w, h
