@@ -2,8 +2,6 @@
 local _rep = string.rep
 local _sub = string.sub
 local string_find = string.find
-local string_char = string.char
-local string_gmatch = string.gmatch
 local table_insert = table.insert
 local _max = math.max
 local _min = math.min
@@ -11,8 +9,13 @@ local _floor = math.floor
 local _ceil = math.ceil
 local function clamp(val, a, b) return _max(a, _min(b, val)) end
 -----------------------------------------------------
---CC:Tweaked Lua Minecraft CraftOS bOS™
+--CC:Tweaked Lua Minecraft CraftOS bOS™ UI
+--by aTimmYm and braunnn
 --lib/ui.lua v0.4.0
+
+---@alias color number
+---@alias object table
+
 local UI = {}
 
 local EVENTS = {
@@ -31,7 +34,7 @@ local EVENTS = {
 	}
 }
 
-local expect = require "cc.expect"
+local expect = require "cc.expect".expect
 local blittle = require "blittle_extended"
 -- local system = require "braunnnsys"
 local c = require "cfunc"
@@ -141,6 +144,7 @@ local function onKeyUp(self,key) return true end
 local function onCharTyped(self,chr) return true end
 local function onPaste(self,text) return true end
 local function onMouseDown(self,btn,x,y) return true end
+local function onMouseMove(self,btn,x,y) return false end
 local function onMouseUp(self,btn,x,y) return true end
 local function onMouseScroll(self,dir,x,y) return false end
 local function onMouseDrag(self,btn,x,y) return true end
@@ -153,43 +157,61 @@ local function redraw(self)
 	if self.dirty then self:draw() self.dirty = false end
 end
 local function onEvent(self,evt)
-	if evt[1] == "mouse_drag" then
+	local event_name = evt[1]
+	if event_name == "mouse_drag" then
 		return self:onMouseDrag(evt[2],evt[3],evt[4])
-	elseif evt[1] == "mouse_up" then
+	elseif event_name == "mouse_up" then
 		return self:onMouseUp(evt[2],evt[3],evt[4])
-	elseif evt[1] == "mouse_click" then
+	elseif event_name == "mouse_click" then
 		if self.root then self.root.focus = self end
 		return self:onMouseDown(evt[2],evt[3],evt[4])
-	elseif evt[1] == "mouse_scroll" then
+	elseif event_name == "mouse_scroll" then
 		return self:onMouseScroll(evt[2],evt[3],evt[4])
-	elseif evt[1] == "char" then
+	elseif event_name == "mouse_move" then
+		return self:onMouseMove(evt[2],evt[3],evt[4])
+	elseif event_name == "char" then
 		return self:onCharTyped(evt[2])
-	elseif evt[1] == "key" then
+	elseif event_name == "key" then
 		return self:onKeyDown(evt[2],evt[3])
-	elseif evt[1] == "key_up" then
+	elseif event_name == "key_up" then
 		return self:onKeyUp(evt[2])
-	elseif evt[1] == "paste" then
+	elseif event_name == "paste" then
 		return self:onPaste(evt[2])
 	end
 	return false
 end
 
 ---Basic *class*. Using automatically to create all another *classes*.
----@param x number
----@param y number
----@param w number
----@param h number
----@param color_bg color|number|nil
----@param color_txt color|number|nil
----@return table object widget (bigbrother)
-local function Widget(x, y, w, h, color_bg, color_txt)
+---@class Widget
+---@field x number
+---@field y number
+---@field w number
+---@field h number
+---@field bc color|number
+---@field fc color|number
+---@field bc_alt? color|number
+---@field fc_alt? color|number
+---@field bc_hv? color|number
+---@field fc_hv? color|number
+---@field bc_cl? color|number
+---@field fc_cl? color|number
+
+---@param args Widget
+---@return object
+local function Widget(args)
 	return {
-		x = x, y = y,
-		w = w, h = h,
-		color_bg = color_bg or colors.black,
-		color_txt = color_txt or colors.white,
+		x = args.x, y = args.y,
+		w = args.w, h = args.h,
 		dirty = true,
 		parent = nil,
+		bc = args.bc,
+		bc_alt = args.bc_alt,
+		fc = args.fc,
+		fc_alt = args.fc_alt,
+		fc_hv = args.fc_hv,
+		bc_hv = args.bc_hv,
+		fc_cl = args.fc_cl,
+		bc_cl = args.bc_cl,
 
 		check = check,
 		onKeyDown = onKeyDown,
@@ -197,6 +219,7 @@ local function Widget(x, y, w, h, color_bg, color_txt)
 		onCharTyped = onCharTyped,
 		onPaste = onPaste,
 		onMouseDown = onMouseDown,
+		onMouseMove = onMouseMove,
 		onMouseUp = onMouseUp,
 		onMouseScroll = onMouseScroll,
 		onMouseDrag = onMouseDrag,
@@ -223,7 +246,7 @@ local function Container_onLayout(self)
 	end
 end
 
-local function Container_addChild(self, child)
+local function Container_addChild(self, child, pos)
 	for _, v in ipairs(self.children) do
 		if v == child then
 			return false
@@ -243,7 +266,11 @@ local function Container_addChild(self, child)
 	if not child.local_x then child.local_x = child.x end
 	if not child.local_y then child.local_y = child.y end
 	child.parent = self
-	table_insert(self.children, child)
+	if pos then
+		table_insert(self.children, pos, child)
+	else
+		table_insert(self.children, child)
+	end
 	--child.dirty = true
 	return true
 end
@@ -275,6 +302,10 @@ end
 local function Container_onEvent(self, evt)
 	local event = evt[1]
 	-- if self.modal and EVENTS.TOP[event] and (self.modal.root.keyboard:onEvent(evt) or self.modal:onEvent(evt)) then return true end
+	if self.custom_handlers[event] then
+        self.custom_handlers[event](table.unpack(evt, 2))  -- Вызов с аргументами
+        return true
+    end
 	if EVENTS.TOP[event] then
 		for i = #self.children, 1, -1 do
 			local child = self.children[i]
@@ -289,26 +320,23 @@ local function Container_onEvent(self, evt)
 			end
 		end
 	end
-	-- If no child handled the event, try to handle it ourselves
+
 	return onEvent(self, evt)
 end
 
 ---Creating new *object* of *class*
----@param x number
----@param y number
----@param w number
----@param h number
----@param color_bg color|number|nil
+---@class Container
+---@field x number X pos in characters
+---@field y number Y pos in characters
+---@field w number Width in characters
+---@field h number Height in characters
+---@param args Container Initialization table with fields above
 ---@return table object container
-function UI.Container(x, y, w, h, color_bg, color_txt)
-	expect(1, x, "number")
-	expect(2, y, "number")
-	expect(3, w, "number")
-	expect(4, h, "number")
-	expect(5, color_bg, "number", "nil")
+function UI.Container(args)
+	local instance = Widget(args)
 
-	local instance = Widget(x, y, w, h, color_bg, color_txt)
 	instance.children = {}
+	instance.custom_handlers = {}
 
 	instance.layoutChild = Container_layoutChild
 	instance.onLayout = Container_onLayout
@@ -326,7 +354,7 @@ local function Root_show(self)
 end
 
 local function Root_tResize(self, evt)
-	if evt[2] then
+	if #evt > 1 then
 		self.w, self.h = evt[2], evt[3]
 	else
 		self.w, self.h = term.getSize()
@@ -374,7 +402,6 @@ end
 local function Root_mainloop(self)
 	Root_show(self)
 	while true do
-		
 		local evt = {os.pullEventRaw()}
 		if evt[1] == "terminate" then
 			break
@@ -388,10 +415,12 @@ local function Root_mainloop(self)
 end
 
 ---Creating new *object* of *class* root - event handler, to use root:mainloop()
+---@class Root
 ---@return table object root
 function UI.Root()
 	local w, h = term.getSize()
-	local instance = UI.Container(1, 1, w, h)
+	local instance = UI.Container({x = 1, y = 1, w = w, h = h})
+
 	instance.focus = nil
 
 	instance.tResize = Root_tResize
@@ -408,24 +437,20 @@ local function Box_onLayout(self)
 end
 
 local function Box_draw(self)
-	paintutils.drawFilledBox(self.x, self.y, self.x + self.w - 1, self.y + self.h - 1, self.color_bg)
+	paintutils.drawFilledBox(self.x, self.y, self.x + self.w - 1, self.y + self.h - 1, self.bc)
 end
 
----Creating new *object* of *class*
----@param x number
----@param y number
----@param w number
----@param h number
----@param color_bg color|number|nil
+---@class Box
+---@field x number X pos in characters
+---@field y number Y pos in characters
+---@field w number Width in characters
+---@field h number Height in characters
+---@field bc color|number Background color
+---@field fc? color|number Foreground/text color (optional)
+---@param args Box Initialization table with fields above
 ---@return table object box
-function UI.Box(x, y, w, h, color_bg, colors_txt)
-	expect(1, x, "number")
-	expect(2, y, "number")
-	expect(3, w, "number")
-	expect(4, h, "number")
-	expect(5, color_bg, "number", "nil")
-
-	local instance = UI.Container(x, y, w, h, color_bg, colors_txt)
+function UI.Box(args)
+	local instance = UI.Container(args)
 
 	instance.draw = Box_draw
 	instance.onLayout = Box_onLayout
@@ -434,7 +459,7 @@ function UI.Box(x, y, w, h, color_bg, colors_txt)
 end
 
 local function ScrollBox_draw(self)
-	paintutils.drawFilledBox(1, 1, self.w, self.h, self.color_bg)
+	paintutils.drawFilledBox(1, 1, self.w, self.h, self.bc)
 	self.win.reposition(self.x, self.y, self.w, self.h)
 end
 
@@ -463,7 +488,9 @@ local function ScrollBox_onLayout(self)
 	Container_onLayout(self)
 	for _, child in pairs(self.children) do
 		child.y = child.y - self.scroll.pos_y
+		child.x = child.x - self.scroll.pos_x
 		self.scroll.max_y = _max(_max(self.scroll.max_y, child.local_y + child.h) - self.h, 0)
+		self.scroll.max_x = _max(_max(self.scroll.max_x, child.local_x + child.w) - self.w, 0)
 		if child.y + child.h > self.y and child.y <= self.y + self.h - 1 then
 			table_insert(self.visibleChild, child)
 		end
@@ -486,16 +513,19 @@ local function ScrollBox_updateDirty(self)
 end
 
 ---Creating new *object* of *class*
----@param x number
----@param y number
----@param w number
----@param h number
----@param color_bg color|number|nil
+---@class ScrollBox
+---@field x number X pos in characters
+---@field y number Y pos in characters
+---@field w number Width in characters
+---@field h number Height in characters
+---@field bc color|number Background color
+---@field fc? color|number Foreground/text color (optional)
+---@param args ScrollBox Initialization table with fields above
 ---@return table object ScrollBox
-function UI.ScrollBox(x, y, w, h, color_bg)
-	local instance = UI.Container(x, y, w, h, color_bg)
+function UI.ScrollBox(args)
+	local instance = UI.Container(args)
 
-	instance.win = window.create(term.current(), x, y, w, h, true)
+	instance.win = window.create(term.current(), args.x, args.y, args.w, args.h, true)
 	add_mixin(instance, ScrollableMixin)
 	instance:initScroll(3, 3)
 	instance.visibleChild = {}
@@ -569,43 +599,42 @@ local function Tumbler_onEvent(self, evt)
 end
 
 ---Creating new *object* of *class*
----@param x number
----@param y number
----@param bg_off color|number|nil
----@param bg_on color|number|nil
----@param switch_color color|number|nil
----@param on boolean|nil
+---@class Tumbler
+---@field x number X pos in characters
+---@field y number Y pos in characters
+---@field w number Width (should be 2)
+---@field h number Height (should be 1)
+---@field bc? color|number Background color when off
+---@field bc_alt? color|number Background color when on
+---@field fc? color|number Color of the switch glyph
+---@field on? boolean Initial on state
+---@param args Tumbler Initialization table with fields above
 ---@return table object tumbler (switcher)
-function UI.Tumbler(x, y, bg_off, bg_on, switch_color, on)
-	expect(1, x, "number")
-	expect(2, y, "number")
-	expect(3, bg_off, "number", "nil")
-	expect(4, bg_on, "number", "nil")
-	expect(5, switch_color, "number", "nil")
-	expect(6, on, "boolean", "nil")
+function UI.Tumbler(args)
+	args.w = 2; args.h = 1
+	local instance = Widget(args)
 
-	local instance = Widget(x, y, 2, 1, _, _)
-	instance.on = on or false
-	instance.color_bg_off = bg_off or colors.gray
-	instance.color_bg_on = bg_on or colors.lime
-	instance.switch_color = switch_color or colors.white
+	instance.on = args.on or false
+	instance.bc = args.bc or colors.gray
+	instance.bc_alt = args.bc_alt or colors.lime
+	instance.fc = args.fc or colors.white
 	instance.animating = false
 	instance.animation_frames = {
 		off = {
-			{char = string_char(149), txtcol = instance.switch_color, bgcol = instance.color_bg_off},
-			{char = " ", txtcol = instance.color_bg_off, bgcol = instance.color_bg_off}
+			{char = "\149", txtcol = instance.fc, bgcol = instance.bc},
+			{char = " ", txtcol = instance.bc, bgcol = instance.bc}
 		},
 		anim1 = {
-			{char = string_char(149), txtcol = instance.color_bg_on, bgcol = instance.switch_color},
-			{char = " ", txtcol = instance.color_bg_off, bgcol = instance.color_bg_off}
+			{char = "\149", txtcol = instance.bc_alt, bgcol = instance.fc},
+			{char = " ", txtcol = instance.bc, bgcol = instance.bc}
 		},
 		anim2 = {
-			{char = " ", txtcol = instance.color_bg_on, bgcol = instance.color_bg_on},
-			{char = string_char(149), txtcol = instance.switch_color, bgcol = instance.color_bg_off}
+			{char = " ", txtcol = instance.bc_alt, bgcol = instance.bc_alt},
+			{char = "\149", txtcol = instance.fc, bgcol = instance.bc}
 		},
 		on = {
-			{char = " ", txtcol = instance.color_bg_on, bgcol = instance.color_bg_on},
-			{char = string_char(149), txtcol = instance.color_bg_on, bgcol = instance.switch_color}
+			{char = " ", txtcol = instance.bc_alt, bgcol = instance.bc_alt},
+			{char = "\149", txtcol = instance.bc_alt, bgcol = instance.fc}
 		}
 	}
 	instance.current_frame = instance.on and "on" or "off"
@@ -624,15 +653,15 @@ function UI.Tumbler(x, y, bg_off, bg_on, switch_color, on)
 end
 
 local function RadioButton_horizontal_draw(self)
-	term.setBackgroundColor(self.color_bg)
+	term.setBackgroundColor(self.bc)
 	for i = 1, self.count do
 		term.setCursorPos(self.x + i - 1, self.y)
 		if self.item == i then
-			term.setTextColor(self.color_txt)
+			term.setTextColor(self.fc)
 		else
 			term.setTextColor(colors.gray)
 		end
-		term.write(string_char(7))
+		term.write("\7")
 	end
 end
 
@@ -652,21 +681,19 @@ local function RadioButton_horizontal_onMouseUp(self, btn, x, y)
 end
 
 ---Creating new *object* of *class*
----@param x number
----@param y number
----@param count number|nil
----@param color_bg color|number|nil
----@param color_txt color|number|nil
+---@class RadioButtonHorizontal
+---@field x number X pos in characters
+---@field y number Y pos in characters
+---@field count? number Number of radio items
+---@field bc color|number Background color
+---@field fc color|number Foreground/text color
+---@param args RadioButtonHorizontal Initialization table with fields above
 ---@return table object radioButton_horizontal
-function UI.RadioButton_horizontal(x, y, count, color_bg, color_txt)
-	expect(1, x, "number")
-	expect(2, y, "number")
-	expect(3, count, "number", "nil")
-	expect(4, color_bg, "number", "nil")
-	expect(5, color_txt, "number", "nil")
+function UI.RadioButton_horizontal(args)
+	args.w = 1; args.h = 1;
+	local instance = Widget(args)
 
-	local instance = Widget(x, y, 1, 1, color_bg, color_txt)
-	instance.count = (count and count >= 1 and count or 1)
+	instance.count = (args.count and args.count >= 1) and args.count or 1
 	instance.w = instance.count
 	instance.item = 1
 
@@ -679,16 +706,16 @@ function UI.RadioButton_horizontal(x, y, count, color_bg, color_txt)
 end
 
 local function RadioButton_draw(self)
-	term.setBackgroundColor(self.color_bg)
+	term.setBackgroundColor(self.bc)
 	for i, v in ipairs(self.text) do
 		term.setCursorPos(self.x, self.y + i - 1)
 		term.setTextColor(colors.gray)
 		if self.item == i then
-			term.setTextColor(self.color_txt)
+			term.setTextColor(self.fc)
 		end
-		term.write(string_char(7))
+		term.write("\7")
 		term.setCursorPos(self.x + 1, self.y + i - 1)
-		term.setTextColor(self.color_txt)
+		term.setTextColor(self.fc)
 		term.write(_rep(" ", _min(#v, 1))..v)
 	end
 end
@@ -703,24 +730,20 @@ local function RadioButton_onMouseUp(self, btn, x, y)
 end
 
 ---Creating new *object* of *class*
----@param x number
----@param y number
----@param count number|nil
----@param text string[]|nil table of strings, example: {"string1", "string2"}
----@param color_bg color|number|nil
----@param color_txt color|number|nil
+---@class RadioButton
+---@field x number X pos in characters
+---@field y number Y pos in characters
+---@field count? number Number of radio items
+---@field text? string[] Array of labels for each item
+---@field bc color|number Background color
+---@field fc color|number Foreground/text color
+---@param args RadioButton Initialization table with fields above
 ---@return table object radioButton
-function UI.RadioButton(x, y, count, text, color_bg, color_txt)
-	expect(1, x, "number")
-	expect(2, y, "number")
-	expect(3, count, "number", "nil")
-	expect(4, text, "table", "nil") -- ← table of strings
-	expect(5, color_bg, "number", "nil")
-	expect(6, color_txt, "number", "nil")
+function UI.RadioButton(args)
+	local instance = UI.RadioButton_horizontal(args)
 
-	local instance = UI.RadioButton_horizontal(x, y, count, color_bg, color_txt)
-	if text then
-		instance.text = text
+	if args.text then
+		instance.text = args.text
 		instance.count = #instance.text
 	else
 		instance.text = {}
@@ -739,8 +762,8 @@ function UI.RadioButton(x, y, count, text, color_bg, color_txt)
 end
 
 -- local function Label_draw(self, bg_override, txtcol_override)
--- 	bg_override = bg_override or self.color_bg
--- 	txtcol_override = txtcol_override or self.color_txt
+-- 	bg_override = bg_override or self.bc
+-- 	txtcol_override = txtcol_override or self.fc
 -- 	local lines = {}
 -- 	if #self.text <= self.w then
 -- 		table_insert(lines, self.text)
@@ -831,8 +854,8 @@ end
 -- end
 
 local function Label_draw(self, bg_override, txtcol_override)
-	bg_override = bg_override or self.color_bg
-	txtcol_override = txtcol_override or self.color_txt
+	bg_override = bg_override or self.bc
+	txtcol_override = txtcol_override or self.fc
 	local lines = {}
 
 	-- Split text into paragraphs based on explicit newlines
@@ -946,28 +969,22 @@ local function Label_setText(self, text)
 end
 
 ---Creating new *object* of *class*
----@param x number
----@param y number
----@param w number
----@param h number
----@param text string|nil
----@param align string|nil
----@param color_bg color|number|nil
----@param color_txt color|number|nil
+---@class Label
+---@field x number X pos in characters
+---@field y number Y pos in characters
+---@field w number Width in characters
+---@field h number Height in characters
+---@field text? string Text content
+---@field align? string Alignment string (e.g. "center", "left")
+---@field bc color|number Background color
+---@field fc color|number Foreground/text color
+---@param args Label Initialization table with fields above
 ---@return table object label
-function UI.Label(x, y, w, h, text, align, color_bg, color_txt)
-	expect(1, x, "number")
-	expect(2, y, "number")
-	expect(3, w, "number")
-	expect(4, h, "number")
-	expect(5, text, "string", "nil")
-	expect(6, align, "string", "nil")
-	expect(7, color_bg, "number", "nil")
-	expect(8, color_txt, "number", "nil")
+function UI.Label(args)
+	local instance = Widget(args)
 
-	local instance = Widget(x, y, w, h, color_bg, color_txt)
-	instance.text = text or ""
-	instance.align = align or "center"
+	instance.text = args.text or ""
+	instance.align = args.align or "center"
 
 	instance.draw = Label_draw
 	instance.setText = Label_setText
@@ -977,13 +994,18 @@ end
 
 local function Button_draw(self)
 	if self.held then
-		if self.test then
-			Label_draw(self, self.color_bg, self.test)
+		if self.fc_cl then
+			local bg = self.bc_cl or self.bc
+			Label_draw(self, bg, self.fc_cl)
 		else
-			Label_draw(self, self.color_txt, self.color_bg)
+			Label_draw(self, self.fc, self.bc)
 		end
 	else
-		Label_draw(self, self.color_bg, self.color_txt)
+		if self.hovered and self.bc_hv and self.fc_hv then
+			Label_draw(self, self.bc_hv, self.fc_hv)
+		else
+			Label_draw(self, self.bc, self.fc)
+		end
 	end
 end
 
@@ -994,58 +1016,74 @@ local function Button_onMouseDown(self, btn, x, y)
 end
 
 local function Button_onMouseUp(self, btn, x, y)
-	if self:check(x,y) and self.held == true then self:pressed() end
+	if self:check(x,y) and self.held == true then self:pressed(btn, x, y) end
 	self.held = false
 	self.dirty = true
 	return true
 end
 
----Creating new *object* of *class*
----@param x number
----@param y number
----@param w number
----@param h number
----@param text string|nil
----@param align string|nil
----@param color_bg color|number|nil
----@param color_txt color|number|nil
----@return table object button
-function UI.Button(x, y, w, h, text, align, test, color_bg, color_txt)
-	expect(1, x, "number")
-	expect(2, y, "number")
-	expect(3, w, "number")
-	expect(4, h, "number")
-	expect(5, text, "string", "nil")
-	expect(6, align, "string", "nil")
-	expect(7, color_bg, "number", "nil")
-	expect(8, color_txt, "number", "nil")
+local function Button_onMouseMove(self, btn, x, y)
+	if self:check(x, y) then
+		if self.hovered == false then
+			self.hovered = true
+			self.dirty = true
+		end
+		return false
+	end
+	if self.hovered == true then
+		self.hovered = false
+		self.dirty = true
+	end
+	return false
+end
 
-	local instance = Widget(x, y, w, h, color_bg, color_txt)
-	instance.text = text
+---@class Button
+---@field x number
+---@field y number
+---@field w number
+---@field h number
+---@field align? string
+---@field text? string
+---@field bc color|number Main background color
+---@field fc color|number Main text color
+---@field bc_alt? color|number Disabled bg color
+---@field fc_alt? color|number Disabled text color
+---@field bc_hv? color|number Hover bg color
+---@field fc_hv? color|number Hover text color
+---@field bc_cl? color|number Pressed bg color
+---@field fc_cl? color|number Pressed text color
+
+---@param args Button
+---@return object
+function UI.Button(args)
+	local instance = Widget(args)
+
+	instance.text = args.text or ""
 	instance.held = false
-	instance.test = test
-	instance.align = align or "center"
+	instance.hovered = false
+	instance.align = args.align or "center"
 
 	instance.draw = Button_draw
 	instance.pressed = pressed
 	instance.onMouseDown = Button_onMouseDown
 	instance.onMouseUp = Button_onMouseUp
+	instance.onMouseMove = Button_onMouseMove
 	instance.setText = Label_setText
 
 	return instance
 end
 
 local function Shortcut_draw(self)
-	paintutils.drawFilledBox(self.x, self.y, self.x + self.w - 1, self.y + self.h - 1, self.color_bg)
+	paintutils.drawFilledBox(self.x, self.y, self.x + self.w - 1, self.y + self.h - 1, self.bc)
 
 	local text_h = self.text and 1 or 0
 
 	local dX = _floor((self.w - self.blittle_img.width)/2) + self.x
 	local dY = _floor((self.h - text_h - self.blittle_img.height)/2) + self.y
 	blittle.draw(self.blittle_img, dX, dY)
-	local txtcol_override = self.held and colors.lightGray or self.color_txt
+	local txtcol_override = self.held and colors.lightGray or self.fc
 
-	term.setBackgroundColor(self.color_bg)
+	term.setBackgroundColor(self.bc)
 	term.setTextColor(txtcol_override)
 	term.setCursorPos(self.x, dY + self.blittle_img.height)
 
@@ -1075,31 +1113,24 @@ end
 -- end
 
 ---Creating new *object* of *class*
----@param x number
----@param y number
----@param w number
----@param h number
----@param text string|nil
----@param filepath string
----@param icopath string
----@param color_bg number|nil
----@param color_txt number|nil
+---@class Shortcut
+---@field x number X pos in characters
+---@field y number Y pos in characters
+---@field w number Width in characters
+---@field h number Height in characters
+---@field text? string Optional label text
+---@field filePath string Path to executable file
+---@field icoPath string Path to icon file
+---@field bc color|number Background color
+---@field fc color|number Foreground/text color
+---@param args Shortcut Initialization table with fields above
 ---@return table object shortcut
-function UI.Shortcut(x, y, w, h, text, filepath, icopath, color_bg, color_txt)
-	expect(1, x, "number")
-	expect(2, y, "number")
-	expect(3, w, "number")
-	expect(4, h, "number")
-	expect(5, text, "string", "nil")
-	expect(6, filepath, "string", "nil")
-	expect(7, icopath, "string")
-	expect(8, color_bg, "number", "nil")
-	expect(9, color_txt, "number", "nil")
+function UI.Shortcut(args)
+	local instance = UI.Button(args)
 
-	local instance = UI.Button(x, y, w, h, text, _, _, color_bg, color_txt)
-	instance.icoPath = icopath and fs.exists(icopath) and icopath or "usr/icon_default.ico"
+	instance.icoPath = (args.icoPath and fs.exists(args.icoPath)) and args.icoPath or "usr/icon_default.ico"
 	instance.needArgs = {}
-	instance.filePath = filepath
+	instance.filePath = args.filePath
 	instance.blittle_img = blittle.load(instance.icoPath)
 
 	instance.draw = Shortcut_draw
@@ -1109,8 +1140,8 @@ function UI.Shortcut(x, y, w, h, text, filepath, icopath, color_bg, color_txt)
 end
 
 local function Running_Label_draw(self, bg_override, txtcol_override)
-	bg_override = bg_override or self.color_bg
-	txtcol_override = txtcol_override or self.color_txt
+	bg_override = bg_override or self.bc
+	txtcol_override = txtcol_override or self.fc
 	self:checkScrolling()
 	if not self.scrolling then
 		-- Если не нужно прокручивать, рисуем как обычный label
@@ -1122,7 +1153,10 @@ local function Running_Label_draw(self, bg_override, txtcol_override)
 	local cycle_len = #segment
 	if cycle_len == 0 then
 		local visible_text = _rep(" ", self.w)
-		term.setBackgroundColor(bg_override); term.setCursorPos(self.x, self.y); term.setTextColor(txtcol_override); term.write(visible_text)
+		term.setBackgroundColor(bg_override)
+		term.setCursorPos(self.x, self.y)
+		term.setTextColor(txtcol_override)
+		term.write(visible_text)
 		return
 	end
 
@@ -1158,11 +1192,17 @@ local function Running_Label_draw(self, bg_override, txtcol_override)
 	local right_pad = _rep(" ", self.w - (x_pos - self.x + #visible_text))
 	local full_line = left_pad .. visible_text .. right_pad
 
-	term.setBackgroundColor(bg_override); term.setCursorPos(self.x, self.y); term.setTextColor(txtcol_override); term.write(full_line)
+	term.setBackgroundColor(bg_override)
+	term.setCursorPos(self.x, self.y)
+	term.setTextColor(txtcol_override)
+	term.write(full_line)
 
 	-- Очистка остальных строк, если h > 1 (хотя для бегущей строки обычно h=1)
 	for i = self.y + 1, self.y + self.h - 1 do
-		term.setBackgroundColor(bg_override); term.setCursorPos(self.x, i); term.setTextColor(txtcol_override); term.write(_rep(" ", self.w))
+		term.setBackgroundColor(bg_override)
+		term.setCursorPos(self.x, i)
+		term.setTextColor(txtcol_override)
+		term.write(_rep(" ", self.w))
 	end
 end
 
@@ -1219,35 +1259,27 @@ local function Running_Label_onLayout(self)
 end
 
 ---Creating new *object* of *class* "shortcut"
----@param x number
----@param y number
----@param w number
----@param h number
----@param text string|nil
----@param align string|nil
----@param scroll_speed number|nil
----@param gap string|nil
----@param color_bg color|number|nil
----@param color_txt color|number|nil
+---@class Running_Label
+---@field x number X pos in characters
+---@field y number Y pos in characters
+---@field w number Width in characters (usually 1+)
+---@field h number Height in characters (usually 1)
+---@field text? string Text to scroll
+---@field align? string Alignment (e.g. "center")
+---@field scroll_speed? number Scroll step delay in seconds
+---@field gap? string Gap string placed between cycles
+---@field bc color|number Background color
+---@field fc color|number Foreground/text color
+---@param args Running_Label Initialization table with fields above
 ---@return table return Running_Label
-function UI.Running_Label(x, y, w, h, text, align, scroll_speed, gap, color_bg, color_txt)
-	expect(1, x, "number")
-	expect(2, y, "number")
-	expect(3, w, "number")
-	expect(4, h, "number")
-	expect(5, text, "string", "nil")
-	expect(6, align, "string", "nil")
-	expect(7, scroll_speed, "number", "nil")
-	expect(8, gap, "string", "nil")
-	expect(9, color_bg, "number", "nil")
-	expect(10, color_txt, "number", "nil")
+function UI.Running_Label(args)
+	local instance = UI.Label(args)
 
-	local instance = UI.Label(x, y, w, h, text, align, color_bg, color_txt)
-	instance.scroll_speed = scroll_speed or 0.5  -- Задержка между сдвигами в секундах (по умолчанию 0.5)
+	instance.scroll_speed = args.scroll_speed or 0.5  -- Задержка между сдвигами в секундах (по умолчанию 0.5)
 	instance.scroll_pos = 1
 	instance.timer_id = nil
 	instance.scrolling = false
-	instance.scroll_gap = gap or " " --_rep(" ", instance.w)
+	instance.scroll_gap = args.gap or " " --_rep(" ", instance.w)
 
 	instance.draw = Running_Label_draw
 	instance.setText = Running_Label_setText
@@ -1266,7 +1298,7 @@ local function Scrollbar_draw(self)
 	local slider_y_start = self.y + 1 + slider_offset
 
 	-- Фон трека
-	term.setBackgroundColor(self.color_bg)
+	term.setBackgroundColor(self.bc)
 	for y = self.y + 1, slider_y_start - 1 do
 		term.setCursorPos(self.x, y)
 		term.write(" ")
@@ -1277,32 +1309,32 @@ local function Scrollbar_draw(self)
 	end
 
 	-- Стрелка вверх
-	local up_bg, up_fg = (self.held == 1 and self.color_txt or self.color_bg), (self.held == 1 and self.color_bg or self.color_txt)
+	local up_bg, up_fg = (self.held == 1 and self.fc or self.bc), (self.held == 1 and self.bc or self.fc)
 	term.setBackgroundColor(up_bg)
 	term.setTextColor(up_fg)
 	term.setCursorPos(self.x, self.y)
-	term.write(string_char(30))
+	term.write("\30")
 
 	-- Стрелка вниз
-	local down_bg, down_fg = (self.held == 3 and self.color_txt or self.color_bg), (self.held == 3 and self.color_bg or self.color_txt)
+	local down_bg, down_fg = (self.held == 3 and self.fc or self.bc), (self.held == 3 and self.bc or self.fc)
 	term.setBackgroundColor(down_bg)
 	term.setTextColor(down_fg)
 	term.setCursorPos(self.x, self.y + self.h - 1)
-	term.write(string_char(31))
+	term.write("\31")
 
 	-- Ползунок
-	term.setBackgroundColor(self.color_txt)
-	term.setTextColor(self.color_bg)
+	term.setBackgroundColor(self.fc)
+	term.setTextColor(self.bc)
 	for y = slider_y_start, _min(slider_y_start + slider_height - 1, self.y + self.h - 2) do
 		term.setCursorPos(self.x, y)
-		term.write(string_char(149))  -- Filled pixel
+		term.write("\149")  -- Filled pixel
 	end
 end
 
 local function Scrollbar_setObj(self, obj)
 	self.obj = obj
-	self.color_bg = self.obj.bg
-	self.color_txt = self.obj.txtcol
+	self.bc = self.obj.bg
+	self.fc = self.obj.txtcol
 	obj:attachScrollbar(instance, "vertical")
 	self.dirty = true
 end
@@ -1448,12 +1480,18 @@ local function Scrollbar_onMouseDrag(self, btn, x, y)
 end
 
 ---Creating new *object* of *class* "scrollbar" which connected at another *object*
----@param obj table *object*
+---@class Scrollbar
+---@param obj table Target object (expects fields like x,y,w,h,bc,fc and scroll methods)
 ---@return table return scrollbar
 function UI.Scrollbar(obj)
 	expect(1, obj, "table")
 
-	local instance = Widget(obj.x + obj.w, obj.y, 1, obj.h, obj.color_bg, obj.color_txt)
+	local instance = Widget({
+		x = obj.x + obj.w, y = obj.y,
+		w = 1, h = obj.h,
+		bc = obj.bc,
+		fc = obj.fc
+	})
 	instance.obj = obj
 	instance.held = 0  -- 0: none, 1: up arrow, 2: slider, 3: down arrow
 	instance.drag_offset = 0
@@ -1614,7 +1652,7 @@ local function Scrollbar_H_draw(self)
 	local slider_x_start = self.x + 1 + slider_offset
 
 	-- Фон трека
-	term.setBackgroundColor(self.color_bg)
+	term.setBackgroundColor(self.bc)
 	for x = self.x + 1, slider_x_start - 1 do
 		term.setCursorPos(x, self.y)
 		term.write(" ")
@@ -1625,35 +1663,40 @@ local function Scrollbar_H_draw(self)
 	end
 
 	-- Стрелка влево
-	local left_bg, left_fg = (self.held == 1 and self.color_txt or self.color_bg), (self.held == 1 and self.color_bg or self.color_txt)
+	local left_bg, left_fg = (self.held == 1 and self.fc or self.bc), (self.held == 1 and self.bc or self.fc)
 	term.setBackgroundColor(left_bg)
 	term.setCursorPos(self.x, self.y)
 	term.setTextColor(left_fg)
-	term.write(string_char(17))
+	term.write("\17")
 
 	-- Стрелка вправо
-	local right_bg, right_fg = (self.held == 3 and self.color_txt or self.color_bg), (self.held == 3 and self.color_bg or self.color_txt)
+	local right_bg, right_fg = (self.held == 3 and self.fc or self.bc), (self.held == 3 and self.bc or self.fc)
 	term.setBackgroundColor(right_bg)
 	term.setCursorPos(self.x + self.w - 1, self.y)
 	term.setTextColor(right_fg)
-	term.write(string_char(16))
+	term.write("\16")
 
 	-- Ползунок
-	term.setBackgroundColor(self.color_bg)
-	term.setTextColor(self.color_txt)
+	term.setBackgroundColor(self.bc)
+	term.setTextColor(self.fc)
 	for x = slider_x_start, _min(slider_x_start + slider_width - 1, self.x + self.w - 2) do
 		term.setCursorPos(x, self.y)
-		term.write(string_char(140))  -- Filled pixel
+		term.write("\140")  -- Filled pixel
 	end
 end
 
 ---Creating new *object* of *class* "scrollbar_horizontal" which connected at another *object*
----@param obj table *object*
+---@class ScrollbarHorizontal
+---@param obj table Target object which the horizontal scrollbar will be attached to
 ---@return table return scrollbar_horizontal
 function UI.Scrollbar_Horizontal(obj)
-	expect(1, obj, "table")
+	local instance = Widget({
+		x = obj.x, y = obj.y + obj.h,
+		w = obj.w, h = 1,
+		bc = obj.bc,
+		fc = obj.fc,
+	})
 
-	local instance = Widget(obj.x, obj.y + obj.h, obj.w, 1, obj.color_bg, obj.color_txt)
 	instance.obj = obj
 	instance.orientation = "horizontal"
 	instance.held = 0
@@ -1678,8 +1721,8 @@ end
 
 
 local function List_draw(self)
-	term.setBackgroundColor(self.color_bg)
-	term.setTextColor(self.color_txt)
+	term.setBackgroundColor(self.bc)
+	term.setTextColor(self.fc)
 	for i = self.scroll.pos_y + 1, _min(self.h + self.scroll.pos_y, #self.array) do
 		local index_arr = self.array[i]
 		term.setCursorPos(self.x, (i - self.scroll.pos_y - 1) + self.y)
@@ -1687,15 +1730,15 @@ local function List_draw(self)
 	end
 	if self.item and self.item_index then
 		if (self.y + self.item_index - self.scroll.pos_y - 1) >= self.y and (self.y + self.item_index - self.scroll.pos_y - 1) <= (self.h + self.y - 1) then
-			term.setBackgroundColor(self.color_txt)
-			term.setTextColor(self.color_bg)
+			term.setBackgroundColor(self.fc)
+			term.setTextColor(self.bc)
 			term.setCursorPos(self.x, self.y + self.item_index - self.scroll.pos_y - 1)
 			term.write(_sub(self.item.._rep(" ",self.w - #self.item), 1, self.w))
 		end
 	end
 	if self.h > #self.array then
-		term.setBackgroundColor(self.color_bg)
-		term.setTextColor(self.color_txt)
+		term.setBackgroundColor(self.bc)
+		term.setTextColor(self.fc)
 		for i = #self.array, self.h - 1 do
 			term.setCursorPos(self.x, i + self.y)
 			term.write(_sub(_rep(" ", self.w), 1, self.w))
@@ -1772,27 +1815,22 @@ local function List_updateDirty(self)
 end
 
 ---Creating new *object* of *class*
----@param x number
----@param y number
----@param w number
----@param h number
----@param array table|nil
----@param color_bg color|number|nil
----@param color_txt color|number|nil
+---@class List
+---@field x number X pos in characters
+---@field y number Y pos in characters
+---@field w number Width in characters
+---@field h number Height in characters
+---@field array? table Array of strings to display
+---@field bc color|number Background color
+---@field fc color|number Foreground/text color
+---@param args List Initialization table with fields above
 ---@return table object list
-function UI.List(x, y, w, h, array, color_bg, color_txt)
-	expect(1, x, "number")
-	expect(2, y, "number")
-	expect(3, w, "number")
-	expect(4, h, "number")
-	expect(5, array, "table", "nil")
-	expect(6, color_bg, "number", "nil")
-	expect(7, color_txt, "number", "nil")
+function UI.List(args)
+	local instance = Widget(args)
 
-	local instance = Widget(x, y, w, h, color_bg, color_txt)
 	add_mixin(instance, ScrollableMixin)
 	instance:initScroll(3, 3)
-	instance.array = array
+	instance.array = args.array
 	instance.item = nil
 	instance.item_index = nil
 	function instance:getScrollMaxY()
@@ -1812,7 +1850,7 @@ function UI.List(x, y, w, h, array, color_bg, color_txt)
 end
 
 local function Textfield_draw(self)
-	term.setBackgroundColor(self.color_bg)
+	term.setBackgroundColor(self.bc)
 	term.setCursorPos(self.x, self.y)
 	local text = self.text
 	if self.hidden == true then
@@ -1823,8 +1861,22 @@ local function Textfield_draw(self)
 		term.write(self.hint.._rep(" ", self.w - #self.hint))
 		return
 	end
-	term.setTextColor(self.color_txt)
-	term.write(_sub(text, self.offset + 1, _min(#self.text, self.offset + self.w)).._rep(" ", self.w - #self.text + self.offset))
+	term.setTextColor(self.fc)
+	term.write(text:sub(self.offset + 1, _min(#self.text, self.offset + self.w)).._rep(" ", self.w - #self.text + self.offset))
+	if self.selected.status then
+		term.setBackgroundColor(self.bc_alt or colors.blue)
+		term.setTextColor(self.fc_alt or colors.white)
+		local sel_x_start = self.selected.pos1_x
+		local draw_x = self.x + (sel_x_start - 1) - self.offset
+		if draw_x < self.x then
+			sel_x_start = sel_x_start + (self.x - draw_x)
+			draw_x = self.x
+		end
+		local sel_x_end = _min(self.w + self.offset, self.selected.pos2_x)
+		local sel_text = text:sub(sel_x_start, sel_x_end)
+		term.setCursorPos(draw_x, self.y)
+		term.write(sel_text)
+	end
 end
 
 local function Textfield_focusPostDraw(self)
@@ -1836,6 +1888,18 @@ local function Textfield_focusPostDraw(self)
 	else
 		term.setCursorBlink(true)
 	end
+end
+
+local function delete_selected_tf(self)
+	if self.selected.status and #self.text > 0 then
+		local sel = self.selected
+		self.text = self.text:sub(1, sel.pos1_x - 1) .. self.text:sub(sel.pos2_x + 1, #self.text)
+		self:moveCursorPos(sel.pos1_x)
+		self.selected.status = false
+		self.dirty = true
+		return true
+	end
+	return false
 end
 
 local function Textfield_moveCursorPos(self, pos)
@@ -1871,17 +1935,48 @@ local function Textfield_onFocus(self, focused)
 	-- elseif not focused and bOS.monitor[1] and bOS.monitor[2] then
 	-- 	self.root:removeChild(self.root.keyboard)
 	-- end
+	if not focused then self.selected.status = false end
 	term.setCursorBlink(focused)
 	self.dirty = true
 	return true
 end
 
+local function select_tf(self, new_x)
+	local oX = self.click_pos_x
+	local sel = self.selected
+	local line = #self.text
+	local nX = _max(1, _min(line, new_x))
+	self:moveCursorPos(nX)
+	if nX < oX then
+		sel.pos1_x = self.cursor_x
+		sel.pos2_x = oX
+	else
+		sel.pos1_x = oX
+		sel.pos2_x = self.cursor_x
+	end
+	self.selected.status = true
+	self.dirty = true
+end
+
 local function Textfield_onMouseDown(self, btn, x, y)
 	self:moveCursorPos(x - self.x + 1 + self.offset)
+	local cx = self.cursor_x
+	self.click_pos_x = cx
+	self.selected.pos1_x = cx
+	self.selected.pos2_x = cx
+	self.selected.status = false
+	self.dirty = true
+	return true
+end
+
+local function Textfield_onMouseDrag(self, btn, x, y)
+	local nX = x - self.x + 1 + self.offset
+	select_tf(self, nX)
 	return true
 end
 
 local function Textfield_onCharTyped(self, chr)
+	delete_selected_tf(self)
 	self.text = _sub(self.text, 1, self.cursor_x - 1)..chr.._sub(self.text, self.cursor_x, #self.text)
 	self:moveCursorPos(self.cursor_x + 1)
 	self.dirty = true
@@ -1895,55 +1990,97 @@ local function Textfield_onPaste(self, text)
 	return true
 end
 
+local function Textfield_onKeyUp(self, key)
+	if key == keys.leftShift then
+		self.shift_held = false
+		return true
+	elseif key == keys.leftCtrl then
+		self.ctrl_held = false
+	end
+	return true
+end
+
 local function Textfield_onKeyDown(self, key, held)
 	if key == keys.backspace then
+		if delete_selected_tf(self) then return true end
 		self.text = _sub(self.text, 1, _max(self.cursor_x - 2, 0)).._sub(self.text, self.cursor_x, #self.text)
 		self.offset = _max(self.offset - 1, 0)
 		self:moveCursorPos(self.cursor_x - 1)
 	elseif key == keys.delete then
+		if delete_selected_tf(self) then return true end
 		self.text = _sub(self.text, 1, self.cursor_x - 1) .. _sub(self.text, self.cursor_x + 1, #self.text)
 	elseif key == keys.left then
 		self:moveCursorPos(self.cursor_x - 1)
+		if self.shift_held then
+			select_tf(self, self.cursor_x)
+		else
+			self.selected.status = false
+		end
 	elseif key == keys.right then
 		self:moveCursorPos(self.cursor_x + 1)
+		if self.shift_held then
+			select_tf(self, self.cursor_x)
+		else
+			self.selected.status = false
+		end
 	elseif key == keys.enter then
+		self.selected.status = false
 		self:pressed()
+	elseif key == keys.leftShift and not held then
+		if not self.selected.status then
+			local cx = self.cursor_x
+			self.click_pos_x = cx
+			self.selected.pos1_x = cx
+			self.selected.pos2_x = cx
+		end
+		self.shift_held = true
+	elseif key == keys.leftCtrl and not held then
+		self.ctrl_held = true
+	elseif key == keys.c and self.ctrl_held then
+		local peremennaya = self.text:sub(self.selected.pos1_x, self.selected.pos2_x)
+		-- clipboard.copy(peremennaya)
+		return true
+	elseif key == keys.a and self.ctrl_held then
+		self.selected.pos1_x = 1
+		self.selected.pos2_x = #self.text
+		self.selected.status = true
+		self:moveCursorPos(#self.text)
 	end
 	self.dirty = true
 	return true
 end
 
 ---Creating new *object* of *class*
----@param x number
----@param y number
----@param w number
----@param h number
----@param hint string|nil
----@param hidden boolean|nil
----@param color_bg color|number|nil
----@param color_txt color|number|nil
+---@class Textfield
+---@field x number X pos in characters
+---@field y number Y pos in characters
+---@field w number Width in characters
+---@field hint? string Placeholder hint text
+---@field hidden? boolean If true, hide input (password mode)
+---@field bc color|number Background color
+---@field fc color|number Foreground/text color
+---@param args Textfield Initialization table with fields above
 ---@return table object Textfield
-function UI.Textfield(x, y, w, h, hint, hidden, color_bg, color_txt)
-	expect(1, x, "number")
-	expect(2, y, "number")
-	expect(3, w, "number")
-	expect(4, h, "number")
-	expect(5, hint, "string", "nil")
-	expect(6, hidden, "boolean", "nil")
-	expect(7, color_bg, "number", "nil")
-	expect(8, color_txt, "number", "nil")
+function UI.Textfield(args)
+	args.h = 1
+	local instance = Widget(args)
 
-	local instance = Widget(x, y, w, h, color_bg, color_txt)
 	instance.offset = 0
-	instance.hint = hint or "Type here"
+	instance.hint = args.hint or "Type here"
 	instance.text = ""
 	instance.cursor_x = #instance.text + 1
-	instance.hidden = hidden or false
+	instance.hidden = args.hidden or false
+	instance.selected = {
+		status = false,
+		pos1_x = 1,
+		pos2_x = 1
+	}
 
 	instance.draw = Textfield_draw
 	instance.moveCursorPos = Textfield_moveCursorPos
 	instance.onMouseScroll = Textfield_onMouseScroll
 	instance.onMouseUp = Textfield_onMouseUp
+	instance.onMouseDrag = Textfield_onMouseDrag
 	instance.onFocus = Textfield_onFocus
 	instance.pressed = pressed
 	instance.focusPostDraw = Textfield_focusPostDraw
@@ -1951,6 +2088,7 @@ function UI.Textfield(x, y, w, h, hint, hidden, color_bg, color_txt)
 	instance.onCharTyped = Textfield_onCharTyped
 	instance.onPaste = Textfield_onPaste
 	instance.onKeyDown = Textfield_onKeyDown
+	instance.onKeyUp = Textfield_onKeyUp
 
 	return instance
 end
@@ -2032,13 +2170,13 @@ local function clipboard_paste(self)
 end
 
 local function TextBox_draw(self)
-	paintutils.drawFilledBox(self.x, self.y, self.x + self.w - 1, self.y + self.h - 1, self.color_bg)
+	paintutils.drawFilledBox(self.x, self.y, self.x + self.w - 1, self.y + self.h - 1, self.bc)
 
 	local start_line = self.scroll.pos_y + 1
 	local end_line = _min(self.h + self.scroll.pos_y, #self.lines)
 
-	term.setBackgroundColor(self.color_bg)
-	term.setTextColor(self.color_txt)
+	term.setBackgroundColor(self.bc)
+	term.setTextColor(self.fc)
 
 	for i = start_line, end_line do
 		local str = self.lines[i] or ""
@@ -2090,7 +2228,7 @@ local function TextBox_moveCursorPos(self, posX, posY)
 	elseif self.cursor.y - self.scroll.pos_y < 1 then
 		self:setScrollPosY(self.cursor.y - 1)
 	end
-	
+
 	-- local l_start, l_end = string.find(_sub(current_lines, 1, self.cursor.x), '\t', self.cursor.x - self.TabSize)
 	-- local r_start, r_end = string.find(_sub(current_lines, self.cursor.x, #current_lines), '\t', self.cursor.x)
 	-- l_end = l_start and l_end + self.TabSize - 1
@@ -2105,7 +2243,7 @@ local function TextBox_moveCursorPos(self, posX, posY)
 	-- 	self.cursor.x = posX
 	-- end
 	-- self.cursor.x = start and s_end or posX
-	
+
 	self.cursor.x = posX
 	if self.cursor.x - self.scroll.pos_x > self.w then
 		self:setScrollPosX(self.cursor.x - self.w)
@@ -2308,11 +2446,23 @@ function TextBox_onPaste(self)
 	return true
 end
 
-function UI.TextBox(x, y, w, h, color_bg, color_txt)
-	local instance = Widget(x, y, w, h, color_bg, color_txt)
+---@class TextBox
+---@field x number X pos in characters
+---@field y number Y pos in characters
+---@field w number Width in characters
+---@field h number Height in characters
+---@field TabSize? number Tab width in spaces
+---@field bc color|number Background color
+---@field fc color|number Foreground/text color
+---@param args TextBox Initialization table with fields above
+---@return table object TextBox
+
+function UI.TextBox(args)
+	local instance = Widget(args)
+
 	add_mixin(instance, ScrollableMixin)
 	instance:initScroll(3, 3)
-	instance.TabSize = 4
+	instance.TabSize = args.TabSize or 4
 	instance.lines = {""}
 	instance.cursor = {x = 1, y = 1}
 	instance.click_pos = {}
@@ -2349,9 +2499,9 @@ function UI.TextBox(x, y, w, h, color_bg, color_txt)
 end
 
 local function Checkbox_draw(self)
-	local bg_override, txtcol_override = self.color_bg, self.color_txt
+	local bg_override, txtcol_override = self.bc, self.fc
 	if self.held then
-		bg_override, txtcol_override = self.color_txt, self.color_bg
+		bg_override, txtcol_override = self.fc, self.bc
 	end
 	term.setBackgroundColor(bg_override)
 	term.setTextColor(txtcol_override)
@@ -2363,7 +2513,7 @@ local function Checkbox_draw(self)
 	end
 end
 
-local function Checkbox_onMouseUp(self,btn, x, y)
+local function Checkbox_onMouseUp(self, btn, x, y)
 	if self:check(x, y) then
 		self:pressed()
 		self.on = not self.on
@@ -2374,21 +2524,19 @@ local function Checkbox_onMouseUp(self,btn, x, y)
 end
 
 ---Creating new *object* of *class*
----@param x number
----@param y number
----@param on boolean|nil
----@param color_bg color|number|nil
----@param color_txt color|number|nil
+---@class Checkbox
+---@field x number X pos in characters
+---@field y number Y pos in characters
+---@field on? boolean Initial checked state
+---@field bc color|number Background color
+---@field fc color|number Foreground/text color
+---@param args Checkbox Initialization table with fields above
 ---@return table object checkbox
-function UI.Checkbox(x, y, on, color_bg, color_txt)
-	expect(1, x, "number")
-	expect(2, y, "number")
-	expect(3, on, "boolean", "nil")
-	expect(4, color_bg, "number", "nil")
-	expect(5, color_txt, "number", "nil")
+function UI.Checkbox(args)
+	args.w = 1; args.h = 1
+	local instance = Widget(args)
 
-	local instance = Widget(x, y, 1, 1, color_bg, color_txt)
-	instance.on = on or false
+	instance.on = args.on or false
 
 	instance.draw = Checkbox_draw
 	instance.pressed = pressed
@@ -2404,8 +2552,8 @@ local function Clock_updateSize(self)
 end
 
 local function Clock_draw(self)
-	term.setBackgroundColor(self.color_bg)
-	term.setTextColor(self.color_txt)
+	term.setBackgroundColor(self.bc)
+	term.setTextColor(self.fc)
 	term.setCursorPos(self.x, self.y)
 	term.write(self.time)
 end
@@ -2443,25 +2591,22 @@ local function Clock_onEvent(self, evt)
 end
 
 ---Creating new *object* of *class*
----@param x number
----@param y number
----@param show_seconds boolean|nil
----@param is_24h boolean|nil
----@param color_bg color|number|nil
----@param color_txt color|number|nil
+---@class Clock
+---@field x number X pos in characters
+---@field y number Y pos in characters
+---@field show_seconds? boolean Show seconds in format
+---@field is_24h? boolean Use 24-hour format if true
+---@field updt_rate? number Update rate in seconds
+---@field bc color|number Background color
+---@field fc color|number Foreground/text color
+---@param args Clock Initialization table with fields above
 ---@return table object clock
-function UI.Clock(x, y, show_seconds, is_24h, color_bg, color_txt)
-	expect(1, x, "number")
-	expect(2, y, "number")
-	expect(3, show_seconds, "boolean", "nil")
-	expect(4, is_24h, "boolean", "nil")
-	expect(5, color_bg, "number", "nil")
-	expect(6, color_txt, "number", "nil")
+function UI.Clock(args)
+	local instance = Widget(args)
 
-	local instance = Widget(x, y, _, _, color_bg, color_txt)
-	instance.show_seconds = show_seconds ~= false
-	instance.is_24h = is_24h ~= false
-	instance.updt_rate = 1
+	instance.show_seconds = args.show_seconds ~= false
+	instance.is_24h = args.is_24h ~= false
+	instance.updt_rate = args.updt_rate or 1
 
 	local function updateFormat()
 		if instance.is_24h then
@@ -2496,32 +2641,32 @@ end
 local function LoadingBar_draw(self)
 	local LoadX = math.floor(self.value * self.w)
 	if self.orientation == "top" then
-		term.setBackgroundColor(self.color_bg)
+		term.setBackgroundColor(self.bc)
 		term.setTextColor(self.color_Loading)
 		term.setCursorPos(self.x, self.y)
-		term.write(_rep(string_char(131), LoadX))
+		term.write(_rep("\131", LoadX))
 		term.setTextColor(self.color_NotLoaded)
 		term.setCursorPos(self.x + LoadX, self.y)
-		term.write(_rep(string_char(131), self.w - LoadX))
+		term.write(_rep("\131", self.w - LoadX))
 	elseif self.orientation == "center"  then
-		term.setBackgroundColor(self.color_bg)
+		term.setBackgroundColor(self.bc)
 		term.setTextColor(self.color_Loading)
 		term.setCursorPos(self.x, self.y)
-		term.write(_rep(string_char(140), LoadX))
+		term.write(_rep("\140", LoadX))
 		term.setTextColor(self.color_NotLoaded)
 		term.setCursorPos(self.x + LoadX, self.y)
-		term.write(_rep(string_char(140), self.w - LoadX))
+		term.write(_rep("\140", self.w - LoadX))
 	elseif self.orientation == "bottom"  then
 		term.setBackgroundColor(self.color_Loading)
-		term.setTextColor(self.color_bg)
+		term.setTextColor(self.bc)
 		term.setCursorPos(self.x, self.y)
-		term.write(_rep(string_char(143), LoadX))
+		term.write(_rep("\143", LoadX))
 		term.setBackgroundColor(self.color_NotLoaded)
 		term.setCursorPos(self.x + LoadX, self.y)
-		term.write(_rep(string_char(143), self.w - LoadX))
+		term.write(_rep("\143", self.w - LoadX))
 	elseif self.orientation == "filled"  then
 		term.setBackgroundColor(self.color_Loading)
-		term.setTextColor(self.color_bg)
+		term.setTextColor(self.bc)
 		term.setCursorPos(self.x, self.y)
 		term.write(_rep(" ", LoadX))
 		term.setBackgroundColor(self.color_NotLoaded)
@@ -2530,19 +2675,26 @@ local function LoadingBar_draw(self)
 	end
 end
 
----@param orientation "center"|"top"|"bottom"|"filled"
-function UI.LoadingBar(x, y, w, color_bg, color_Loading, color_NotLoaded, orientation, defaultValue)
-	expect(1, x, "number")
-	expect(2, y, "number")
-	expect(3, w, "number")
-	assert(defaultValue and defaultValue >= 0 and defaultValue <= 1, "expecteded argument #6 in range 0-1")
+---@class LoadingBar
+---@field x number X pos in characters
+---@field y number Y pos in characters
+---@field w number Width in characters
+---@field h? number Height in characters
+---@field bc color|number Main bg color
+---@field orientation? string One of "center","top","bottom","filled"
+---@field value? number Fill value between 0 and 1
+---@field color_Loading color|number Color used for loaded portion
+---@field color_NotLoaded color|number Color used for unloaded portion
+---@param args LoadingBar Initialization table with fields above
+function UI.LoadingBar(args)
+	args.h = 1
+	local instance = Widget(args)
 
-	local instance = Widget(x, y, w, 1, color_bg, color_txt)
 	instance.orientation = orientation or "center"
-	instance.color_bg = color_bg or colors.black
-	instance.color_Loading = color_Loading or colors.white
-	instance.color_NotLoaded = color_NotLoaded or colors.gray
-	instance.value = defaultValue
+	instance.bc = args.bc
+	instance.color_Loading = args.color_Loading
+	instance.color_NotLoaded = args.color_NotLoaded
+	instance.value = args.value or 0
 
 	instance.draw = LoadingBar_draw
 	instance.setValue = LoadingBar_setValue
@@ -2553,41 +2705,41 @@ end
 local function Dropdown_draw(self)
 	local index_arr = self.array[self.item_index]
 	if self.orientation == "left" then
-		term.setBackgroundColor(self.color_bg)
-		term.setTextColor(self.color_txt)
+		term.setBackgroundColor(self.bc)
+		term.setTextColor(self.fc)
 		term.setCursorPos(self.x, self.y)
-		term.write(_sub((index_arr), 1, self.w - 1).._rep(" ", self.w - 1 - #index_arr)..string_char(31))
+		term.write(_sub((index_arr), 1, self.w - 1).._rep(" ", self.w - 1 - #index_arr).."\31")
 		if self.expanded then
 			for i, v in pairs(self.array) do
-				term.setBackgroundColor(self.color_bg)
-				term.setTextColor(self.color_txt)
+				term.setBackgroundColor(self.bc)
+				term.setTextColor(self.fc)
 				term.setCursorPos(self.x, self.y + i)
 				term.write(_sub((v.._rep(" ", self.w - #v)), 1, self.w))
 			end
-			term.setBackgroundColor(self.color_bg)
-			term.setTextColor(self.color_txt)
+			term.setBackgroundColor(self.bc)
+			term.setTextColor(self.fc)
 			term.setCursorPos(self.x, self.y)
-			term.write(_sub((index_arr), 1, self.w - 1).._rep(" ", self.w - 1 - #index_arr)..string_char(30))
+			term.write(_sub((index_arr), 1, self.w - 1).._rep(" ", self.w - 1 - #index_arr).."\30")
 			self.h = #self.array + 1
 		else
 			self.h = 1
 		end
 	elseif self.orientation == "right" then
-		term.setBackgroundColor(self.color_bg)
-		term.setTextColor(self.color_txt)
+		term.setBackgroundColor(self.bc)
+		term.setTextColor(self.fc)
 		term.setCursorPos(self.x, self.y)
-		term.write(_sub(index_arr.._rep(" ", self.w - 1 - #index_arr)..string_char(30), 1, self.w))
+		term.write(_sub(index_arr.._rep(" ", self.w - 1 - #index_arr).."\30", 1, self.w))
 		if self.expanded then
 			for i, v in pairs(self.array) do
-				term.setBackgroundColor(self.color_bg)
-				term.setTextColor(self.color_txt)
+				term.setBackgroundColor(self.bc)
+				term.setTextColor(self.fc)
 				term.setCursorPos(self.x, self.y + i)
 				term.write(_sub(_rep(" ", self.w - #v)..v, 1, self.w))
 			end
-			term.setBackgroundColor(self.color_bg)
-			term.setTextColor(self.color_txt)
+			term.setBackgroundColor(self.bc)
+			term.setTextColor(self.fc)
 			term.setCursorPos(self.x, self.y)
-			term.write(_sub(index_arr, 1, self.w - 1).._rep(" ", self.w - 1 - #index_arr)..string_char(31))
+			term.write(_sub(index_arr, 1, self.w - 1).._rep(" ", self.w - 1 - #index_arr).."\31")
 			self.h = #self.array + 1
 		else
 			self.h = 1
@@ -2619,31 +2771,27 @@ local function Dropdown_onMouseDown(self, btn, x, y)
 end
 
 ---Creating new *object* of *class*
----@param x number
----@param y number
----@param array string[]|nil
----@param defaultValue string|nil
----@param maxSizeW number|nil
----@param orientation string|nil
----@param color_bg color|number|nil
----@param color_txt color|number|nil
+---@class Dropdown
+---@field x number X pos in characters
+---@field y number Y pos in characters
+---@field w number Width in characters
+---@field array? string[] Options array
+---@field maxSizeW? number Max value for width
+---@field defaultValue? number Default selected index
+---@field orientation? string "left" or "right"
+---@field bc color|number Background color
+---@field fc color|number Foreground/text color
+---@param args Dropdown Initialization table with fields above
 ---@return table object dropdown
-function UI.Dropdown(x, y, array, defaultValue, maxSizeW, orientation, color_bg, color_txt)
-	expect(1, x, "number")
-	expect(2, y, "number")
-	expect(3, array, "table", "nil")
-	expect(4, defaultValue, "string", "nil")
-	expect(5, maxSizeW, "number", "nil")
-	expect(6, orientation, "string", "nil")
-	expect(7, color_bg, "number", "nil")
-	expect(8, color_txt, "number", "nil")
+function UI.Dropdown(args)
+	args.h = 1
+	local instance = Widget(args)
 
-	local instance = Widget(x, y, 1, 1, color_bg, color_txt)
-	instance.array = array or {}
+	instance.array = args.array or {}
 	instance.item_index = 1
-	if defaultValue then
+	if args.defaultValue then
 		for i, v in pairs(instance.array) do
-			if v == defaultValue then
+			if v == args.defaultValue then
 				instance.item_index = i
 				break
 			end
@@ -2651,7 +2799,7 @@ function UI.Dropdown(x, y, array, defaultValue, maxSizeW, orientation, color_bg,
 	end
 	instance.orientation = orientation or "left"
 	if type(maxSizeW) ~= "number" then maxSizeW = nil end
-	instance.w = maxSizeW or c.findMaxLenStrOfArray(instance.array) + 1
+	instance.w = args.maxSizeW or c.findMaxLenStrOfArray(instance.array) + 1
 	instance.expanded = false
 
 	instance.draw = Dropdown_draw
@@ -2691,27 +2839,27 @@ end
 -- end
 
 -- local function menu_draw(self)
--- 	local color_bg, color_txt = self.color_bg, self.color_txt
+-- 	local bc, fc = self.bc, self.fc
 -- 	if self.expanded then
 -- 		local max_length = c.findMaxLenStrOfArray(self.arr)
 -- 		for i, v in pairs(self.arr) do
--- 			term.setBackgroundColor(color_bg)
--- 			term.setTextColor(color_txt)
+-- 			term.setBackgroundColor(bc)
+-- 			term.setTextColor(fc)
 -- 			term.setCursorPos(self.x, self.y + i)
 -- 			term.write(v.._rep(" ", max_length - #v))
 -- 		end
--- 		color_bg, color_txt = self.color_txt, self.color_bg
+-- 		bc, fc = self.fc, self.bc
 -- 		self.h = #self.arr + 1
 -- 		self.w = max_length
 -- 	end
--- 	term.setBackgroundColor(color_bg)
--- 	term.setTextColor(color_txt)
+-- 	term.setBackgroundColor(bc)
+-- 	term.setTextColor(fc)
 -- 	term.setCursorPos(self.x, self.y)
 -- 	term.write(self.name)
 -- end
 
--- function UI.Menu(x, y, name, arr, color_bg, color_txt)
--- 	local instance = Widget(x, y, #name, 1, color_bg, color_txt)
+-- function UI.Menu(x, y, name, arr, bc, fc)
+-- 	local instance = Widget(x, y, #name, 1, bc, fc)
 -- 	instance.arr = arr or {}
 -- 	instance.name = name
 -- 	instance.expanded = false
@@ -2733,23 +2881,27 @@ local function Slider_draw(self)
 		local offset = (N == 1) and 0 or _min(_floor((i - 1) / (N - 1) * (W - 1)), self.w - 1)
 		local thumb_x = self.x + offset
  		-- Overlay thumb (use a different char, e.g., █ or slider thumb equivalent)
- 		term.setBackgroundColor(self.color_txt)
- 		term.setTextColor(self.color_bg)
+ 		if self.held and self.fc_cl then
+			term.setBackgroundColor(self.fc_cl)
+		else
+			term.setBackgroundColor(self.fc)
+		end
+ 		term.setTextColor(self.bc)
  		term.setCursorPos(thumb_x, self.y)
  		term.write(" ")
- 		term.setBackgroundColor(self.color_bg)
- 		term.setTextColor(self.color_txt2)
+ 		term.setBackgroundColor(self.bc)
+ 		term.setTextColor(self.fc_alt)
  		term.setCursorPos(self.x, self.y)
- 		term.write(_rep(string_char(140), offset))
- 		term.setBackgroundColor(self.color_bg)
- 		term.setTextColor(self.color_txt)
+ 		term.write(_rep("\140", offset))
+ 		term.setBackgroundColor(self.bc)
+ 		term.setTextColor(self.fc)
  		term.setCursorPos(thumb_x + 1, self.y)
- 		term.write(_rep(string_char(140), self.w - offset - 1))
+ 		term.write(_rep("\140", self.w - offset - 1))
 	else
- 		term.setBackgroundColor(self.color_bg)
- 		term.setTextColor(self.color_txt)
+ 		term.setBackgroundColor(self.bc)
+ 		term.setTextColor(self.fc)
  		term.setCursorPos(self.x, self.y)
- 		term.write(_rep(string_char(140), W))
+ 		term.write(_rep("\140", W))
 	end
 end
 
@@ -2766,8 +2918,14 @@ end
 
 local function Slider_onMouseDown(self, btn, x, y)
 	self:updatePos(x, y)
+	self.held = true
 	self:pressed(btn, x, y)
 	return true
+end
+
+local function Slider_onMouseUp(self, btn, x, y)
+	self.held = false
+	self.dirty = true
 end
 
 local function Slider_onMouseDrag(self, btn, x, y)
@@ -2782,29 +2940,24 @@ local function Slider_updateArr(self, array)
 end
 
 ---Creating new *object* of *class*
----@param x number
----@param y number
----@param w number
----@param arr number[]|nil
----@param defaultPosition number|nil
----@param color_txt2 color|number|nil
----@param color_bg color|number|nil
----@param color_txt color|number|nil
+---@class Slider
+---@field x number X pos in characters
+---@field y number Y pos in characters
+---@field w number Width in characters
+---@field arr? number[] Array of possible positions/values
+---@field slidePosition? number Current selected index
+---@field fc_cl? color|number Click slider glif color (optional)
+---@field bc color|number Background color
+---@field fc color|number Foreground/text color
+---@param args Slider Initialization table with fields above
 ---@return table object slider
-function UI.Slider(x, y, w, arr, defaultPosition, color_txt2, color_bg, color_txt)
-	expect(1, x, "number")
-	expect(2, y, "number")
-	expect(3, w, "number")
-	expect(4, arr, "table")
-	expect(5, defaultPosition, "number", "nil")
-	expect(6, color_txt2, "number", "nil")
-	expect(7, color_bg, "number", "nil")
-	expect(8, color_txt, "number", "nil")
+function UI.Slider(args)
+	args.h = 1
+	local instance = Widget(args)
 
-	local instance = Widget(x, y, w, 1, color_bg, color_txt)
-	instance.arr = arr
-	instance.slidePosition = defaultPosition or 1
-	instance.color_txt2 = color_txt2 or instance.color_txt
+	instance.held = false
+	instance.arr = args.arr or {}
+	instance.slidePosition = args.slidePosition or 1
 
 	instance.draw = Slider_draw
 	instance.pressed = pressed
@@ -2812,6 +2965,7 @@ function UI.Slider(x, y, w, arr, defaultPosition, color_txt2, color_bg, color_tx
 	instance.onMouseDown = Slider_onMouseDown
 	instance.onMouseDrag = Slider_onMouseDrag
 	instance.updateArr = Slider_updateArr
+	instance.onMouseUp = Slider_onMouseUp
 
 	return instance
 end
@@ -2847,25 +3001,25 @@ end
 -- end
 
 local function TabBar_draw(self)
-	local self_color_bg, self_color_txt = self.color_bg, self.color_txt
-		paintutils.drawFilledBox(self.x, self.y, self.x + self.w - 1, self.y + self.h - 1, self_color_bg)
+	local self_bc, self_fc = self.bc, self.fc
+		paintutils.drawFilledBox(self.x, self.y, self.x + self.w - 1, self.y + self.h - 1, self_bc)
 	local offset = 1
 	for i, text in ipairs(self.tabs) do
 			if i == self.selected then
-				term.setBackgroundColor(self_color_txt)
+				term.setBackgroundColor(self_fc)
 				term.setTextColor(colors.white)
 				term.setCursorPos(offset, self.y)
 				term.write(_sub(text, 1, self.max_w - 1).._rep(" ", self.max_w - #text - 1).."x")
-				term.setBackgroundColor(self_color_txt)
+				term.setBackgroundColor(self_fc)
 				term.setTextColor(colors.gray)
 				term.setCursorPos(self.max_w * i, self.y)
 				term.write("x")
 			else
-				term.setBackgroundColor(self_color_bg)
-				term.setTextColor(self_color_txt)
+				term.setBackgroundColor(self_bc)
+				term.setTextColor(self_fc)
 				term.setCursorPos(offset, self.y)
 				term.write(_sub(text, 1, self.max_w - 1).._rep(" ", self.max_w - #text - 1).."x")
-				term.setBackgroundColor(self_color_bg)
+				term.setBackgroundColor(self_bc)
 				term.setTextColor(colors.gray)
 				term.setCursorPos(self.max_w * i, self.y)
 				term.write("x")
@@ -2891,8 +3045,18 @@ local function TabBar_addTab(self, name, pos)
 	table.insert(self.tabs, name)
 end
 
-function UI.TabBar(x, y, w, h, color_bg, color_txt)
-	local instance = Widget(x, y, w, h, color_bg, color_txt)
+---@class TabBar
+---@field x number X pos in characters
+---@field y number Y pos in characters
+---@field w number Width in characters
+---@field h number Height in characters
+---@field bc color|number Main bg color
+---@field fc color|number Main text color
+---@param args TabBar Initialization table with fields above
+---@return table object TabBar
+function UI.TabBar(args)
+	local instance = Widget(args)
+
 	instance.selected = 0
 	instance.tabs = {}
 	instance.offset = 0
@@ -2908,29 +3072,29 @@ end
 
 local function MsgWin_draw(self)
 	for i = 1, self.h - 2 do
-		term.setBackgroundColor(self.color_bg)
-		term.setTextColor(self.color_txt)
+		term.setBackgroundColor(self.bc)
+		term.setTextColor(self.fc)
 		term.setCursorPos(self.x + 1, self.y + i)
-		term.write(_rep(" ", self.w - 2)..string_char(149))
-		term.setBackgroundColor(self.color_txt)
-		term.setTextColor(self.color_bg)
+		term.write(_rep(" ", self.w - 2).."\149")
+		term.setBackgroundColor(self.fc)
+		term.setTextColor(self.bc)
 		term.setCursorPos(self.x, self.y + i)
-		term.write(string_char(149))
+		term.write("\149")
 	end
-	term.setBackgroundColor(self.color_bg)
-	term.setTextColor(self.color_txt)
+	term.setBackgroundColor(self.bc)
+	term.setTextColor(self.fc)
 	term.setCursorPos(self.x + 1, self.y)
-	term.write(_rep(string_char(140), self.w - 2)..string_char(148))
-	term.setBackgroundColor(self.color_txt)
-	term.setTextColor(self.color_bg)
+	term.write(_rep("\140", self.w - 2).."\148")
+	term.setBackgroundColor(self.fc)
+	term.setTextColor(self.bc)
 	term.setCursorPos(self.x, self.y)
-	term.write(string_char(151))
-	term.setBackgroundColor(self.color_bg)
-	term.setTextColor(self.color_txt)
+	term.write("\151")
+	term.setBackgroundColor(self.bc)
+	term.setTextColor(self.fc)
 	term.setCursorPos(self.x, self.h + self.y - 1)
-	term.write(string_char(138).._rep(string_char(140), self.w - 2)..string_char(133))
-	term.setBackgroundColor(self.color_bg)
-	term.setTextColor(self.color_txt)
+	term.write("\138".._rep("\140", self.w - 2).."\133")
+	term.setBackgroundColor(self.bc)
+	term.setTextColor(self.fc)
 	term.setCursorPos(_floor((self.w - #self.title)/2) + self.x, self.y)
 	term.write(self.title)
 end
@@ -2947,7 +3111,7 @@ function UI.MsgWin(mode, title, msg)
 	instance.onLayout = Box_onLayout
 
 	local ok = false
-	local label = UI.Label(2, 2, instance.w - 2, instance.h - 2, msg or "Message", "center", instance.color_bg, instance.color_txt)
+	local label = UI.Label(2, 2, instance.w - 2, instance.h - 2, msg or "Message", "center", instance.bc, instance.fc)
 	instance:addChild(label)
 	local btnOK, btnYES
 	if mode == "INFO" then
@@ -2990,7 +3154,9 @@ function UI.MsgWin(mode, title, msg)
 end
 
 ---Creating new *object* of *class*
---@return table|nil object DialWin
+---@param title string|nil Dialog title
+---@param msg string|nil Prompt message
+---@return string|nil Returns entered text or nil if cancelled
 function UI.DialWin(title, msg)
 	local root = UI.Root()
 
@@ -2999,13 +3165,13 @@ function UI.DialWin(title, msg)
 	instance.draw = MsgWin_draw
 	instance.onLayout = Box_onLayout
 
-	local label = UI.Label(2, 2, instance.w - 2, 1, msg or "", "left", instance.color_bg, instance.color_txt)
+	local label = UI.Label(2, 2, instance.w - 2, 1, msg or "", "left", instance.bc, instance.fc)
 	instance:addChild(label)
 
-	local textfield = UI.Textfield(label.local_x, label.local_y + 1, instance.w - 2, 1, "", false, colors.gray--[[instance.color_bg]], instance.color_txt)
+	local textfield = UI.Textfield(label.local_x, label.local_y + 1, instance.w - 2, 1, "", false, colors.gray--[[instance.bc]], instance.fc)
 	instance:addChild(textfield)
 
-	local btnOK = UI.Button(_floor(instance.w/2 - 4 - 1), instance.h, 4, 1, " OK ", _, instance.color_bg, instance.color_txt)
+	local btnOK = UI.Button(_floor(instance.w/2 - 4 - 1), instance.h, 4, 1, " OK ", _, instance.bc, instance.fc)
 	instance:addChild(btnOK)
 	local ok = nil
 
@@ -3015,7 +3181,7 @@ function UI.DialWin(title, msg)
 		ok = true
 	end
 
-	local btnCANCEL = UI.Button(_floor(instance.w/2), instance.h, 8, 1, " CANCEL ", _, instance.color_bg, instance.color_txt)
+	local btnCANCEL = UI.Button(_floor(instance.w/2), instance.h, 8, 1, " CANCEL ", _, instance.bc, instance.fc)
 	instance:addChild(btnCANCEL)
 
 	textfield.pressed = function (self)
@@ -3042,27 +3208,27 @@ end
 
 local function Keyboard_draw(self)
 	for i = 1, self.h - 2 do
-		term.setBackgroundColor(self.color_txt)
-		term.setTextColor(self.color_bg)
+		term.setBackgroundColor(self.fc)
+		term.setTextColor(self.bc)
 		term.setCursorPos(self.w + self.x - 1, self.y + i)
-		term.write(string_char(149))
-		term.setBackgroundColor(self.color_bg)
-		term.setTextColor(self.color_txt)
+		term.write("\149")
+		term.setBackgroundColor(self.bc)
+		term.setTextColor(self.fc)
 		term.setCursorPos(self.x, self.y + i)
-		term.write(string_char(149).._rep(" ",self.w - 2))
+		term.write("\149".._rep(" ",self.w - 2))
 	end
-	term.setBackgroundColor(self.color_bg)
-	term.setTextColor(self.color_txt)
+	term.setBackgroundColor(self.bc)
+	term.setTextColor(self.fc)
 	term.setCursorPos(self.x, self.y)
-	term.write(string_char(151).._rep(string_char(131), self.w - 2))
-	term.setBackgroundColor(self.color_txt)
-	term.setTextColor(self.color_bg)
+	term.write("\151".._rep("\131", self.w - 2))
+	term.setBackgroundColor(self.fc)
+	term.setTextColor(self.bc)
 	term.setCursorPos(self.w + self.x - 1, self.y)
-	term.write(string_char(148))
-	term.setBackgroundColor(self.color_txt)
-	term.setTextColor(self.color_bg)
+	term.write("\148")
+	term.setBackgroundColor(self.fc)
+	term.setTextColor(self.bc)
 	term.setCursorPos(self.x, self.h + self.y - 1)
-	term.write(string_char(138).._rep(string_char(143), self.w - 2)..string_char(133))
+	term.write("\138".._rep("\143", self.w - 2).."\133")
 end
 
 local function Keyboard_onEvent(self,evt)
@@ -3093,28 +3259,28 @@ function UI.Keyboard(width, height)
 		"1","2","3","4","5","6","7","8","9","0", --10
 		"q","w","e","r","t","y","u","i","o","p", --20
 		"a","s","d","f","g","h","j","k","l", --29
-		string_char(24)..string_char(95),"z","x","c","v","b","n","m", string_char(27).."-", --38
-		" "..string_char(2).." ", ",", ".", "  SPACE",string_char(27), string_char(24), string_char(25), string_char(26), string_char(17)..string_char(172)
+		"\24".."\95","z","x","c","v","b","n","m", "\27".."-", --38
+		" ".."\2".." ", ",", ".", "  SPACE","\27", "\24", "\25", "\26", "\17".."\172"
 	}
 
 	local layout_shift = {
-		"1","2","3","4","5","6","7","8","9","0", --10 string_char(27)
+		"1","2","3","4","5","6","7","8","9","0", --10 "\27)
 		"Q","W","E","R","T","Y","U","I","O","P", --20
 		"A","S","D","F","G","H","J","K","L", --29
-		string_char(24)..string_char(95),"Z","X","C","V","B","N","M", string_char(27).."-", --38
-		" "..string_char(2).." ", ",", ".", "  SPACE", string_char(27), string_char(24), string_char(25), string_char(26), string_char(17)..string_char(172)
+		"\24".."\95","Z","X","C","V","B","N","M", "\27".."-", --38
+		" ".."\2".." ", ",", ".", "  SPACE", "\27", "\24", "\25", "\26", "\17".."\172"
 	}
 
 	local layout_smile = {
 		-- Ряд 1 (індекси 1-10)
 		"!", "\"", "#", ";", "%", ":", "?", "*", "(", ")",
 		-- Ряд 2 (індекси 11-20)
-		"~", "@", "T", "$", string_char(19), "^", "&", "=", "+", "-",
+		"~", "@", "T", "$", "\19", "^", "&", "=", "+", "-",
 		-- Ряд 3 (індекси 21-29)
-		"_", "`", "'", string_char(171), string_char(187), "{", "}", "[", "]",
+		"_", "`", "'", "\171", "\187", "{", "}", "[", "]",
 		-- Ряд 4 (індекси 30-38)
 		layout_default[30], -- 30: Shift (Спеціальна, залишаємо)
-		string_char(177), string_char(191), "|", "/", "\\", "<", ">", -- 31-37 (z,x,c,v,b,n,m)
+		"\177", "\191", "|", "/", "\\", "<", ">", -- 31-37 (z,x,c,v,b,n,m)
 		layout_default[38], -- 38: Backspace (Спеціальна, залишаємо)
 		-- Ряд 5 (індекси 39-45)
 		"ABC",         -- 39: "Smile" button, тепер це "ABC"
@@ -3159,7 +3325,7 @@ function UI.Keyboard(width, height)
 			end
 		end
 		if newUpperState == 2 then
-			instance.children[30]:setText(string_char(23)..string_char(95))
+			instance.children[30]:setText("\23".."\95")
 		end
 		if newUpperState == 3 or newUpperState == 0 then
 			instance.children[30].held = false
@@ -3220,7 +3386,7 @@ function UI.Keyboard(width, height)
 		local actionName = keyDef[4]
 
 		if layout_default[keyIndex] then
-			local btn = UI.Button(1 + relX, 1 + relY, #layout_default[keyIndex], 1, layout_default[keyIndex], "center", instance.color_bg, colors.white)
+			local btn = UI.Button(1 + relX, 1 + relY, #layout_default[keyIndex], 1, layout_default[keyIndex], "center", instance.bc, colors.white)
 			btn.pressed = function (self)
 				os.queueEvent("char", self.text)
 				if instance.upper == 1 then
@@ -3267,15 +3433,15 @@ end
 ---@param y number
 ---@param w number
 ---@param h number
----@param color_bg color|number
+---@param bc color|number
 ---@param title string
 ---@return table object Window
--- function UI.Window(x, y, w, h, color_bg, title)
+-- function UI.Window(x, y, w, h, bc, title)
 -- 	expect(1, x, "number")
 -- 	expect(2, y, "number")
 -- 	expect(3, w, "number")
 -- 	expect(4, h, "number")
--- 	expect(5, color_bg, "number")
+-- 	expect(5, bc, "number")
 -- 	expect(6, title, "string")
 
 -- 	local instance = UI.Box(x, y, w, h, colors.white)
@@ -3283,71 +3449,26 @@ end
 -- 	instance:addChild(instance.label)
 -- 	instance.close = UI.Button(w, y, 1, 1, "x" , _, colors.white, colors.black)
 -- 	instance:addChild(instance.close)
--- 	instance.surface = UI.Box(1, 2, w, h - 1, color_bg)
+-- 	instance.surface = UI.Box(1, 2, w, h - 1, bc)
 -- 	instance:addChild(instance.surface)
 
 -- 	return instance
 -- end
 
-local function ContextMenuAddItem(self, item)
-	local childrens = #self.children + 1
-	local button = UI.Button(1, childrens, self.w, 1, item, "left", _, self.color_bg, self.color_txt)
-	
+local function MenuAddContextMenu(self, item)
+	-- local button = UI.Button(1, self.y, #item, 1, item, _, _, self.bc, self.fc)
+	local button = UI.Button({
+		x = self.w + self.x - 1, y = self.y,
+		w = #item, h = 1,
+		text = item,
+		bc = self.bc,
+		fc = self.fc,
+	})
+	button.context_menu = {}
 	self:addChild(button)
-	self.h = childrens
+	self.w = self.w + #item + 1
 
 	return button
-end
-
-local function ContextMenuAddSeparator(self)
-	local childrens = #self.children + 1
-	local label = UI.Label(1, childrens, self.w, 1, _rep("-", self.w), _, self.color_bg, colors.lightGray)
-
-	self:addChild(label)
-	self.h = childrens
-end
-
-local function ContextMenuonFocus(self, boolean)
-	if not boolean then self.parent:removeChild(self) end
-end
-
--- local function ContextMenuAddchtoto(self, item)
--- 	local childrens = #self.children + 1
--- 	local button = UI.Button(1, childrens, self.w, 1, item, _, self.color_bg, colors.lightGray)
--- 	button.context_menu = UI.ContextMenu(self.w + self.x, childrens, )
--- 	button.pressed = function (self)
-
--- 	end
--- 	self:addChild(button)
--- 	self.h = childrens
--- end
-
-function UI.ContextMenu(x, y, color_bg, color_txt)
-	local instance = UI.Box(x, y, 10, 1, color_bg, color_txt)
-
-	instance.add_item = ContextMenuAddItem
-	instance.add_separator = ContextMenuAddSeparator
-	instance.add_chtoto = ContextMenuAddchtoto
-	instance.onFocus = ContextMenuonFocus
-
-	return instance
-end
-
-local function contextMenuAdd(self)
-	local context_menu = self.context_menu
-	context_menu.x, context_menu.y = self.x, self.y + 1
-	self.parent.parent:addChild(context_menu)
-	self.root.focus = context_menu
-end
-
-local function MenuAddContextMenu(self, item)
-	local button = UI.Button(1, self.y, #item, 1, item, _, _, self.color_bg, self.color_txt)
-	button.pressed = contextMenuAdd
-	button.context_menu = UI.ContextMenu(1, 1, self.color_bg, self.color_txt)
-	self:addChild(button)
-	self.w = self.w + #item
-
-	return button.context_menu
 end
 
 local function Menu_draw(self)
@@ -3357,11 +3478,134 @@ local function Menu_draw(self)
 end
 
 function UI.Menu()
-	local instance = UI.Container(1, 1, 1, 1, _, _)
+	-- local instance = UI.Container(1, 1, 1, 1, colors.gray, _)
+	local instance = UI.Container({
+		x = 1, y = 1,
+		w = 1, h = 1,
+		bc = colors.gray,
+		fc = colors.white,
+	})
 
 	instance.add_context = MenuAddContextMenu
 
 	instance.draw = Menu_draw
+
+	return instance
+end
+
+
+
+local function tree_open(self, arr, y, level)
+	local l
+	for i, v in ipairs(arr) do
+		self.click_map[y] = v
+		term.setCursorPos(self.x, y)
+		if v.canOpen then
+			l = v.isOpen and "\31" or "\16"
+		else
+			l = " "
+		end
+		l = v.ico and l .. "   " or l
+		local bg = (y % 2 ~= 0) and self.bc or self.bc_alt
+		bg = (self.hovered == v) and self.bc_hv or bg
+		local text = _rep(" ", level) .. l .. v.name
+		term.setTextColor(self.fc)
+		term.setBackgroundColor(bg)
+		term.write(text .. _rep(" ", self.w - #text))
+		if v.ico.char then
+			term.setCursorPos(self.x + level + 2, y)
+			term.setBackgroundColor(v.ico.bg or bg)
+			term.setTextColor(v.ico.txt or self.fc)
+			term.write(v.ico.char)
+		end
+		y = y + 1
+		if v.isOpen then
+			y = tree_open(self, v.arr, y, level + 1)
+		end
+	end
+	return y
+end
+
+local function TreeView_onMouseDown(self, btn, x, y)
+	local item = self.click_map[y]
+
+	if item then
+		self:pressed(item)
+	end
+end
+
+local function TreeView_onMouseMove(self, btn, x, y)
+	local item = self.click_map[y]
+
+	if item then
+		self.hovered = item
+	else
+		self.hovered = nil
+	end
+
+	self.dirty = true
+end
+
+local function TreeView_draw(self)
+	-- paintutils.drawFilledBox(self.x, self.y, self.w + self.x - 1, self.h + self.y - 1, self.bc)
+	tree_open(self, self.tree, self.y, 0)
+end
+
+---@class TreeView
+---@field x number X pos in characters
+---@field y number Y pos in characters
+---@field w number Width in characters
+---@field h number Height in characters
+---@field bc color|number Main bg color
+---@field fc color|number Main text color
+---@field bc_cl? color|number Click bg color
+---@field fc_cl? color|number Click text color
+---@field bc_alt? color|number Alternate background color (optional)
+---@field bc_hv? color|number Hover background color (optional)
+---@field fc_hv? color|number Hover foreground/text color (optional)
+---@param args TreeView Initialization table with fields above
+---@return table object TreeView
+function UI.TreeView(args)
+	local instance = Widget(args)
+
+	instance.tree = {}
+	instance.click_map = {}
+	instance.hovered = nil
+	instance.pole = 0
+
+	instance.draw = TreeView_draw
+	instance.onMouseDown = TreeView_onMouseDown
+	instance.onMouseMove = TreeView_onMouseMove
+
+	return instance
+end
+
+local function add_element(self, string)
+	local obj = UI.Button({
+		x = 1, y = #self.children + 1,
+		w = self.w, h = 1,
+		text = string,
+		align = "left",
+		bc = self.bc,
+		fc = self.fc,
+	})
+	self:addChild(obj)
+	self.h = #self.children
+	-- self.w = self.w + #string
+	return obj
+end
+
+local function ContextMenu_onFocus(self, focused)
+	log("POPAL")
+	if not focused then os.queueEvent("wm_popup_close") end
+	return true
+end
+
+function UI.ContextMenu(args)
+	local instance = UI.Container(args)
+
+	instance.add_element = add_element
+	instance.onFocus = ContextMenu_onFocus
 
 	return instance
 end

@@ -1,1 +1,1 @@
-local sys = require "sys"
+local sys = require "syscalls"

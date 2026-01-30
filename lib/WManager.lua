@@ -2,20 +2,19 @@ local screen = window.create(term.current(), 1, 1, term.getSize())
 screen.setVisible(false)
 term.redirect(screen)
 
-local sys = require "sys"
+local sys = require "syscalls"
 local UI = require "ui2"
--- local dm = dofile("lib/DManager.lua")
-local dm = require "DManager"
--- local docker = require "docker"
 local c = require "cfunc"
 local conf = c.readConf("usr/settings.conf")
+local Popup = require "Popup"
 
 local desktop_mode = conf["DesktopMode"]
-local _wmanager = {}
+local _WM = {}
 local _rep = string.rep
 -- local to_blit = colors.toBlit
 local windows_visible = {}
 local windows = {}
+local popup_windows = {}
 local need_resize = nil
 local win_held = nil
 local window_focus = nil
@@ -31,6 +30,7 @@ local EVENTS = {
 		["mouse_scroll"] = true,
 		["mouse_up"] = true,
 		["mouse_drag"] = true,
+		["mouse_move"] = true,
 	},
 	FOCUS = {
 		["char"] = true,
@@ -58,32 +58,48 @@ local COLORS = {
 
 local function check(win, x, y)
 	return (x >= win.x and x < win.w + win.x and
-			y >= win.y and y < win.h + win.y)
+		y >= win.y and y < win.h + win.y)
 end
 
 local function term_check(win, x, y)
 	local top = win.y + (win.border and 1 or 0)
 	return (x >= win.x and x < win.w + win.x and
-			y >= top and y < win.h + win.y)
+		y >= top and y < win.h + win.y)
 end
 
 
 local function win_draw(self)
 	if not self.border then return end
 	local btns = #self.children
-	local center = math.floor((self.w - btns - #self.title)/2) + 1
+	local center = math.floor((self.w - btns - #self.title) / 2) + 1
 	term.setBackgroundColor(window_focus == self and COLORS.TITLE[1] or colors.lightGray)
 	term.setCursorPos(self.x, self.y)
-	term.write(_rep(" ",self.w))
+	term.write(_rep(" ", self.w))
 	term.setTextColor(COLORS.TITLE[2])
 	term.setCursorPos(center + self.x, self.y)
 	term.write(self.title)
 	for i, child in ipairs(self.children) do
-		child.color_txt = window_focus == self and COLORS.BUTTONS[i] or colors.gray
-		child.color_bg = window_focus == self and COLORS.TITLE[1] or colors.lightGray
+		child.fc = window_focus == self and COLORS.BUTTONS[i] or colors.gray
+		child.bc = window_focus == self and COLORS.TITLE[1] or colors.lightGray
 		child:draw()
 	end
 end
+
+function sys.create_popup(items, x, y, width, opts)
+	opts = opts or { bgColor = colors.gray, selText = colors.white, selBg = colors.blue }
+	local p = Popup.create(items, x, y, width, opts, screen)
+	table.insert(popup_windows, p)
+	return p
+end
+
+-- function sys.create_popup(object)
+-- 	_G.context = object
+-- 	table.insert(popup_windows, object)
+-- 	if _WM.uiserver_pid then
+-- 		sys.ipc(_WM.uiserver_pid, {"popup_add"})
+-- 	end
+-- 	return p
+-- end
 
 local function window_reposition(win, x, y, w, h)
 	local n_x = desktop_mode and x or (w or win.w) + x - 1
@@ -94,7 +110,7 @@ local function window_reposition(win, x, y, w, h)
 	win.x, win.y = x, y
 	if w and h then win.w, win.h = w, h end
 	y = win.border and y + 1 or y
-	h = win.border and h - 1 or h
+	h = (h and win.border) and h - 1 or h
 	win.term.reposition(x, y, w, h)
 	-- if win.h + win.y - 1 >= MAXIMIZE_H - 1 then
 	-- 	docker.hide(true)
@@ -117,9 +133,11 @@ local function window_set_focus(win)
 	end
 
 	table.insert(windows_visible, win)
+	if _WM.panel_pid then sys.ipc(_WM.panel_pid, "menu_add", win.id) end
 end
 
 local function title_handler(win, evt, id)
+	if evt[1] == "mouse_move" then return false end
 	for _, child in ipairs(win.children) do
 		if child:check(evt[3], evt[4]) or child.held then
 			window_set_focus(win)
@@ -140,7 +158,7 @@ local function close_pressed(self)
 end
 
 local function minimize_pressed(self)
-	_wmanager.close_window(self.root.id, true)
+	_WM.close_window(self.root.id, true)
 end
 
 --СОГЛАСИЕ СОЗДАТЕЛЯ BRAUNNOS
@@ -168,11 +186,20 @@ end
 
 local function title_fill(win, menu)
 	if not win.border then return end
-	local btn_ico = desktop_mode and string.char(7) or "x"
+	local btn_ico = desktop_mode and "\7" or "x"
 	local x = desktop_mode and win.x or win.w + win.x - 1
 	local lightGray = desktop_mode and colors.lightGray or nil
 
-	local close = UI.Button(x, win.y, 1, 1, btn_ico, _, lightGray, COLORS.TITLE[1], colors.red)
+	-- local close = UI.Button(x, win.y, 1, 1, btn_ico, _, {font2 = lightGray, bg = COLORS.TITLE[1], font = colors.red})
+	local close = UI.Button({
+		x = x, y = win.y,
+		w = 1, h = 1,
+		fc_cl = lightGray,
+		bc_cl = gray,
+		bc = COLORS.TITLE[1],
+		fc = colors.red,
+		text = btn_ico,
+	})
 	close.pressed = close_pressed
 	close.root = win
 
@@ -188,16 +215,33 @@ local function title_fill(win, menu)
 		return close, menu
 	end
 
-	local minimize = UI.Button(x + 1, win.y, 1, 1, btn_ico, _, lightGray, colors.gray, colors.orange)
+	-- local minimize = UI.Button(x + 1, win.y, 1, 1, btn_ico, _, {font2 = lightGray, bg = colors.gray, font = colors.orange})
+	local minimize = UI.Button({
+		x = x + 1, y = win.y,
+		w = 1, h = 1,
+		fc_cl = lightGray,
+		bc_cl = gray,
+		bc = COLORS.TITLE[1],
+		fc = colors.orange,
+		text = btn_ico,
+	})
+
 	minimize.pressed = minimize_pressed
 	minimize.root = win
 
-	local maximize = UI.Button(x + 2, win.y, 1, 1, btn_ico, _, lightGray, colors.gray, colors.green)
+
+	-- local maximize = UI.Button(x + 2, win.y, 1, 1, btn_ico, _, {font2 = lightGray, bg = colors.gray, font = colors.green})
+	local maximize = UI.Button({
+		x = x + 2, y = win.y,
+		w = 1, h = 1,
+		fc_cl = lightGray,
+		bc_cl = gray,
+		bc = COLORS.TITLE[1],
+		fc = colors.green,
+		text = btn_ico,
+	})
 	maximize.pressed = maximize_pressed
 	maximize.root = win
-
-	-- sys.ipc(_wmanager.panel_pid, "global_menu", )
-	-- dm.set_global_menu(menu)
 
 	return close, minimize, maximize
 end
@@ -206,7 +250,7 @@ local function addChild(self, child)
 	table.insert(self.children, child)
 end
 
-function _wmanager.create(title, x, y, w, h, border, id, order)
+function _WM.create(title, x, y, w, h, border, id, order, menu)
 	x = desktop_mode and x or DEFAULT_X
 	y = desktop_mode and y or DEFAULT_Y
 	w = desktop_mode and w or MAXIMIZE_W
@@ -227,18 +271,19 @@ function _wmanager.create(title, x, y, w, h, border, id, order)
 	win.offset_x = 0
 	win.offset_y = 0
 	win.maximize = (not desktop_mode)
-	win.children = {title_fill(win, menu)}
+	win.children = { title_fill(win, menu) }
 	win.order = order or 2
 
 	windows[id] = win
+	_G.global_menu = menu
 	window_set_focus(win)
 	-- table.insert(windows_visible, win)
-	if _wmanager.docker_pid then sys.ipc(_wmanager.docker_pid, "docker_add", id) end
+	if _WM.docker_pid then sys.ipc(_WM.docker_pid, "docker_add", id) end
 
 	return win
 end
 
-function _wmanager.minimize_window(win)
+function _WM.minimize_window(win)
 	for i = #windows_visible, 1, -1 do
 		if windows_visible[i] == win then
 			table.remove(windows_visible, i)
@@ -247,7 +292,7 @@ function _wmanager.minimize_window(win)
 	end
 end
 
-function _wmanager.close_window(pid, bool)
+function _WM.close_window(pid, bool)
 	if not windows[pid] then return end
 	for i = #windows_visible, 1, -1 do
 		if windows_visible[i].id == pid then
@@ -258,14 +303,14 @@ function _wmanager.close_window(pid, bool)
 	window_set_focus(windows_visible[#windows_visible])
 	if bool then return end
 	windows[pid] = nil
-	if _wmanager.docker_pid then sys.ipc(_wmanager.docker_pid, "docker_remove", pid) end
+	if _WM.docker_pid then sys.ipc(_WM.docker_pid, "docker_remove", pid) end
 end
 
 local function visible_sort()
 	local t = {}
 	for i = 1, #windows_visible do
 		local win = windows_visible[i]
-		t[i] = {win = win, index = i}
+		t[i] = { win = win, index = i }
 	end
 
 	table.sort(t, function(a, b)
@@ -281,11 +326,9 @@ local function visible_sort()
 	end
 end
 
-function _wmanager.redraw_all()
+function _WM.redraw_all()
 	visible_sort()
-	dm.draw()
-	-- term.setBackgroundColor(colors.lightBlue)
-	-- term.clear()
+
 	for _, win in ipairs(windows_visible) do
 		local win_term = win.term
 		win_draw(win)
@@ -293,20 +336,66 @@ function _wmanager.redraw_all()
 		win_term.setVisible(false)
 	end
 
+	for i = 1, #popup_windows do
+		local p = popup_windows[i]
+		if p and not p.closed then p:draw() end
+	end
+
 	screen.setVisible(true)
 	screen.setVisible(false)
+	if window_focus then
+		local native = term.native()
+		local cursor = window_focus.term.getCursorBlink()
+		local txtCol = window_focus.term.getTextColor()
+		local x, y = window_focus.term.getCursorPos()
+		local t_x, t_y = window_focus.term.getPosition()
+		native.setCursorBlink(cursor)
+		native.setTextColor(txtCol)
+		native.setCursorPos(t_x + x - 1, t_y + y - 1)
+	end
 end
 
-function _wmanager.dispatch_event(evt)
+function _WM.dispatch_event(evt)
 	local event_name = evt[1]
+	
+	if #popup_windows > 0 then
+		for i = #popup_windows, 1, -1 do
+			local p = popup_windows[i]
+			if not p then
+				table.remove(popup_windows, i)
+			else
+				local res = p:handleEvent(evt)
+				if res and res.consumed then
+					if res.open then
+						table.remove(popup_windows, i + 1)
+						table.insert(popup_windows, i + 1, res.open)
+					end
+					if p.closed then table.remove(popup_windows, i) end
+					return true
+				end
+				if p.closed then table.remove(popup_windows, i) end
+			end
+		end
+	end			
+	-- if event_name == "wm_popup_close" then
+	-- 	popup_windows = {}
+	-- end
+	
+	-- if #popup_windows > 0 then
+	-- 	if _WM.uiserver_pid then
+	-- 		sys.ipc(_WM.uiserver_pid, evt)
+	-- 		return true
+	-- 	end
+	-- end
 
 	if EVENTS.MOUSE[event_name] then
 		local c_x, c_y = evt[3], evt[4]
+		if not (c_x and c_y) then return true end
 
 		if win_held and win_held.is_draggable and event_name == "mouse_drag" then
 			if win_held.maximize then
 				win_held.children[3]:pressed(c_x)
-				return {win_held.id, {"term_resize", win_held.w, win_held.h - 1}}
+				return { win_held.id, { "term_resize", win_held.w, win_held.h - 1 } }
 			end
 			window_reposition(win_held, c_x - win_held.offset_x, math.max(2, c_y), win_held.w, win_held.h)
 			return true
@@ -318,7 +407,7 @@ function _wmanager.dispatch_event(evt)
 				local new_h = math.max(MIN_H, c_y - window_focus.y + 1)
 				if new_w ~= window_focus.w or new_h ~= window_focus.h then
 					window_reposition(window_focus, window_focus.x, window_focus.y, new_w, new_h)
-					return {window_focus.id, {"term_resize", window_focus.w, window_focus.h - 1}}
+					return { window_focus.id, { "term_resize", window_focus.w, window_focus.h - 1 } }
 				end
 			elseif event_name == "mouse_up" then
 				window_focus.resizing = false
@@ -330,12 +419,12 @@ function _wmanager.dispatch_event(evt)
 			if win.border and title_handler(win, evt, i) then
 				if need_resize then
 					need_resize = nil
-					return {win.id, {"term_resize", win.w, win.h - 1}}
+					return { win.id, { "term_resize", win.w, win.h - 1 } }
 				end
 				return true
 			end
 			if check(win, c_x, c_y) then
-				window_set_focus(win)
+				if not (event_name == "mouse_move" or event_name == "mouse_drag") then window_set_focus(win) end
 				local resize_zone = (c_x >= win.x + win.w - 1 and c_y >= win.y + win.h - 1)
 				if resize_zone and win.border and event_name == "mouse_click" then
 					win.resizing = true
@@ -344,7 +433,7 @@ function _wmanager.dispatch_event(evt)
 					local rel_x = c_x - win.x + 1
 					local rel_y = c_y - win.y + (win.border and 0 or 1)
 					evt[3], evt[4] = rel_x, rel_y
-					return {win.id, evt}
+					return { win.id, evt }
 				end
 
 				if not win.border then return true end
@@ -357,11 +446,10 @@ function _wmanager.dispatch_event(evt)
 				return true
 			end
 		end
-		dm.event_handler(evt)
 		return true
 	elseif EVENTS.FOCUS[event_name] then
 		if window_focus then
-			return {window_focus.id, evt}
+			return { window_focus.id, evt }
 		end
 		-- return true
 	elseif event_name == "term_resize" then
@@ -381,10 +469,10 @@ function _wmanager.dispatch_event(evt)
 				window_reposition(win, x, y)
 			end
 		end
-		dm.resize(w, h)
 
-		if _wmanager.panel_pid then sys.ipc(_wmanager.panel_pid, "term_resize", w, h) end
-		if _wmanager.docker_pid then sys.ipc(_wmanager.docker_pid, "term_resize", w, h) end
+		if _WM.panel_pid then sys.ipc(_WM.panel_pid, "term_resize", w, h) end
+		if _WM.docker_pid then sys.ipc(_WM.docker_pid, "term_resize", w, h) end
+		if _WM.desktop_pid then sys.ipc(_WM.desktop_pid, "term_resize", w, h) end
 		return true
 	elseif EVENTS.WM[event_name] then
 		if event_name == "wm_reposition" then
@@ -394,7 +482,7 @@ function _wmanager.dispatch_event(evt)
 			window_reposition(win, evt[3], evt[4], evt[5], evt[6])
 
 			if win.w ~= old_w or win.h ~= old_h then
-				return {win.id, {"term_resize", MAXIMIZE_W, MAXIMIZE_H}}
+				return { win.id, { "term_resize", MAXIMIZE_W, MAXIMIZE_H } }
 			end
 		elseif event_name == "wm_restore" then
 			local win = windows[evt[2]]
@@ -404,4 +492,4 @@ function _wmanager.dispatch_event(evt)
 	end
 end
 
-return _wmanager
+return _WM

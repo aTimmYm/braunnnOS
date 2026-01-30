@@ -1,6 +1,6 @@
 --DESIGN BY BASNIPE(AI)
-local sys = require "sys"
-sys.register_window("CheckEVT", 1, 1, 51, 18, true)
+local sys = require "syscalls"
+sys.register_window("CheckEVT", 1, 1, 39, 14, true)
 
 local function printEvent(evt)
 	local name = tostring(evt[1] or "nil")

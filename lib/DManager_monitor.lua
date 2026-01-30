@@ -9,7 +9,7 @@ local _ceil = math.ceil
 local dM = {} --deskManager
 
 local UI = require "ui2"
-local system = require "lib.sys"
+local system = require "syscalls"
 
 local shortcut_width = 15
 local shortcut_height = 8

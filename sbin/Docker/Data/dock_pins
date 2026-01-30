@@ -1,4 +1,10 @@
 return {
-	{"sbin/MPlayer/main.lua", "MPlayer"},
-	{"sbin/Launchpad/main.lua", "Launchpad"}
+  {
+    "sbin/MPlayer/main.lua",
+    "MPlayer",
+  },
+  {
+    "sbin/Explorer/main.lua",
+    "Explorer",
+  },
 }

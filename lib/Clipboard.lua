@@ -1,4 +1,4 @@
-local system = require "lib.sys"
+local system = require "syscalls"
 
 if not fs.exists("Clipboard.txt") then
 	local file = fs.open("Clipboard.txt", "w")

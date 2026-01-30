@@ -3,41 +3,80 @@ local math_min = math.min
 local string_byte = string.byte
 local string_sub = string.sub
 -----------------------------------------------------
-local sys = require "sys"
+local sys = require "syscalls"
 local UI = require "ui2"
-local lib
-
-lib = require("sbin/Converter/Data/id3_meta")
-local readID3v1 = lib.readID3v1
-local readID3v2 = lib.readID3v2
-
-lib = require("sbin/Converter/Data/mp4_meta")
-local readMP4Metadata = lib.readMP4Metadata
+local readID3v1 = require("sbin/Converter/Data/id3_meta").readID3v1
+local readID3v2 = require("sbin/Converter/Data/id3_meta").readID3v2
+local readMP4Metadata = require("sbin/Converter/Data/mp4_meta").readMP4Metadata
 
 sys.register_window("Converter", 1, 1, 26, 10, true)
 
 local root = UI.Root()
 
-local surface = UI.Box(1, 1, root.w, root.h, colors.black, colors.white)
+-- local surface = UI.Box(1, 1, root.w, root.h, colors.black, colors.white)
+local surface = UI.Box({
+	x = 1, y = 1,
+	w = root.w, h = root.h,
+	bc = colors.black,
+	fc = colors.white,
+})
 root:addChild(surface)
 
 local termTxtcol = term.getTextColor()
 
 local W = math_min(24, surface.w - 3)
 
-local textfield_filePath = UI.Textfield(2, 2, W, 1, "Path to the audio file", false, colors.gray, colors.white)
+-- local textfield_filePath = UI.Textfield(2, 2, W, 1, "Path to the audio file", false, colors.gray, colors.white)
+local textfield_filePath = UI.Textfield({
+	x = 2, y = 2,
+	w = W, h = 1,
+	hint = "Path to the audio file",
+	bc = colors.gray,
+	fc = colors.white,
+})
 surface:addChild(textfield_filePath)
 
-local textfield_saveTo = UI.Textfield(2, 4, W, 1, "Path to save new file", false, colors.gray, colors.white)
+-- local textfield_saveTo = UI.Textfield(2, 4, W, 1, "Path to save new file", false, colors.gray, colors.white)
+local textfield_saveTo = UI.Textfield({
+	x = 2, y = 4,
+	w = W, h = 1,
+	hint = "Path to save new file",
+	bc = colors.gray,
+	fc = colors.white,
+})
 surface:addChild(textfield_saveTo)
 
-local btnConvert = UI.Button(2, 6, 14, 3, "Convert", "center", _, colors.lightGray, colors.white)
+-- local btnConvert = UI.Button(2, 6, 14, 3, "Convert", "center", _, colors.lightGray, colors.white)
+local btnConvert = UI.Button({
+	x = 2, y = 6,
+	w = 14, h = 3,
+	text = "Convert",
+	align = "center",
+	bc = colors.lightGray,
+	fc = colors.white,
+})
 surface:addChild(btnConvert)
 
-local btnDef = UI.Button(17, 6, 7, 1, "DefPath", "center", _, colors.lightGray, colors.white)
+-- local btnDef = UI.Button(17, 6, 7, 1, "DefPath", "center", _, colors.lightGray, colors.white)
+local btnDef = UI.Button({
+	x = 17, y = 6,
+	w = 7, h = 1,
+	text = "DefPath",
+	align = "center",
+	bc = colors.lightGray,
+	fc = colors.white,
+})
 surface:addChild(btnDef)
 
-local progress_convert = UI.LoadingBar(2, 3, W, colors.black, colors.blue, colors.black, "center", 0)
+-- local progress_convert = UI.LoadingBar(2, 3, W, colors.black, colors.blue, colors.black, "center", 0)
+local progress_convert = UI.LoadingBar({
+	x = 2, y = 3,
+	w = W,
+	bc = colors.black,
+	color_Loading = colors.blue,
+	color_NotLoaded = surface.bc,
+	value = 0,
+})
 surface:addChild(progress_convert)
 
 btnConvert.pressed = function (self)

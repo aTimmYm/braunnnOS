@@ -33,5 +33,5 @@ local function OLD()
 	return end_timer - start_timer
 end
 
-print("OLD: "..)
-print("NEW: "..)
+print("OLD: "..OLD)
+print("NEW: "..NEW)

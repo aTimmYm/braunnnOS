@@ -8,7 +8,7 @@ local table_insert = table.insert
 local table_sort = table.sort
 -----------------------------------------------------
 -------| СЕКЦИЯ ПОДКЛЮЧЕНИЯ БИБЛИОТЕК И ROOT |-------
-local sys = require "sys"
+local sys = require "syscalls"
 local c = require "cfunc"
 local UI = require "ui2"
 -----------------------------------------------------
@@ -40,7 +40,13 @@ local serverID = rednet.lookup(protocol, "messenger_main")
 ----------| СЕКЦИЯ ИНИЦИАЛИЗАЦИИ ОБЪЕКТОВ |----------
 local root = UI.Root()
 
-local surface = UI.Box(1, 1, root.w, root.h, colors.black, colors.white)
+-- local surface = UI.Box(1, 1, root.w, root.h, colors.black, colors.white)
+local surface = UI.Box({
+	x = 1, y = 1,
+	w = root.w, h = root.h,
+	bc = colors.black,
+	fc = colors.white,
+})
 root:addChild(surface)
 
 local usersList, msgScrollBox, textOut, msgLabel, timer
@@ -49,8 +55,8 @@ local usersList, msgScrollBox, textOut, msgLabel, timer
 local function drawMessage(msg, direction)
 	if not selectedFriend[2] then return end
 	local isRight = (direction == "right")
-	local color_bg = isRight and msgScrollBox.color_bg or colors.lightGray
-	local color_txt = isRight and colors.lightGray or colors.white
+	local bc = isRight and msgScrollBox.color_bg or colors.lightGray
+	local fc = isRight and colors.lightGray or colors.white
 
 
 	local lines = {}
@@ -86,7 +92,15 @@ local function drawMessage(msg, direction)
 		end
 	end
 
-	local label = UI.Label(1, currentChatHeight, msgScrollBox.w, #lines, msg, direction, color_bg, color_txt)
+	-- local label = UI.Label(1, currentChatHeight, msgScrollBox.w, #lines, msg, direction, bc, fc)
+	local label = UI.Label({
+		x = 1, y = currentChatHeight,
+		w = msgScrollBox.w, h = #lines,
+		text = msg,
+		align = direction,
+		bc = bc,
+		fc = fc,
+	})
 
 	msgScrollBox:addChild(label)
 	msgScrollBox:onLayout()
@@ -116,7 +130,15 @@ local function drawFriendsButtons()
 	table_sort(friendsSort)
 	usersList.children = {}
 	for i, v in ipairs(friendsSort) do
-		local userButton = UI.Button(1, i, usersList.w, 1, " "..tostring(v), "left", _, usersList.color_bg, colors.white)
+		-- local userButton = UI.Button(1, i, usersList.w, 1, " "..tostring(v), "left", _, usersList.color_bg, colors.white)
+		local userButton = UI.Button({
+			x = 1, y = i,
+			w = usersList.w, h = 1,
+			text = " "..tostring(v),
+			align = "left",
+			bc = usersList.bc,
+			fc = colors.white,
+		})
 		userButton.selectedFriend = friends[v]
 		userButton.pressed = userButton_pressed
 		usersList:addChild(userButton)
@@ -127,19 +149,54 @@ end
 local function switchToAuth()
 	surface:removeChild(true)
 
-	msgLabel = UI.Label(1, math.floor(surface.h/2) - 3, surface.w, 1, "", "center", surface.color_bg, colors.white)
+	-- msgLabel = UI.Label(1, math.floor(surface.h/2) - 3, surface.w, 1, "", "center", surface.color_bg, colors.white)
+	msgLabel = UI.Label({
+		x = 1, y = math.floor(surface.h/2) - 3,
+		w = surface.w, h = 1,
+		align = "center",
+		bc = surface.bc,
+		fc = colors.white,
+	})
 	surface:addChild(msgLabel)
 
-	local textfieldLogin = UI.Textfield(math.floor((surface.w - 10)/2) + 1, msgLabel.local_y + 2, 10, 1, "Login", _, colors.gray, colors.white)
+	-- local textfieldLogin = UI.Textfield(math.floor((surface.w - 10)/2) + 1, msgLabel.local_y + 2, 10, 1, "Login", _, colors.gray, colors.white)
+	local textfieldLogin = UI.Textfield({
+		x = math.floor((surface.w - 10)/2) + 1, y = msgLabel.local_y + 2,
+		w = 10, h = 1,
+		hint = "Login",
+		bc = colors.gray,
+		fc = colors.white,
+	})
 	surface:addChild(textfieldLogin)
 
-	local textfieldPassword = UI.Textfield(textfieldLogin.local_x, textfieldLogin.local_y + 2, 10, 1, "Password", true, colors.gray, colors.white)
+	-- local textfieldPassword = UI.Textfield(textfieldLogin.local_x, textfieldLogin.local_y + 2, 10, 1, "Password", true, colors.gray, colors.white)
+	local textfieldPassword = UI.Textfield({
+		x = textfieldLogin.x, y = textfieldLogin.x + 2,
+		w = 10, h = 1,
+		hint = "Password",
+		bc = colors.gray,
+		fc = colors.white
+	})
 	surface:addChild(textfieldPassword)
 
-	local buttonRegister = UI.Button(math.floor((surface.w - 10)/2) - 5, textfieldPassword.local_y + 2, 10, 1, "Register", _, _, colors.lightGray, colors.white)
+	-- local buttonRegister = UI.Button(math.floor((surface.w - 10)/2) - 5, textfieldPassword.local_y + 2, 10, 1, "Register", _, _, colors.lightGray, colors.white)
+	local buttonRegister = UI.Button({
+		x = math.floor((surface.w - 10)/2) - 5, y = textfieldPassword.y + 2,
+		w = 10, h = 1,
+		text = "Register",
+		bc = colors.lightGray,
+		fc = colors.white,
+	})
 	surface:addChild(buttonRegister)
 
-	local buttonLogin = UI.Button(buttonRegister.local_x + buttonRegister.w + 1, textfieldPassword.local_y + 2, 10, 1, "Login", _, _, colors.lightGray, colors.white)
+	-- local buttonLogin = UI.Button(buttonRegister.local_x + buttonRegister.w + 1, textfieldPassword.local_y + 2, 10, 1, "Login", _, _, colors.lightGray, colors.white)
+	local buttonLogin = UI.Button({
+		x = buttonRegister.x + buttonRegister.w + 1, y = textfieldPassword.y + 2,
+		w = 10, h = 1,
+		text = "Login",
+		bc = colors.lightGray,
+		fc = colors.white,
+	})
 	surface:addChild(buttonLogin)
 
 	buttonLogin.pressed = function (self)
@@ -171,12 +228,31 @@ local function switchToApp()
 	surface.dirty = true
 	surface:removeChild(true)
 
-	usersList = UI.ScrollBox(1, 1, math.ceil(surface.w/4), surface.h, colors.black)
+	-- usersList = UI.ScrollBox(1, 1, math.ceil(surface.w/4), surface.h, colors.black)
+	usersList = UI.ScrollBox({
+		x = 1, y = 1,
+		w = math.ceil(surface.w/4), h = surface.h,
+		bc = colors.black,
+		fc = colors.white,
+	})
 	surface:addChild(usersList)
 
-	msgScrollBox = UI.ScrollBox(usersList.w + 1, 1, surface.w - usersList.w, surface.h - 1, colors.gray)
+	-- msgScrollBox = UI.ScrollBox(usersList.w + 1, 1, surface.w - usersList.w, surface.h - 1, colors.gray)
+	msgScrollBox = UI.ScrollBox({
+		x = usersList.w + 1, y = 1,
+		w = surface.w - usersList.w, h = surface.h - 1,
+		bc = colors.gray,
+		fc = colors.white,
+	})
 
-	textOut = UI.Textfield(msgScrollBox.x, surface.h, msgScrollBox.w, 1, "Type message", _, colors.black, colors.white)
+	-- textOut = UI.Textfield(msgScrollBox.x, surface.h, msgScrollBox.w, 1, "Type message", _, colors.black, colors.white)
+	textOut = UI.Textfield({
+		x = msgScrollBox.x, y = surface.h,
+		w = msgScrollBox.w, h = 1,
+		hint = "Type Message",
+		bc = colors.black,
+		fc = colors.white,
+	})
 
 	textOut.pressed = function (self)
 		drawMessage(self.text, "right")

@@ -1,5 +1,4 @@
-local lib = require("sbin/Converter/Data/translit")
-local decode_and_translit = lib.decode_and_translit
+local decode_and_translit = require("sbin/Converter/Data/translit").decode_and_translit
 local string_sub = string.sub
 local string_byte = string.byte
 local ret = {}

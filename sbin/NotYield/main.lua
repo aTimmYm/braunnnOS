@@ -1,6 +1,6 @@
-local sys = require "sys"
+local sys = require "syscalls"
 
-sys.register_window("NotYield", 1, 1, 51, 18, true)
+sys.register_window("NotYield", 1, 1, 39, 14, true)
 
 local i = 1
 

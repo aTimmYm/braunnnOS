@@ -1,5 +1,5 @@
 local PE = require "PixelEngine"
-local sys = require "sys"
+local sys = require "syscalls"
 -- local mon = peripheral.wrap("top")
 sys.register_window("PixelEngine", 1, 2, 39, 14, true)
 --we make basic adjustments to color and size

@@ -19,7 +19,7 @@ local instructions = 100000
 local event_queue = {}
 local interruption, need_resume = true
 
-local sys = require "sys"
+local sys = require "syscalls"
 local wm = require "WManager"
 package.loaded["WManager"] = nil
 
@@ -55,13 +55,13 @@ local function hook()
 	end
 end
 
-function sys.register_window(title, x, y, w, h, border, order)
+function sys.register_window(opts, x, y, w, h, border, order, menu)
 	if not wm then return end
 	local running_co = co_running()
 
 	for pid, process in pairs(processes) do
 		if process.co == running_co then
-			process.win = wm.create(title, x, y, w, h, border, pid, order)
+			process.win = wm.create(opts, x, y, w, h, border, pid, order, menu)
 			term.redirect(process.win.term)
 			return process.win
 			-- break
@@ -139,12 +139,14 @@ local function process_resume(pid, args)
 		end
 		-- debug.sethook(process.co, hook, "", instructions)
 	else
-		log(filter)
+        local traceback = debug.traceback(process.co, filter)  -- Фокус на стеку процесу
+        log("Помилка в процесі PID " .. pid .. ":\n" .. traceback)  -- Виводимо повний стек
 		process_end(pid)
 	end
 end
 
 function sys.ipc(pid, ...)
+	-- local co, main = co_running()
 	-- process_resume(pid, {...})
 	t_insert(event_queue, 1, {pid, {...}})
 	-- os.queueEvent("ipc")
@@ -201,8 +203,10 @@ local function event_handler(evt)
 end
 
 local function kernel_run()
-	wm.docker_pid = sys.execute("sbin/Docker/main.lua", "docker", _ENV)
 	wm.panel_pid = sys.execute("lib/panel.lua", "panel", _ENV)
+	wm.desktop_pid = sys.execute("lib/DManager.lua", "desktop", _ENV)
+	wm.docker_pid = sys.execute("sbin/Docker/main.lua", "docker", _ENV)
+	-- wm.uiserver_pid = sys.execute("sbin/SystemUIServer/main.lua", "SystemUIServer", _ENV)
 	while kernel_running do
 		if wm then wm.redraw_all() end
 		local evt = {os.pullEventRaw()}
@@ -210,7 +214,7 @@ local function kernel_run()
 
 		if event_name == "term_resize" then evt[2], evt[3] = t_native.getSize() end
 		if event_name == "terminate" then kernel_running = false end
-		-- if event_name == "__interrupts" then interruption = true end
+		if event_name == "__interrupts" then interruption = true end
 
 		event_handler(evt)
 
@@ -220,11 +224,11 @@ local function kernel_run()
 			process_resume(queue[1], queue[2])
 		end
 
-		-- if need_resume and interruption then
-		-- 	os.queueEvent("__interrupts")
-		-- 	need_resume = false
-		-- 	interruption = false
-		-- end
+		if need_resume and interruption then
+			os.queueEvent("__interrupts")
+			need_resume = false
+			interruption = false
+		end
 	end
 end
 

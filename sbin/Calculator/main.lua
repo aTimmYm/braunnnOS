@@ -1,5 +1,5 @@
 -------| СЕКЦИЯ ПОДКЛЮЧЕНИЯ БИБЛИОТЕК И surface |-------
-local sys = require "sys"
+local sys = require "syscalls"
 local UI = require "ui2"
 -----------------------------------------------------
 -----| СЕКЦИЯ ОБЪЯВЛЕНИЯ ПЕРЕМЕННЫХ ПРОГРАММЫ |------
@@ -11,18 +11,32 @@ local btnTexts = {
 	{"4","5","6","*"},
 	{"1","2","3","-"},
 	{"0",".","=","+"},
-	{"C",string.char(27),"(",")"}
+	{"C","\27","(",")"}
 }
 -----------------------------------------------------
 ----------| СЕКЦИЯ ИНИЦИАЛИЗАЦИИ ОБЪЕКТОВ |----------
-sys.register_window("Calculator", 1, 1, 23, 14, true)
+sys.register_window("Calculator", 1, 1, 19, 14, true)
 
 local root = UI.Root()
 
-local surface = UI.Box(1, 1, root.w, root.h, colors.gray, colors.white)
+-- local surface = UI.Box(1, 1, root.w, root.h, colors.gray, colors.white)
+local surface = UI.Box({
+	x = 1, y = 1,
+	w = root.w, h = root.h,
+	bc = colors.gray,
+	fc = colors.white,
+})
 root:addChild(surface)
 
-local display = UI.Label(2, 1, math.max(10, surface.w - 2), 3, "0", "right", colors.black, colors.white)
+-- local display = UI.Label(1, 1, surface.w, 3, "0", "right", colors.black, colors.white)
+local display = UI.Label({
+	x = 1, y = 1,
+	w = surface.w, h = 3,
+	text = "0",
+	align = "right",
+	bc = colors.black,
+	fc = colors.white,
+})
 surface:addChild(display)
 -----------------------------------------------------
 ------| СЕКЦИЯ ОБЪЯВЛЕНИЯ ФУНКЦИЙ ПРОГРАММЫ |--------
@@ -62,14 +76,21 @@ for row = 1, #btnTexts do
 		local x = surface.x + (col - 1) * w + 1
 		local y = display.h + (row - 1) * h + 1
 
-		local btn = UI.Button(x, y, w, h, txt, _, _, surface.color_bg, colors.white)
+		-- local btn = UI.Button(x, y, w, h, txt, _, _, surface.color_bg, colors.white)
+		local btn = UI.Button({
+			x = x, y = y,
+			w = w, h = h,
+			text = txt,
+			bc = surface.bc,
+			fc = colors.white,
+		})
 
 		btn.pressed = function(self)
 			if txt == "C" then
 				expr = ""
 				setDisplay(0)
 				return
-			elseif txt == string.char(27) then
+			elseif txt == "\27" then
 				expr = expr:sub(1, -2)
 				if expr == "" then setDisplay(0) else setDisplay(expr) end
 				return
@@ -101,7 +122,7 @@ end
 --| СЕКЦИЯ ПЕРЕОПРЕДЕЛЕНИЯ ФУНКЦИОНАЛЬНЫХ МЕТОДОВ |--
 surface.onResize = function (width, height)
 	surface.w, surface.h = width, height
-	display.w = math.max(10, width - 2)
+	display.w = width
 	for row = 1, #btnTexts do
 		for col = 1, #btnTexts[row] do
 			local totalCols = #btnTexts[1]
