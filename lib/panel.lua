@@ -3,7 +3,8 @@ local UI = require "ui2"
 local self_pid = sys.getpid()
 
 local items = {
-	{ text = "About", onClick = function() log("About") end },
+	{ text = "Reboot", onClick = function() os.reboot() end },
+	{ text = "ShutDown", onClick = function() os.shutdown() end },
 }
 
 local globals = {}
