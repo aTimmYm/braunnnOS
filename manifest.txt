@@ -7,8 +7,7 @@ d1accc2e7be3993625e9c24f5fa44f99   app_ico_small.ico
 86dc08a5e5af4e14bc38bb327eb4cd9b   blittle_extended
 4ede0105e0e594c84a4c0f5795a443c1   groove.nfp
 341280da832e071b0b6b9972ce81a377   init.lua
-16cea9811523113c7d13bff7c216ae0c   kernel.lua
-1c1312120987d8373d86cc161320d4a0   lib/Clipboard.lua
+7d4535a4a498fbd4c49847a7a0439ee8   kernel.lua
 698c5699c0f402f17423a2ab79dff2d6   lib/DManager.lua
 61350cd27c75f7d4907bb11b17ad44c9   lib/DManager_monitor.lua
 cc0264dd56a0995e181bbcc1befbb3fb   lib/PixelEngine.lua
@@ -22,18 +21,17 @@ dab30e377fc66d66e0b41f392aea1a5a   lib/WManager.lua
 0e8430925597fb135103b506fe2c669f   lib/palette
 a3f402f429fb9d2ec7805b304cb7ded4   lib/panel.lua
 20ea8dd71b87edfffe1782c46c614b06   lib/services.lua
-5803c7c86da624bca4649d1b43f3e506   lib/sys.lua
 5803c7c86da624bca4649d1b43f3e506   lib/syscalls.lua
 a36fdc9afb696c297ac8b2d37b92d566   lib/ui.lua
-a66202f4bb9b81be537e891a2d517c3b   lib/ui2.lua
-e13218b9cc51c40fea3a938f066366be   log.txt
+d24a936b7c4c44cb0f87f761d7cfde54   lib/ui2.lua
+0af97daacd864dde206e478af0344be4   log.txt
 6ed2a7fb4889e2386c81ce3be2fc42b4   sbin/Activity Manager/icon.ico
 f20eb1cfebc25298a1206df9bf04a9f0   sbin/Activity Manager/main.lua
 23da7678bfb9ad7018811d64aa2ca22a   sbin/Blittle/main.lua
 fa9e2211ae473b02f178ecda08216941   sbin/CEditor/Data/lex.lua
 99db974632becd62ed0d1c709ba8b6b8   sbin/CEditor/icon.ico
 062d404a5ffda6fc702d207f81415219   sbin/CEditor/icon3.ico
-86188b6eda28ea3d95a17da0fc1d4d4d   sbin/CEditor/main.lua
+7dc56ece374afc51020b954d3032a481   sbin/CEditor/main.lua
 cf6bc7d1cbee2c1c07b78bc0d91e9565   sbin/Calculator/icon.ico
 d05b64c65dd3bee35f677015fdc0e551   sbin/Calculator/icon3
 50b980b6f2c4ced23738ce3d08235157   sbin/Calculator/icon3.ico
