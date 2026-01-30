@@ -1,1 +1,17 @@
-JIT; 
+0; 
+Помилка в процесі PID 4:
+/lib/ui2.lua:2462: attempt to get length of local 'prev_line' (a nil value)
+stack traceback:
+	/lib/ui2.lua:2462: in function </lib/ui2.lua:2443>
+	(...tail calls...)
+	/lib/ui2.lua:382: in function 'onEvent'
+	/lib/ui2.lua:409: in function 'mainloop'
+	/sbin/CEditor/main.lua:559: in main chunk; 
+Помилка в процесі PID 4:
+/lib/ui2.lua:2463: attempt to get length of local 'prev_line' (a nil value)
+stack traceback:
+	/lib/ui2.lua:2463: in function </lib/ui2.lua:2443>
+	(...tail calls...)
+	/lib/ui2.lua:382: in function 'onEvent'
+	/lib/ui2.lua:409: in function 'mainloop'
+	/sbin/CEditor/main.lua:559: in main chunk; 

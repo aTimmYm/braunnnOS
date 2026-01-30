@@ -9,6 +9,7 @@ local t_remove	= table.remove
 local t_insert	= table.insert
 
 -- local _kernel = {}
+_G.sysclipboard = ""
 local processes = {}
 local kernel_running = true
 local t_native = term.native()
@@ -215,6 +216,9 @@ local function kernel_run()
 		if event_name == "term_resize" then evt[2], evt[3] = t_native.getSize() end
 		if event_name == "terminate" then kernel_running = false end
 		if event_name == "__interrupts" then interruption = true end
+		if event_name == "paste" and _G.sysclipboard then evt[2] = _G.sysclipboard end
+		if event_name == "paste_on" then _G.sysclipboard = "" goto continue end
+		if event_name == "paste_off" then _G.sysclipboard = nil goto continue end
 
 		event_handler(evt)
 
@@ -229,6 +233,7 @@ local function kernel_run()
 			need_resume = false
 			interruption = false
 		end
+		::continue::
 	end
 end
 

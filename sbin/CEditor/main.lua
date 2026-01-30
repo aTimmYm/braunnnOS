@@ -230,7 +230,7 @@ local function create_textbox(path)
 	end
 
 	local preff_x
-	local alt_held = false
+	local alt_held = nil
 	local temp_key = textbox.onKeyDown
 	textbox.onKeyDown = function (self, key, held)
 		local min_y
@@ -316,7 +316,7 @@ local function create_textbox(path)
 	local temp_keyUp = textbox.onKeyUp
 	textbox.onKeyUp = function (self, key)
 		if key == keys.leftAlt then
-			alt_held = false
+			alt_held = nil
 			return true
 		end
 		return temp_keyUp(self, key)

@@ -1984,6 +1984,8 @@ local function Textfield_onCharTyped(self, chr)
 end
 
 local function Textfield_onPaste(self, text)
+	delete_selected_tf(self)
+	text = text:match("([^\n]*)")
 	self.text = _sub(self.text, 1, self.cursor_x - 1)..text.._sub(self.text, self.cursor_x, #self.text)
 	self:moveCursorPos(self.cursor_x + #text)
 	self.dirty = true
@@ -1992,10 +1994,10 @@ end
 
 local function Textfield_onKeyUp(self, key)
 	if key == keys.leftShift then
-		self.shift_held = false
+		self.shift_held = nil
 		return true
 	elseif key == keys.leftCtrl then
-		self.ctrl_held = false
+		self.ctrl_held = nil
 	end
 	return true
 end
@@ -2038,7 +2040,7 @@ local function Textfield_onKeyDown(self, key, held)
 		self.ctrl_held = true
 	elseif key == keys.c and self.ctrl_held then
 		local peremennaya = self.text:sub(self.selected.pos1_x, self.selected.pos2_x)
-		-- clipboard.copy(peremennaya)
+		if _G.sysclipboard then _G.sysclipboard = peremennaya end
 		return true
 	elseif key == keys.a and self.ctrl_held then
 		self.selected.pos1_x = 1
@@ -2145,29 +2147,29 @@ local function select_text(self, new_x, new_y)
 	self.dirty = true
 end
 
-local function clipboard_paste(self)
-	delete_selected_text(self)
-	local paste = clipboard.paste()
-	local y = self.cursor.y
-	local lines = self.lines
-	local t_line = self.lines[self.cursor.y]
-	local i = 0
-	local ostatok
-	for line in paste:gmatch("[^\n]+") do
-		if i == 0 then
-			ostatok = _sub(t_line, self.cursor.x, #t_line)
-			t_line = _sub(t_line, 1, self.cursor.x - 1)..line
-			self:setLine(t_line, y)
-		else
-			table.insert(lines, y + i, line)
-		end
-		i = i + 1
-	end
-	local prev_line = lines[y + i - 1]
-	lines[y + i - 1] = _sub(prev_line, 1, #prev_line)..ostatok
-	self:moveCursorPos(#prev_line + 1, y + i - 1)
-	self.dirty = true
-end
+-- local function clipboard_paste(self)
+-- 	delete_selected_text(self)
+-- 	local paste = clipboard.paste()
+-- 	local y = self.cursor.y
+-- 	local lines = self.lines
+-- 	local t_line = self.lines[self.cursor.y]
+-- 	local i = 0
+-- 	local ostatok
+-- 	for line in paste:gmatch("[^\n]+") do
+-- 		if i == 0 then
+-- 			ostatok = _sub(t_line, self.cursor.x, #t_line)
+-- 			t_line = _sub(t_line, 1, self.cursor.x - 1)..line
+-- 			self:setLine(t_line, y)
+-- 		else
+-- 			table.insert(lines, y + i, line)
+-- 		end
+-- 		i = i + 1
+-- 	end
+-- 	local prev_line = lines[y + i - 1]
+-- 	lines[y + i - 1] = _sub(prev_line, 1, #prev_line)..ostatok
+-- 	self:moveCursorPos(#prev_line + 1, y + i - 1)
+-- 	self.dirty = true
+-- end
 
 local function TextBox_draw(self)
 	paintutils.drawFilledBox(self.x, self.y, self.x + self.w - 1, self.y + self.h - 1, self.bc)
@@ -2332,10 +2334,10 @@ end
 
 local function TextBox_onKeyUp(self, key)
 	if key == keys.leftShift then
-		self.shift_held = false
+		self.shift_held = nil
 	end
 	if key == keys.leftCtrl then
-		self.ctrl_held = false
+		self.ctrl_held = nil
 	end
 	return true
 end
@@ -2380,17 +2382,15 @@ local function TextBox_onKeyDown(self, key, held)
 			select_text(self, a, self.cursor.y)
 		end
 		if not self.shift_held then self.selected.status = false end
-	elseif key == keys.c and self.ctrl_held then
-		local peremennaya = {}
+	elseif key == keys.c and self.ctrl_held and self.selected.status then
+		local copy = ""
 		for i = self.selected.pos1.y, self.selected.pos2.y do
-			table_insert(peremennaya, self.lines[i])
+			-- if self.line[i] ~= nil then
+			copy = copy .. self.lines[i].."\n"
+			-- end
 		end
-		peremennaya[#peremennaya] = _sub(peremennaya[#peremennaya], 1, self.selected.pos2.x)
-		peremennaya[1] = _sub(peremennaya[1], self.selected.pos1.x, #peremennaya[1])
-		clipboard.copy(peremennaya)
+		if _G.sysclipboard then _G.sysclipboard = copy end
 		return true
-	elseif key == keys.v and self.ctrl_held then
-		clipboard_paste(self)
 	elseif key == keys.a and self.ctrl_held then
 		local p1, p2 = self.selected.pos1, self.selected.pos2
 		local all_lines = #self.lines
@@ -2441,8 +2441,28 @@ local function TextBox_onKeyDown(self, key, held)
 	return true
 end
 
-function TextBox_onPaste(self)
-	clipboard_paste(self)
+function TextBox_onPaste(self, char)
+	delete_selected_text(self)
+	local y = self.cursor.y
+	local lines = self.lines
+	local t_line = self.lines[self.cursor.y]
+	local i = 0
+	local ostatok
+	for line in char:gmatch("[^\n]+") do
+		if i == 0 then
+			ostatok = _sub(t_line, self.cursor.x, #t_line)
+			t_line = _sub(t_line, 1, self.cursor.x - 1)..line
+			self:setLine(t_line, y)
+		else
+			table.insert(lines, y + i, line)
+		end
+		i = i + 1
+	end
+	local prev_line = lines[y + i - 1]
+	if not prev_line then return end
+	lines[y + i - 1] = _sub(prev_line, 1, #prev_line)..ostatok
+	self:moveCursorPos(#prev_line + 1, y + i - 1)
+	self.dirty = true
 	return true
 end
 
