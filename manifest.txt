@@ -20,7 +20,7 @@ dab30e377fc66d66e0b41f392aea1a5a   lib/WManager.lua
 10d29649ce814f1504f475f0067612db   lib/cfunc.lua
 5ae089e2f3d9120b92ca828470ef5d98   lib/deskManager.lua
 0e8430925597fb135103b506fe2c669f   lib/palette
-b8afc449c8b2cbacaf1a2a822c6f82d6   lib/panel.lua
+a3f402f429fb9d2ec7805b304cb7ded4   lib/panel.lua
 20ea8dd71b87edfffe1782c46c614b06   lib/services.lua
 5803c7c86da624bca4649d1b43f3e506   lib/sys.lua
 5803c7c86da624bca4649d1b43f3e506   lib/syscalls.lua
