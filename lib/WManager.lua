@@ -165,6 +165,12 @@ end
 
 local function close_pressed(self)
 	sys.process_end(self.root.id)
+	for i,v in ipairs(windows_visible) do
+		if v == windows[_WM.docker_pid] then
+			return
+		end
+	end
+	table.insert(windows_visible, windows[_WM.docker_pid])
 end
 
 local function minimize_pressed(self)

@@ -205,7 +205,7 @@ end
 local function Shortcut_draw(self)
 	local text_color = root.focus == self and colors.white or colors.black
 	blittle.draw(self.blittle_img, self.x, self.y)
-	if self.icoPath ~= "NFP/app_ico_small.ico" then return end
+	if self.icoPath ~= "usr/app_ico_small.ico" then return end
 	term.setCursorPos(self.x + 1, self.y + 1)
 	term.setBackgroundColor(colors.orange)
 	term.setTextColor(text_color)
@@ -308,7 +308,7 @@ local function load_pins()
 	for _, pin in ipairs(dock_pins or {}) do
 		local path_ico = pin[1]:match("(.*)/").."/icon2.ico"
 		if not fs.exists(path_ico) then
-			path_ico = "NFP/app_ico_small.ico"
+			path_ico = "usr/app_ico_small.ico"
 		end
 		local item = {
 			path = pin[1],
@@ -345,7 +345,7 @@ function docker.custom_handlers.docker_add(pid)
 
 	local path_ico = path:match("(.*)/").."/icon2.ico"
 	if not fs.exists(path_ico) then
-		path_ico = "NFP/app_ico_small.ico"
+		path_ico = "usr/app_ico_small.ico"
 	end
 
 	local new_item = {

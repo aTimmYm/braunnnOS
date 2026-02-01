@@ -54,7 +54,7 @@ local function install(url)
 		local temp = response.readAll()
 		response.close()
 		for line in temp:gmatch("([^\n]+)\n?") do
-			local value = line:sub(36)
+			local value = line:sub(33)
 			local request = http.get(url..value)
 			if request then
 				print("Downloading "..value)

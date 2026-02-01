@@ -6,8 +6,6 @@ usr/settings.conf
 manifest.txt
 sbin/MPlayer/Data/player.conf
 sbin/MPlayer/Data/cache
-installer_dev.lua
-installer_release.lua
 Clipboard.txt
 sbin/test
 sbin/Speed
