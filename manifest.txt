@@ -88,4 +88,3 @@ ba5179dbdcdd9adaa07769fdfdfe8d04   sbin/Shell/icon3.nfp
 236c986171352f1905ef020c9e0a8435   sbin/SystemUIServer/main.lua
 54aeeaca6b774f88c80034a7de37e658   startup.lua
 d85ee7513ea6d48e84ddb2323ef64052   usr/icon_default.ico
-0eb96093f30be4b51bf85db28d8e6963   utility/ImageBLITTLE.lua
