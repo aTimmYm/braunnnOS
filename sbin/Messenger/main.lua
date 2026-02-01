@@ -119,6 +119,7 @@ local function userButton_pressed(self)
 	surface:addChild(msgScrollBox)
 	surface:addChild(textOut)
 	surface:onLayout()
+	if not serverID then return end -- Сделать отдельной функцией вместе с ⬇️
 	rednet.send(serverID, {cType = "get_chat_history", from = account_key, to = selectedFriend[1]}, protocol)
 end
 
@@ -256,6 +257,7 @@ local function switchToApp()
 
 	textOut.pressed = function (self)
 		drawMessage(self.text, "right")
+		if not serverID then return end -- Сделать отдельной функцией вместе с ⬇️
 		rednet.send(serverID, {cType = "send", from = account_key, to = selectedFriend[1], message = self.text}, protocol)
 		self.text = ""
 		self:moveCursorPos(1)

@@ -143,8 +143,6 @@ scrollBox:addChild(radioLabel)
 local tumbler = UI.Tumbler({
 	x = radioButton.x, y = radioButton.h + radioButton.y + 1,
 	fc = colors.white,
-	bc_off = colors.gray,
-	bc_on = colors.black,
 	on = true,
 })
 scrollBox:addChild(tumbler)
@@ -195,6 +193,7 @@ local slider = UI.Slider({
 	fc = colors.white,
 	bc = scrollBox.bc,
 	fc_alt = colors.red,
+	fc_cl = colors.lightGray,
 })
 scrollBox:addChild(slider)
 

@@ -2,12 +2,10 @@ local decode_and_translit = require("sbin/Converter/Data/translit").decode_and_t
 local string_sub = string.sub
 local string_byte = string.byte
 local ret = {}
--- Функции для чтения ID3 тегов
 function ret.readID3v1(data)
 	if #data < 128 then return nil end
 	local tag = string_sub(data, -128)
 	if string_sub(tag, 1, 3) ~= "TAG" then return nil end
-	-- Для ID3v1 предполагаем encoding 0 (часто Windows-1251)
 	return {
 		title = decode_and_translit(0, string_sub(tag, 4, 33)),
 		artist = decode_and_translit(0, string_sub(tag, 34, 63)),

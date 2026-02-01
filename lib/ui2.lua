@@ -58,7 +58,6 @@ function ScrollableMixin:initScroll(sensitivity_x, sensitivity_y)
 	self.scrollbar_h = nil
 end
 
--- Вертикальный скроллинг
 function ScrollableMixin:getScrollMaxY()
 	return self.scroll.max_y
 end
@@ -83,7 +82,6 @@ function ScrollableMixin:scrollY(direction)
 	return self:setScrollPosY(_floor(new_pos + 0.5))
 end
 
--- Горизонтальный скроллинг
 function ScrollableMixin:getScrollMaxX()
 	return self.scroll.max_x
 end
@@ -108,7 +106,6 @@ function ScrollableMixin:scrollX(direction)
 	return self:setScrollPosX(_floor(new_pos + 0.5))
 end
 
--- Универсальный метод для обратной совместимости (если только Y скроллинг)
 function ScrollableMixin:getScrollMax()
 	return self:getScrollMaxY()
 end
@@ -303,7 +300,7 @@ local function Container_onEvent(self, evt)
 	local event = evt[1]
 	-- if self.modal and EVENTS.TOP[event] and (self.modal.root.keyboard:onEvent(evt) or self.modal:onEvent(evt)) then return true end
 	if self.custom_handlers[event] then
-        self.custom_handlers[event](table.unpack(evt, 2))  -- Вызов с аргументами
+        self.custom_handlers[event](table.unpack(evt, 2))
         return true
     end
 	if EVENTS.TOP[event] then
@@ -602,8 +599,6 @@ end
 ---@class Tumbler
 ---@field x number X pos in characters
 ---@field y number Y pos in characters
----@field w number Width (should be 2)
----@field h number Height (should be 1)
 ---@field bc? color|number Background color when off
 ---@field bc_alt? color|number Background color when on
 ---@field fc? color|number Color of the switch glyph
@@ -616,7 +611,7 @@ function UI.Tumbler(args)
 
 	instance.on = args.on or false
 	instance.bc = args.bc or colors.gray
-	instance.bc_alt = args.bc_alt or colors.lime
+	instance.bc_alt = args.bc_alt or colors.blue
 	instance.fc = args.fc or colors.white
 	instance.animating = false
 	instance.animation_frames = {
@@ -1144,11 +1139,10 @@ local function Running_Label_draw(self, bg_override, txtcol_override)
 	txtcol_override = txtcol_override or self.fc
 	self:checkScrolling()
 	if not self.scrolling then
-		-- Если не нужно прокручивать, рисуем как обычный label
 		Label_draw(self, bg_override, txtcol_override)
 		return
 	end
-	-- Для прокрутки: собираем visible_text по символам с модульной адресацией
+
 	local segment = (self.text or "") .. (self.scroll_gap)
 	local cycle_len = #segment
 	if cycle_len == 0 then
@@ -1160,10 +1154,8 @@ local function Running_Label_draw(self, bg_override, txtcol_override)
 		return
 	end
 
-	-- нормалізуємо позицію в межах циклу
 	local pos = ((self.scroll_pos - 1) % cycle_len) + 1
 
-	-- будуємо видимий рядок по-символьно, щоб уникнути артефактів при обгортанні
 	local visible_chars = {}
 	for i = 0, self.w - 1 do
 		local idx = ((pos - 1 + i) % cycle_len) + 1
@@ -1171,7 +1163,6 @@ local function Running_Label_draw(self, bg_override, txtcol_override)
 	end
 	local visible_text = table.concat(visible_chars)
 
-	-- Обрабатываем выравнивание (только горизонтальное, вертикальное игнорируем для простоты, так как h=1 предположительно)
 	local horiz_align = "center"
 	if string_find(self.align, "left") then
 		horiz_align = "left"
@@ -1197,7 +1188,6 @@ local function Running_Label_draw(self, bg_override, txtcol_override)
 	term.setTextColor(txtcol_override)
 	term.write(full_line)
 
-	-- Очистка остальных строк, если h > 1 (хотя для бегущей строки обычно h=1)
 	for i = self.y + 1, self.y + self.h - 1 do
 		term.setBackgroundColor(bg_override)
 		term.setCursorPos(self.x, i)
@@ -1244,9 +1234,9 @@ local function Running_Label_onEvent(self, evt)
 				self.scroll_pos = 1
 			end
 			self.dirty = true
-			self.timer_id = os.startTimer(self.scroll_speed)  -- Перезапускаем таймер
+			self.timer_id = os.startTimer(self.scroll_speed)
 		else
-			self.timer_id = nil  -- Не перезапускаем, если прокрутка не нужна
+			self.timer_id = nil
 		end
 		return true
 	end
@@ -1275,11 +1265,11 @@ end
 function UI.Running_Label(args)
 	local instance = UI.Label(args)
 
-	instance.scroll_speed = args.scroll_speed or 0.5  -- Задержка между сдвигами в секундах (по умолчанию 0.5)
+	instance.scroll_speed = args.scroll_speed or 0.5
 	instance.scroll_pos = 1
 	instance.timer_id = nil
 	instance.scrolling = false
-	instance.scroll_gap = args.gap or " " --_rep(" ", instance.w)
+	instance.scroll_gap = args.gap or " "
 
 	instance.draw = Running_Label_draw
 	instance.setText = Running_Label_setText
@@ -1297,7 +1287,6 @@ local function Scrollbar_draw(self)
 	local slider_offset = self:getSliderOffset()
 	local slider_y_start = self.y + 1 + slider_offset
 
-	-- Фон трека
 	term.setBackgroundColor(self.bc)
 	for y = self.y + 1, slider_y_start - 1 do
 		term.setCursorPos(self.x, y)
@@ -1308,26 +1297,23 @@ local function Scrollbar_draw(self)
 		term.write(" ")
 	end
 
-	-- Стрелка вверх
 	local up_bg, up_fg = (self.held == 1 and self.fc or self.bc), (self.held == 1 and self.bc or self.fc)
 	term.setBackgroundColor(up_bg)
 	term.setTextColor(up_fg)
 	term.setCursorPos(self.x, self.y)
 	term.write("\30")
 
-	-- Стрелка вниз
 	local down_bg, down_fg = (self.held == 3 and self.fc or self.bc), (self.held == 3 and self.bc or self.fc)
 	term.setBackgroundColor(down_bg)
 	term.setTextColor(down_fg)
 	term.setCursorPos(self.x, self.y + self.h - 1)
 	term.write("\31")
 
-	-- Ползунок
 	term.setBackgroundColor(self.fc)
 	term.setTextColor(self.bc)
 	for y = slider_y_start, _min(slider_y_start + slider_height - 1, self.y + self.h - 2) do
 		term.setCursorPos(self.x, y)
-		term.write("\149")  -- Filled pixel
+		term.write("\149")
 	end
 end
 
@@ -1345,10 +1331,10 @@ end
 
 local function Scrollbar_checkIn(self, x, y)
 	if y == self.y then
-		self.held = 1  -- Up arrow
+		self.held = 1
 		return true
 	elseif y == self.y + self.h - 1 then
-		self.held = 3  -- Down arrow
+		self.held = 3
 		return true
 	end
 	return false
@@ -1445,10 +1431,9 @@ local function Scrollbar_onMouseDown(self, btn, x, y)
 
 	local click_rel = clamp(y - track_top, 0, track_height - 1)
 
-	-- Центруємо: ставимо центр слайдера на місце кліка
-	local half = (slider_height - 1) / 2        -- може бути .5 для парної висоти
-	local desired_offset_f = click_rel - half  -- дробовий бажаний offset
-	local desired_offset = _floor(desired_offset_f + 0.5) -- округлюємо до найближчого
+	local half = (slider_height - 1) / 2
+	local desired_offset_f = click_rel - half
+	local desired_offset = _floor(desired_offset_f + 0.5)
 	desired_offset = clamp(desired_offset, 0, max_offset)
 
 	local frac = 0
@@ -1547,7 +1532,7 @@ local function Scrollbar_H_getSliderOffset(self)
 end
 
 local function Scrollbar_H_getTrackWidth(self)
-	return self.w - 2  -- Минус две стрелки
+	return self.w - 2
 end
 
 local function Scrollbar_H_getMaxSliderOffset(self)
@@ -1558,19 +1543,16 @@ local function Scrollbar_H_getMaxSliderOffset(self)
 end
 
 local function Scrollbar_H_onMouseDown(self, btn, x, y)
-	-- Левая стрелка
 	if x == self.x then
 		self.held = 1
 		self.dirty = true
 		return true
-	-- Правая стрелка
 	elseif x == self.x + self.w - 1 then
 		self.held = 3
 		self.dirty = true
 		return true
 	end
 
-	-- На слайдере
 	if self:isOnSlider(x) then
 		self.held = 2
 		local slider_offset = self:getSliderOffset()
@@ -1580,7 +1562,6 @@ local function Scrollbar_H_onMouseDown(self, btn, x, y)
 		return true
 	end
 
-	-- Клик на трек
 	local track_left = self.x + 1
 	local max_offset = self:getMaxSliderOffset()
 	local scrollmax = self.obj:getScrollMaxX()
@@ -1651,7 +1632,6 @@ local function Scrollbar_H_draw(self)
 	local slider_offset = self:getSliderOffset()
 	local slider_x_start = self.x + 1 + slider_offset
 
-	-- Фон трека
 	term.setBackgroundColor(self.bc)
 	for x = self.x + 1, slider_x_start - 1 do
 		term.setCursorPos(x, self.y)
@@ -1662,26 +1642,23 @@ local function Scrollbar_H_draw(self)
 		term.write(" ")
 	end
 
-	-- Стрелка влево
 	local left_bg, left_fg = (self.held == 1 and self.fc or self.bc), (self.held == 1 and self.bc or self.fc)
 	term.setBackgroundColor(left_bg)
 	term.setCursorPos(self.x, self.y)
 	term.setTextColor(left_fg)
 	term.write("\17")
 
-	-- Стрелка вправо
 	local right_bg, right_fg = (self.held == 3 and self.fc or self.bc), (self.held == 3 and self.bc or self.fc)
 	term.setBackgroundColor(right_bg)
 	term.setCursorPos(self.x + self.w - 1, self.y)
 	term.setTextColor(right_fg)
 	term.write("\16")
 
-	-- Ползунок
 	term.setBackgroundColor(self.bc)
 	term.setTextColor(self.fc)
 	for x = slider_x_start, _min(slider_x_start + slider_width - 1, self.x + self.w - 2) do
 		term.setCursorPos(x, self.y)
-		term.write("\140")  -- Filled pixel
+		term.write("\140")
 	end
 end
 
@@ -1880,7 +1857,9 @@ local function Textfield_draw(self)
 end
 
 local function Textfield_focusPostDraw(self)
-	term.setTextColor(colors.blue)
+	local cursor = colors.blue
+	if self.selected.status then cursor = colors.red end
+	term.setTextColor(cursor)
 	local x = self.x + self.cursor_x - self.offset - 1
 	term.setCursorPos(x, self.y)
 	if x < self.x or x > self.x + self.w - 1 then
@@ -2101,7 +2080,7 @@ local function delete_selected_text(self)
 		local p2 = self.selected.pos2
 		local s, e = p1, p2
 		if p1.y > p2.y or (p1.y == p2.y and p1.x > p2.x) then
-			s, e = p2, p1 -- то, что я пытался сделать, но мозгов не хватило, Увы
+			s, e = p2, p1
 		end
 		local string = ""
 		for i = s.y, e.y do
@@ -2146,30 +2125,6 @@ local function select_text(self, new_x, new_y)
 	self.selected.status = true
 	self.dirty = true
 end
-
--- local function clipboard_paste(self)
--- 	delete_selected_text(self)
--- 	local paste = clipboard.paste()
--- 	local y = self.cursor.y
--- 	local lines = self.lines
--- 	local t_line = self.lines[self.cursor.y]
--- 	local i = 0
--- 	local ostatok
--- 	for line in paste:gmatch("[^\n]+") do
--- 		if i == 0 then
--- 			ostatok = _sub(t_line, self.cursor.x, #t_line)
--- 			t_line = _sub(t_line, 1, self.cursor.x - 1)..line
--- 			self:setLine(t_line, y)
--- 		else
--- 			table.insert(lines, y + i, line)
--- 		end
--- 		i = i + 1
--- 	end
--- 	local prev_line = lines[y + i - 1]
--- 	lines[y + i - 1] = _sub(prev_line, 1, #prev_line)..ostatok
--- 	self:moveCursorPos(#prev_line + 1, y + i - 1)
--- 	self.dirty = true
--- end
 
 local function TextBox_draw(self)
 	paintutils.drawFilledBox(self.x, self.y, self.x + self.w - 1, self.y + self.h - 1, self.bc)
@@ -2830,82 +2785,21 @@ function UI.Dropdown(args)
 	return instance
 end
 
-local function menu_onFocus(self, focused)
-	if not focused and self.expanded then
-		self.expanded = false
-		self.parent:onLayout()
-		self.h = 1
-		self.w = #self.name
-	end
-	return true
-end
-
--- local function menu_onMouseDown(self, btn, x, y)
--- 	if self.expanded then
--- 		local coord = y - self.y
--- 		if coord == 0 then return false end
--- 		local elem = self.arr[coord]
--- 		if elem then
--- 			self:pressed(elem)
--- 		end
--- 	end
--- 	self.expanded = not self.expanded
--- 	if not self.expanded then
--- 		self.parent:onLayout()
--- 		self.h = 1
--- 		self.w = #self.name
--- 	else self.dirty = true end
--- 	return true
--- end
-
--- local function menu_draw(self)
--- 	local bc, fc = self.bc, self.fc
--- 	if self.expanded then
--- 		local max_length = c.findMaxLenStrOfArray(self.arr)
--- 		for i, v in pairs(self.arr) do
--- 			term.setBackgroundColor(bc)
--- 			term.setTextColor(fc)
--- 			term.setCursorPos(self.x, self.y + i)
--- 			term.write(v.._rep(" ", max_length - #v))
--- 		end
--- 		bc, fc = self.fc, self.bc
--- 		self.h = #self.arr + 1
--- 		self.w = max_length
--- 	end
--- 	term.setBackgroundColor(bc)
--- 	term.setTextColor(fc)
--- 	term.setCursorPos(self.x, self.y)
--- 	term.write(self.name)
--- end
-
--- function UI.Menu(x, y, name, arr, bc, fc)
--- 	local instance = Widget(x, y, #name, 1, bc, fc)
--- 	instance.arr = arr or {}
--- 	instance.name = name
--- 	instance.expanded = false
-
--- 	instance.draw = menu_draw
--- 	instance.onMouseDown = menu_onMouseDown
--- 	instance.onFocus = menu_onFocus
-
--- 	return instance
--- end
-
 local function Slider_draw(self)
 	local N = #self.arr
 	local W = self.w
 
-	-- Calculate thumb position if N > 0
 	if N > 0 then
 		local i = self.slidePosition
 		local offset = (N == 1) and 0 or _min(_floor((i - 1) / (N - 1) * (W - 1)), self.w - 1)
 		local thumb_x = self.x + offset
- 		-- Overlay thumb (use a different char, e.g., █ or slider thumb equivalent)
+
  		if self.held and self.fc_cl then
 			term.setBackgroundColor(self.fc_cl)
 		else
 			term.setBackgroundColor(self.fc)
 		end
+
  		term.setTextColor(self.bc)
  		term.setCursorPos(thumb_x, self.y)
  		term.write(" ")
@@ -2928,11 +2822,12 @@ end
 local function Slider_updatePos(self, x, y)
 	local N = #self.arr
 
-	if N > 0 and self.w > 1 then  -- Avoid div by zero
+	if N > 0 and self.w > 1 then
 		local offset = x - self.x
 		local raw_index = _floor((offset / (self.w - 1) * (N - 1)) + 0.5) + 1
 		self.slidePosition = _max(1, _min(N, raw_index))
 	end
+
 	self.dirty = true
 end
 
@@ -3125,7 +3020,7 @@ end
 function UI.MsgWin(mode, title, msg)
 	local root = UI.Root()
 
-	local instance = UI.Container(math.floor(root.w*0.2 + 0.5), math.floor(root.h*0.2  + 0.5), math.floor(root.w*0.65  + 0.5), math.floor(root.h*0.65  + 0.5), colors.black)
+	local instance = UI.Container(_floor(root.w*0.2 + 0.5), _floor(root.h*0.2  + 0.5), _floor(root.w*0.65  + 0.5), _floor(root.h*0.65  + 0.5), colors.black)
 	instance.title = title or " Error "
 	instance.draw = MsgWin_draw
 	instance.onLayout = Box_onLayout
@@ -3600,6 +3495,117 @@ function UI.TreeView(args)
 	return instance
 end
 
+local function TableView_onMouseDown(self, btn, x, y)
+	local l_x = x - self.x + 1
+	local w = 0
+	for i, v in ipairs(self.elements) do
+		w = w + v.w + 1
+		if w == l_x then
+			self.held = i
+			-- return true
+			break
+		end
+	end
+
+	return true
+end
+
+local function TableView_onMouseDrag(self, btn, x, y)
+	-- if self.held == 1 then
+	-- 	self.columns.size = x - self.x + 1
+	-- 	self.parent:onLayout()
+	-- 	return true
+	-- end
+	if self.held then
+		self.elements[self.held].w = _max(1, x - self.x)
+		self.parent:onLayout()
+		return true
+	end
+	return false
+end
+
+local function TableView_onMouseUp(self, btn, x, y)
+	self.held = nil
+	return true
+end
+
+local function TableView_draw(self)
+	term.setCursorPos(self.x, self.y)
+	term.setBackgroundColor(self.bc)
+	term.setTextColor(self.fc)
+	local line = ""
+	for i, v in ipairs(self.elements) do
+		-- line = string.sub(line..v.title..string.rep(" ", v.w-#v.title), 1, v.w - 1) .. "|"
+		line = line .. v.title:sub(1,v.w)..string.rep(" ", v.w - #v.title).."|"
+		v.x = #line
+	end
+	term.write(line)
+	-- local line = "Name"
+	-- line = line .. "Size" .. string.rep(" ", self.w - #line - 4)
+end
+
+function UI.TableView(args)
+	local instance = Widget(args)
+
+	instance.elements = args.elements or {}
+	instance.held = nil
+
+	instance.draw = TableView_draw
+	instance.onMouseDown = TableView_onMouseDown
+	instance.onMouseDrag = TableView_onMouseDrag
+	instance.onMouseUp = TableView_onMouseUp
+
+	return instance
+end
+
+local function Explorer_open(self, arr, y, level)
+	local l
+	for i, v in ipairs(arr) do
+		self.click_map[y] = v
+		term.setCursorPos(self.x, y)
+		if v.canOpen then
+			l = v.isOpen and "\31" or "\16"
+		else
+			l = " "
+		end
+		l = v.ico and l .. "   " or l
+		local bg = (y % 2 ~= 0) and self.bc or self.bc_alt
+		bg = (self.hovered == v) and self.bc_hv or bg
+		local text = _rep(" ", level) .. l .. v.name
+		term.setTextColor(self.fc)
+		term.setBackgroundColor(bg)
+		text = text .. _rep(" ", self.w - #text)
+		local size = v.canOpen and "--" or v.size
+		size = string.rep(" ", 10 - #size) .. size
+		term.write(text:sub(1, self.pole - 1).." "..size)
+		if v.ico.char then
+			term.setCursorPos(self.x + level + 2, y)
+			term.setBackgroundColor(v.ico.bg or bg)
+			term.setTextColor(v.ico.txt or self.fc)
+			term.write(v.ico.char)
+		end
+		y = y + 1
+		if v.isOpen then
+			y = Explorer_open(self, v.arr, y, level + 1)
+		end
+	end
+	return y
+end
+
+local function ExplorerElement_draw(self)
+	Explorer_open(self, self.tree, self.y, 0)
+end
+
+function UI.ExplorerElement(args)
+	local instance = UI.TreeView(args)
+
+	instance.pole = 15
+
+	instance.draw = ExplorerElement_draw
+
+	return instance
+end
+
 local function add_element(self, string)
 	local obj = UI.Button({
 		x = 1, y = #self.children + 1,
@@ -3616,7 +3622,6 @@ local function add_element(self, string)
 end
 
 local function ContextMenu_onFocus(self, focused)
-	log("POPAL")
 	if not focused then os.queueEvent("wm_popup_close") end
 	return true
 end

@@ -14,7 +14,7 @@ local dock_items = {
 		name = "Launchpad",
 		pid = nil,
 		pinned = true,
-		icon = "app_ico_small.ico" -- Тут нужна логика поиска иконки по пути
+		icon = "sbin/Docker/Data/launch.ico" -- Тут нужна логика поиска иконки по пути
 	}
 }
 local hidden = false
@@ -205,6 +205,7 @@ end
 local function Shortcut_draw(self)
 	local text_color = root.focus == self and colors.white or colors.black
 	blittle.draw(self.blittle_img, self.x, self.y)
+	if self.icoPath ~= "NFP/app_ico_small.ico" then return end
 	term.setCursorPos(self.x + 1, self.y + 1)
 	term.setBackgroundColor(colors.orange)
 	term.setTextColor(text_color)
@@ -228,16 +229,6 @@ local function Shortcut_pressed(self, btn, x, y)
 		local win = term.current()
 		local t_x, t_y = win.getPosition()
 		sys.create_popup(popup, t_x + x - 1, t_y - #popup)
-
-		-- -- Логика переключения pinned
-		-- local item_ref = dock_items[i]
-		-- item_ref.pinned = not item_ref.pinned
-		-- save_pins()
-		-- -- Если мы открепили и оно не запущено - удаляем из дока
-		-- if not item_ref.pinned and not item_ref.pid then
-			-- table.remove(dock_items, i)
-			-- docker.rebuild_layout()
-		-- end
 	end
 	if launchpad then launchpad_remove() end
 end
@@ -245,13 +236,13 @@ end
 local function save_pins()
 	local pins = {}
 	for _, item in ipairs(dock_items) do
-		if item.pinned then
+		if item.pinned and not (item.name == "Launchpad") then
 			table.insert(pins, {item.path, item.name})
 		end
 	end
-	local dock_pins = fs.open(PINS_FILE, "w")
-	dock_pins.write("return "..textutils.serialize(pins))
-	dock_pins.close()
+	local file = fs.open(PINS_FILE, "w")
+	file.write("return "..textutils.serialize(pins))
+	file.close()
 end
 
 local function rebuild_layout()
@@ -303,6 +294,7 @@ popup = {
 				v.pinned = false
 				save_pins()
 				if not v.pid then
+					table.remove(dock_items, i)
 					rebuild_layout()
 				end
 				return
@@ -314,12 +306,16 @@ popup = {
 local function load_pins()
 	local dock_pins = dofile(PINS_FILE)
 	for _, pin in ipairs(dock_pins or {}) do
+		local path_ico = pin[1]:match("(.*)/").."/icon2.ico"
+		if not fs.exists(path_ico) then
+			path_ico = "NFP/app_ico_small.ico"
+		end
 		local item = {
 			path = pin[1],
 			name = pin[2],
 			pid = nil,
 			pinned = true,
-			icon = "app_ico_small.ico" -- Тут нужна логика поиска иконки по пути
+			icon = path_ico -- Тут нужна логика поиска иконки по пути
 		}
 		table.insert(dock_items, item)
 	end
@@ -347,12 +343,17 @@ function docker.custom_handlers.docker_add(pid)
 		end
 	end
 
+	local path_ico = path:match("(.*)/").."/icon2.ico"
+	if not fs.exists(path_ico) then
+		path_ico = "NFP/app_ico_small.ico"
+	end
+
 	local new_item = {
 		path = path,
 		name = sys.get_proc_name(pid),
 		pid = pid,
 		pinned = false,
-		icon = "app_ico_small.ico"
+		icon = path_ico
 	}
 	table.insert(dock_items, new_item)
 	rebuild_layout()

@@ -87,7 +87,6 @@ function Popup.create(items, x, y, width, opts, term)
 		end
 	end
 
-	-- возвращает table {consumed = bool, open = popup_or_nil}
 	function p:handleEvent(evt)
 		if self.closed then return {consumed = false} end
 		local et = evt[1]
@@ -97,9 +96,7 @@ function Popup.create(items, x, y, width, opts, term)
 				local ry = cy - self.y + 1
 				local it = self.items[ry]
 				if it then
-					-- клик по пункту
 					if it.submenu then
-						-- открываем подменю справа (попытка)
 						local sx = self.x + self.w
 						local sy = self.y + ry - 1
 						local sw = calc_width(it.submenu)
@@ -116,39 +113,36 @@ function Popup.create(items, x, y, width, opts, term)
 				end
 				return { consumed = true }
 			else
-				-- клик вне текущего попапа -> закрыть цепочку
 				self:close()
 				return { consumed = true, close = true }
 			end
 		elseif et == "mouse_move" then
-		    local cx, cy = evt[3], evt[4]
-		    if cx >= self.x and cx < self.x + self.w and cy >= self.y and cy < self.y + self.h then
-		        local ry = cy - self.y + 1
-		        if ry ~= self.selected then
-		            self.selected = math.max(1, math.min(#self.items, ry))
-		            -- открыть подменю при наведении, если есть
-		            local it = self.items[self.selected]
-		            if it and it.submenu then
-		                local sx = self.x + self.w
-		                local sy = self.y + self.selected - 1
-		                local sw = calc_width(it.submenu)
-		                local sh = #it.submenu
-		                sx, sy = fit_on_screen(sx, sy, sw, sh)
-		                local child = Popup.create(it.submenu, sx, sy, sw, { bgColor = self.bg, text = self.fg }, term)
-		                self.child = child
-		                return { consumed = true, open = child }
-		            else
-		                -- если было открыто child — закрыть его
-		                if self.child then
-		                    self.child:close()
-		                    self.child = nil
-		                end
-		            end
-		        end
-		        return { consumed = true }
-		    else
-		        return { consumed = false }
-		    end
+			local cx, cy = evt[3], evt[4]
+			if cx >= self.x and cx < self.x + self.w and cy >= self.y and cy < self.y + self.h then
+				local ry = cy - self.y + 1
+				if ry ~= self.selected then
+					self.selected = math.max(1, math.min(#self.items, ry))
+					local it = self.items[self.selected]
+					if it and it.submenu then
+						local sx = self.x + self.w
+						local sy = self.y + self.selected - 1
+						local sw = calc_width(it.submenu)
+						local sh = #it.submenu
+						sx, sy = fit_on_screen(sx, sy, sw, sh)
+						local child = Popup.create(it.submenu, sx, sy, sw, { bgColor = self.bg, text = self.fg }, term)
+						self.child = child
+						return { consumed = true, open = child }
+					else
+						if self.child then
+							self.child:close()
+							self.child = nil
+						end
+					end
+				end
+				return { consumed = true }
+			else
+				return { consumed = false }
+			end
 		elseif et == "key" then
 			local key = evt[2]
 			if key == keys.up then
@@ -176,7 +170,6 @@ function Popup.create(items, x, y, width, opts, term)
 					end
 				end
 			elseif key == keys.left or key == keys.esc then
-				-- закрыть текущий
 				self:close()
 				return { consumed = true, close = true }
 			end

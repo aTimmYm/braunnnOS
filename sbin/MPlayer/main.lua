@@ -329,7 +329,6 @@ local function play(self, path)
 	local temp = self.filePath:match("([^/\\]+)$")
 	totalTimeLabel:setText(cache[temp].time)
 
-	-- Update UI labels with parsed metadata (if available)
 	ArtistName:setText(cache[temp].artist)
 	local Title = cache[temp].title
 	if Title ~= "Unknown" then
@@ -344,7 +343,6 @@ local function play(self, path)
 	local ok, fileSize = pcall(function() return self.music_file.seek("end") end)
 	fileSize = tonumber(fileSize) or 0
 
-	-- compute data end position (if metadata present, stop before it)
 	self.data_end = fileSize
 	if cache[temp].meta_start then
 		self.data_end = cache[temp].meta_start - 1
@@ -387,16 +385,13 @@ local function set_pause(bool)
 end
 
 local function updateTrackIcons(newIndex)
-	-- Если что-то играло до этого, возвращаем треугольник
 	if currentTrackIndex > 0 and trackButtons[currentTrackIndex] then
 		trackButtons[currentTrackIndex].play = false
 		trackButtons[currentTrackIndex].dirty = true
 	end
 
-	-- Обновляем текущий индекс
 	currentTrackIndex = newIndex
 
-	-- Ставим ноту на новую кнопку
 	if trackButtons[currentTrackIndex] then
 		trackButtons[currentTrackIndex].play = true
 		trackButtons[currentTrackIndex].dirty = true
@@ -470,48 +465,44 @@ end
 
 local function cacheUpdate()
 	local arr = fs.list(Path)
-	local onDiskFiles = {} -- Создаем "сет" (таблицу-множество) для быстрой проверки
+	local onDiskFiles = {}
 	for _, v in pairs(arr) do
 		onDiskFiles[v] = true
 	end
 
 	local newFiles = {}
-	local cacheModified = false -- Флаг, отслеживающий изменения
+	local cacheModified = false
 
-	-- 0. Убедимся, что кеш - это таблица
 	if type(cache) ~= "table" then
 		cache = {}
-		cacheModified = true -- Кеш был пуст, его нужно будет создать
+		cacheModified = true
 	end
 
-	-- 1. Ищем новые файлы (есть на диске, нет в кеше)
 	for _, v in pairs(arr) do
 		if not cache[v] then
 			table_insert(newFiles, v)
-			cacheModified = true -- Нашли новый файл, кеш нужно обновить
+			cacheModified = true
 		end
 	end
 
-	-- 2. Ищем удаленные файлы (есть в кеше, нет на диске)
 	local removedFiles = {}
 	for filename, _ in pairs(cache) do
 		if not onDiskFiles[filename] then
 			table_insert(removedFiles, filename)
-			cacheModified = true -- Нашли удаленный файл, кеш нужно обновить
+			cacheModified = true
 		end
 	end
-	-- Удаляем их из кеша
+
 	for _, filename in pairs(removedFiles) do
 		cache[filename] = nil
 	end
 
-	-- 3. Обрабатываем *только* новые файлы
 	if #newFiles > 0 then
 		for _, v in pairs(newFiles) do
 			local handle = fs.open(Path .. v, "rb")
 			if not handle then
 				print("Warning: Could not open " .. v .. " to cache.")
-				goto continue -- Пропускаем этот файл, если не можем открыть
+				goto continue
 			end
 
 			local metadata = {}
@@ -523,7 +514,6 @@ local function cacheUpdate()
 			local tailRead = _min(8192, fileSize)
 			local tail = ""
 			if tailRead > 0 then
-				-- Обернем в pcall на случай ошибки доступа
 				pcall(function() handle.seek("set", _max(0, fileSize - tailRead)) end)
 				tail = handle.read(tailRead) or ""
 			end
@@ -569,13 +559,12 @@ local function cacheUpdate()
 			if not metadata["title"] or metadata["title"] == "" then metadata["title"] = "Unknown" end
 			if not metadata["album"] or metadata["album"] == "" then metadata["album"] = "Unknown" end
 
-			cache[v] = metadata -- Добавляем новый файл в нашу таблицу кеша
+			cache[v] = metadata
 
-			::continue:: -- Метка для goto
+			::continue::
 		end
 	end
 
-	-- 4. Если были изменения (новые ИЛИ удаленные файлы), перезаписываем файл кеша
 	if cacheModified then
 		local cacheFile, err = fs.open(APP_PATH.."/Data/cache", "w")
 		if not cacheFile then
@@ -588,7 +577,6 @@ local function cacheUpdate()
 end
 cacheUpdate()
 
--- Очищаем старый sortedCache и заполняем его актуальными данными из обновленного кеша
 sortedCache = {}
 artistS = {}
 for k, v in pairs(cache) do
@@ -656,7 +644,6 @@ for i,v in pairs(artistS) do
 end]]
 
 local function clearVolumeWidgets()
-	-- Очистка широкого режима
 	if btnVolume then
 		box2:removeChild(btnVolume)
 		btnVolume = nil
@@ -665,8 +652,6 @@ local function clearVolumeWidgets()
 		box2:removeChild(volumeSlider)
 		volumeSlider = nil
 	end
-
-	-- Очистка узкого режима
 	if btnVolumeUp then
 		box2:removeChild(btnVolumeUp)
 		btnVolumeUp = nil
@@ -682,17 +667,14 @@ local function clearVolumeWidgets()
 end
 
 local function initWideMode(width)
-	-- Если уже созданы, просто обновляем позиции
 	if btnVolume and volumeSlider then
 		btnVolume.local_x = width - 13
 		volumeSlider.local_x = width - 10
 		return
 	end
 
-	-- Если нет - очищаем старое и создаем новое
 	clearVolumeWidgets()
 
-	-- 1. Создаем кнопку Mute
 	-- btnVolume = UI.Button(width - 13, 2, 3, 1, "", _, _, box2.bc, colors.white)
 	btnVolume = UI.Button({
 		x = width - 13, y = 2,
@@ -702,7 +684,6 @@ local function initWideMode(width)
 	})
 	btnVolume.PrevStatus = 1
 
-	-- Логика отрисовки
 	btnVolume.draw = function(self)
 		term.setBackgroundColor(self.fc)
 		term.setTextColor(self.bc)
@@ -727,11 +708,9 @@ local function initWideMode(width)
 		end
 	end
 
-	-- Логика нажатия
 	btnVolume.pressed = function(self)
 		if conf["volume"] == 0 then
 			conf["volume"] = self.PrevStatus
-			-- Восстанавливаем позицию слайдера по значению
 			for i, v in pairs(volumes) do
 				if v == conf["volume"] then
 					if volumeSlider then volumeSlider.slidePosition = i end
@@ -750,8 +729,6 @@ local function initWideMode(width)
 		if volumeSlider then volumeSlider.dirty = true end
 	end
 
-	-- 2. Создаем Слайдер
-	-- Находим текущую позицию для слайдера
 	local currentIdx = 1
 	for i, v in pairs(volumes) do
 		if v == conf["volume"] then
@@ -779,14 +756,11 @@ local function initWideMode(width)
 		if btnVolume then btnVolume.dirty = true end
 	end
 
-	-- Добавляем в box2
 	box2:addChild(btnVolume)
 	box2:addChild(volumeSlider)
 end
 
--- Функция инициализации УЗКОГО режима (<= 41)
 local function initNarrowMode(width)
-	-- Если уже созданы, обновляем позиции
 	if btnVolumeUp and volumeLabel then
 		local volX = width - 2
 		btnVolumeUp.local_x = volX
@@ -799,7 +773,6 @@ local function initNarrowMode(width)
 
 	local volX = width - 2
 
-	-- Находим текущий индекс громкости для отображения
 	local currentIdx = 1
 	for i, v in pairs(volumes) do
 		if v == conf["volume"] then
@@ -808,7 +781,6 @@ local function initNarrowMode(width)
 		end
 	end
 
-	-- 1. Кнопка Вверх
 	-- btnVolumeUp = UI.Button(volX, 1, 3, 1, "\30), _, _, box2.bc, colors.white)
 	btnVolumeUp = UI.Button({
 		x = volX, y = 1,
@@ -818,7 +790,6 @@ local function initNarrowMode(width)
 		fc = colors.white,
 	})
 
-	-- 2. Лейбл
 	-- volumeLabel = UI.Label(volX, 2, 3, 1, tostring(currentIdx - 1), "center", box2.bc, colors.lightGray)
 	volumeLabel = UI.Label({
 		x = volX, y = 2,
@@ -829,7 +800,6 @@ local function initNarrowMode(width)
 		fc = colors.lightGray,
 	})
 
-	-- 3. Кнопка Вниз
 	-- btnVolumeDown = UI.Button(volX, 3, 3, 1, "\31), _, _, box2.bc, colors.white)
 	btnVolumeDown = UI.Button({
 		x = volX, y = 3,
@@ -839,7 +809,6 @@ local function initNarrowMode(width)
 		fc = colors.white,
 	})
 
-	-- Логика кнопок
 	btnVolumeUp.pressed = function(self)
 		local cIdx = tonumber(volumeLabel.text) + 1 or 1
 		local nIdx = _min(cIdx + 1, #volumes)

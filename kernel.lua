@@ -140,8 +140,8 @@ local function process_resume(pid, args)
 		end
 		-- debug.sethook(process.co, hook, "", instructions)
 	else
-        local traceback = debug.traceback(process.co, filter)  -- Фокус на стеку процесу
-        log("Помилка в процесі PID " .. pid .. ":\n" .. traceback)  -- Виводимо повний стек
+        local traceback = debug.traceback(process.co, filter)
+        log("Помилка в процесі PID " .. pid .. ":\n" .. traceback)
 		process_end(pid)
 	end
 end
@@ -245,5 +245,3 @@ local function TEST()
 end
 
 kernel_run()
-
-term.redirect(t_native)

@@ -40,12 +40,11 @@ function _screen.clip_remove()
 	clip_x, clip_y, clip_w, clip_h = 1, 1, screen_w, screen_h
 end
 
--- Безопасная функция записи в буфер
 function _screen.write(str, x, y, bg, txt)
 	if y < clip_y or y > clip_h then return end
 
 	local line = screen_frame[y]
-	if not line then return end -- Защита от nil
+	if not line then return end
 
 	local start_draw = _max(x, clip_x)
 	local end_draw   = _min(x + #str - 1, clip_w)
@@ -88,22 +87,21 @@ end
 
 function _screen.draw_blittle(image, x, y)
 	local t, tC, bC = image[1], image[2], image[3]
-	x, y = x or 1, y or 1  -- terminal не нужен, т.к. мы работаем с буфером
+	x, y = x or 1, y or 1
 
 	for i = 1, image.height do
 		local tI = t[i]
-		local fg_str = tC[i]  -- FG (color_txt)
-		local bg_str = bC[i]  -- BG (color_bg)
+		local fg_str = tC[i]
+		local bg_str = bC[i]
 		local y_eff = y + i - 1
 
-		-- Проверка по вертикали (с учетом клиппинга)
 		if y_eff < clip_y or y_eff > clip_h then
-			goto continue  -- Пропускаем строку, если за пределами
+			goto continue
 		end
 
 		local frame = screen_frame[y_eff]
 		if not frame then
-			goto continue  -- Защита от nil (хотя буфер должен быть полным)
+			goto continue
 		end
 
 		local eff_x, text
@@ -111,10 +109,10 @@ function _screen.draw_blittle(image, x, y)
 			eff_x = x
 			text = tI
 		elseif type(tI) == "table" then
-			eff_x = x + (tI[1] or 0)  -- Смещение из таблицы
-			text = tI[2] or ""  -- Текст из таблицы
+			eff_x = x + (tI[1] or 0)
+			text = tI[2] or ""
 		else
-			goto continue  -- Некорректный тип, пропускаем
+			goto continue
 		end
 
 		local len = #text
@@ -122,21 +120,18 @@ function _screen.draw_blittle(image, x, y)
 			goto continue
 		end
 
-		-- Вычисление видимой части (горизонтальный клиппинг)
 		local start_draw = _max(eff_x, clip_x)
 		local end_draw = _min(eff_x + len - 1, clip_w)
 		if start_draw > end_draw then
-			goto continue  -- Полностью за пределами
+			goto continue
 		end
 
-		-- Обрезка строк (текст, fg, bg)
 		local offset = start_draw - eff_x + 1
 		local vis_len = end_draw - start_draw + 1
 		local vis_text = _sub(text, offset, offset + vis_len - 1)
 		local vis_fg = _sub(fg_str, offset, offset + vis_len - 1)
 		local vis_bg = _sub(bg_str, offset, offset + vis_len - 1)
 
-		-- Вставка в буфер (прямая замена частей строк)
 		local prefix_len = start_draw - 1
 		local suffix_start = end_draw + 1
 

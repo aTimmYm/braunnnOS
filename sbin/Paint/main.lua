@@ -58,7 +58,7 @@ scrollBox:addChild(paintBox)
 local textfield = UI.Textfield({
 	x = 20, y = 1,
 	w = surface.w - 20, h = 1,
-	hint = "",
+	hint = "write here",
 	bc = colors.gray,
 	fc = colors.white,
 })
@@ -258,6 +258,7 @@ surface.onResize = function(W, H)
 	scrollBox.w, scrollBox.h = W - 1, H - 2
 	v_scroll.local_x, v_scroll.h = W, H - 2
 	h_scroll.local_y, h_scroll.w = H, W - 1
+	textfield.w = W - 20
 	-- paintBox.w, paintBox.h = scrollBox.w, scrollBox.h - 1
 end
 

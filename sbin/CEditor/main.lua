@@ -416,12 +416,12 @@ local file_items = {
 		sys.ipc(self_pid, "redraw")
 	end},
 	{text = "Open", onClick = function()
-		local path = UI.DialWin(" Open ", "Enter path to file:")
+		-- local path = UI.DialWin(" Open ", "Enter path to file:")
 		if not path then
 			return
 		end
 		if not fs.exists(path) then
-			UI.MsgWin("INFO", " Error ", "File not found")
+			-- UI.MsgWin("INFO", " Error ", "File not found")
 			return
 		end
 		local name = path:match("([^/%\\]+)$")
@@ -453,12 +453,12 @@ local file_items = {
 	end},
 	{text = "Save as", onClick = function()
 		if not tab_buffer then return end
-		local path = UI.DialWin(" Save as ", "Enter path to save:")
+		-- local path = UI.DialWin(" Save as ", "Enter path to save:")
 		if not path then
 			return
 		end
 		if fs.exists(path) then
-			local answ = UI.MsgWin("YES,NO", " Message ", "File is already exists. Do you want to override it?")
+			-- local answ = UI.MsgWin("YES,NO", " Message ", "File is already exists. Do you want to override it?")
 			if not answ then return end
 		end
 		local name = path:match("([^/%\\]+)$")

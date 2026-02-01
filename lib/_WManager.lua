@@ -100,7 +100,7 @@ end
 -- 	_G.context = object
 -- 	table.insert(popup_windows, object)
 -- 	if _WM.uiserver_pid then
--- 		sys.ipc(_WM.uiserver_pid, "popup_add")
+-- 		sys.ipc(_WM.uiserver_pid, {"popup_add"})
 -- 	end
 -- 	return p
 -- end
@@ -116,17 +116,11 @@ local function window_reposition(win, x, y, w, h)
 	y = win.border and y + 1 or y
 	h = (h and win.border) and h - 1 or h
 	win.term.reposition(x, y, w, h)
-	if _WM.docker_pid and windows[_WM.docker_pid] == win then return end
-	if win.h + win.y - 1 >= MAXIMIZE_H - 1 then
-		if _WM.docker_pid then _WM.close_window(_WM.docker_pid, true) end
-	elseif _WM.docker_pid then
-		for i,v in ipairs(windows_visible) do
-			if v == windows[_WM.docker_pid] then
-				return
-			end
-		end
-		table.insert(windows_visible, windows[_WM.docker_pid])
-	end
+	-- if win.h + win.y - 1 >= MAXIMIZE_H - 1 then
+	-- 	docker.hide(true)
+	-- else
+	-- 	docker.hide(false)
+	-- end
 end
 
 local function window_set_focus(win)
@@ -349,14 +343,6 @@ function _WM.redraw_all()
 		if p and not p.closed then p:draw() end
 	end
 
-	-- for i = 1, #popup_windows do
-	-- 	local p = popup_windows[i]
-	-- 	if p then
-	-- 		p:onLayout()
-	-- 		p:redraw()
-	-- 	end
-	-- end
-
 	screen.setVisible(true)
 	screen.setVisible(false)
 	if window_focus then
@@ -373,7 +359,7 @@ end
 
 function _WM.dispatch_event(evt)
 	local event_name = evt[1]
-
+	
 	if #popup_windows > 0 then
 		for i = #popup_windows, 1, -1 do
 			local p = popup_windows[i]
@@ -392,15 +378,14 @@ function _WM.dispatch_event(evt)
 				if p.closed then table.remove(popup_windows, i) end
 			end
 		end
-	end
-
+	end		
 	-- if event_name == "wm_popup_close" then
 	-- 	popup_windows = {}
 	-- end
-
+	
 	-- if #popup_windows > 0 then
 	-- 	if _WM.uiserver_pid then
-	-- 		sys.ipc(_WM.uiserver_pid, table.unpack(evt))
+	-- 		sys.ipc(_WM.uiserver_pid, evt)
 	-- 		return true
 	-- 	end
 	-- end
@@ -519,8 +504,6 @@ function _WM.dispatch_event(evt)
 		elseif event_name == "wm_restore" then
 			local win = windows[evt[2]]
 			window_set_focus(win)
-		-- elseif event_name == "wm_minimize" then
-		-- 	_WM.close_window(evt[2], true)
 		end
 		return true
 	end

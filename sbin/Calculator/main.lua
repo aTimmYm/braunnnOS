@@ -52,7 +52,6 @@ end
 setDisplay(0)
 
 local function is_valid_expr(s)
-	-- allow only digits, operators, dot and parentheses
 	if not s or s == "" then return false end
 	if s:find("[^%d%+%-%*/%.%(%)]") then return false end
 	return true
@@ -101,14 +100,12 @@ for row = 1, #btnTexts do
 					setDisplay("ERR")
 					expr = ""
 				else
-					-- show number and keep it as expression for further ops
 					local sres = tostring(res)
 					setDisplay(sres)
 					expr = sres
 				end
 				return
 			else
-				-- Append digit/operator
 				expr = expr .. txt
 				setDisplay(expr)
 			end

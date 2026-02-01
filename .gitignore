@@ -9,3 +9,10 @@ sbin/MPlayer/Data/cache
 installer_dev.lua
 installer_release.lua
 Clipboard.txt
+sbin/test
+sbin/Speed
+sbin/NotYield
+_startup.lua
+log.txt
+groove.nfp
+test.nfp

@@ -34,8 +34,21 @@ local surface = UI.Box({
 root:addChild(surface)
 
 -- local treeview = UI.TreeView(1, 1, surface.w, surface.h, {bg = colors.black, bg2 = colors.gray, hover = colors.lightGray, txt = colors.white})
-local treeview = UI.TreeView({
+local TableView = UI.TableView({
 	x = 1, y = 1,
+	w = surface.w, h = surface.h,
+	bc = colors.black,
+	fc = colors.white,
+	elements = {
+		{title = "Name", w = 15},
+		{title = "Size", w = 15},
+		{title = "Data", w = 15},
+	}
+})
+surface:addChild(TableView)
+
+local treeview = UI.ExplorerElement({
+	x = 1, y = 2,
 	w = surface.w, h = surface.h,
 	bc = colors.black,
 	fc = colors.white,
@@ -46,7 +59,6 @@ surface:addChild(treeview)
 -----------------------------------------------------
 ------| СЕКЦИЯ ОБЪЯВЛЕНИЯ ФУНКЦИЙ ПРОГРАММЫ |--------
 local function strCmpIgnoreCase(a, b)
-	-- Регистронезависимое лексикографическое сравнение (работает в Lua 5.1+ и 5.2+)
 	a = string_lower(a or "")
 	b = string_lower(b or "")
 	local minlen = math.min(#a, #b)
@@ -71,11 +83,11 @@ local function sort(arr, path)
 		end
 	end
 	arr = {}
-	-- Сортируем папки регистронезависимо
+
 	table_sort(dirs, function(a, b)
 		return strCmpIgnoreCase(a, b)
 	end)
-	-- Сортируем файлы регистронезависимо
+
 	table_sort(files, function(a, b)
 		return strCmpIgnoreCase(a, b)
 	end)
@@ -88,13 +100,26 @@ local function sort(arr, path)
 	return arr
 end
 
+local function filse_size(size)
+	local bytes = {"B", "KB", "MB", "GB", "TB"}
+	local i = 1
+	while size > 1024 do
+		size = size / 1024
+		i = i + 1
+	end
+	-- size = size.." "..bytes[i]
+	size = string.format("%.2f", size):gsub("%.?0+$", "") .. " " .. bytes[i]
+	return size
+end
+
 local function list(path)
 	local fslist = fs.list(path)
 	fslist = sort(fslist, path)
 	local fslist2 = {}
 	for i, v in ipairs(fslist) do
-		local txt = fs.isDir(path .. "/" .. v) and colors.blue or colors.white
-		fslist2[i] = { name = v, canOpen = fs.isDir(path .. "/" .. v), arr = {}, isOpen = false, path = path .. "/" .. v, ico = {char = "\143", txt = txt} }
+		local attributes = fs.attributes(path .. "/" .. v)
+		local txt = attributes.isDir and colors.blue or colors.white
+		fslist2[i] = { name = v, canOpen = attributes.isDir, arr = {}, isOpen = false, path = path .. "/" .. v, ico = {char = "\143", txt = txt}, size = filse_size(attributes.size) }
 	end
 	return fslist2
 end

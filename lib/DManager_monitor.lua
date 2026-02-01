@@ -13,8 +13,8 @@ local system = require "syscalls"
 
 local shortcut_width = 15
 local shortcut_height = 8
-local spacing_x = 1  -- Отступ по X между ярлыками (можно увеличить для большего пространства)
-local spacing_y = 1  -- Отступ по Y между рядами (можно увеличить)
+local spacing_x = 1
+local spacing_y = 1
 
 
 local APP_ROOT_PATH = "sbin/"
@@ -44,7 +44,7 @@ local Radio = UI.RadioButton_horizontal(_floor((Root.w - num_desks)/2) + 1, Root
 Root:addChild(Radio)
 
 local function updateNumDesks()
-	num_shortcuts = #system_apps--+#user_apps
+	num_shortcuts = #system_apps
 
 	maxCols = _floor(desk_width/(shortcut_width + spacing_x - 1))
 	maxRows = _floor(desk_height/(shortcut_height + spacing_y - 1))

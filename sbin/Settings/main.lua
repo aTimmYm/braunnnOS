@@ -118,9 +118,9 @@ local function create_page_1()
 	-- local monitorTumbler = UI.Tumbler(page.w - 2, tumblerLabel.y, colors.white, colors.lightGray, colors.gray, conf['isMonitor'])
 	local monitorTumbler = UI.Tumbler({
 		x = page.w - 2, y = tumblerLabel.y,
-		bc = colors.white,
-		bc_alt = colors.lightGray,
-		fc = colors.gray,
+		bc = colors.gray,
+		bc_alt = colors.blue,
+		fc = colors.white,
 		on = conf['isMonitor'],
 	})
 	page:addChild(monitorTumbler)
@@ -160,9 +160,9 @@ local function create_page_1()
 	-- local tumbler_desk_mode = UI.Tumbler(page.w - 2, label_desk_mode.y, colors.white, colors.lightGray, colors.gray, conf['DesktopMode'])
 	local tumbler_desk_mode = UI.Tumbler({
 		x = page.w - 2, y = label_desk_mode.y,
-		bc = colors.white,
-		bc_alt = colors.lightGray,
-		fc = colors.gray,
+		bc = colors.gray,
+		bc_alt = colors.blue,
+		fc = colors.white,
 		on = conf['DesktopMode'],
 	})
 	page:addChild(tumbler_desk_mode)
@@ -224,9 +224,9 @@ local function create_page_2()
 	-- local time24FormatTumbler = UI.Tumbler(page.w - 2, time24FormatLabel.y, colors.lightGray, colors.gray, _, conf['24format'])
 	local time24FormatTumbler = UI.Tumbler({
 		x = page.w - 2, y = time24FormatLabel.y,
-		bc = colors.white,
-		bc_alt = colors.lightGray,
-		fc = colors.gray,
+		bc = colors.gray,
+		bc_alt = colors.blue,
+		fc = colors.white,
 		on = conf['24format'],
 	})
 	page:addChild(time24FormatTumbler)
@@ -245,9 +245,9 @@ local function create_page_2()
 	-- local showSecondsTumbler = UI.Tumbler(page.w - 2, showSecondsLabel.y, colors.lightGray, colors.gray, _, conf['show_seconds'])
 	local showSecondsTumbler = UI.Tumbler({
 		x = page.w - 2, y = showSecondsLabel.y,
-		bc = colors.white,
-		bc_alt = colors.lightGray,
-		fc = colors.gray,
+		bc = colors.gray,
+		bc_alt = colors.blue,
+		fc = colors.white,
 		on = conf['show_seconds'],
 	})
 	page:addChild(showSecondsTumbler)

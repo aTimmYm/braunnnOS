@@ -94,7 +94,7 @@ local extensions = {
 }
 
 local function strCmpIgnoreCase(a, b)
-	-- Регистронезависимое лексикографическое сравнение (работает в Lua 5.1+ и 5.2+)
+
 	a = string_lower(a or "")
 	b = string_lower(b or "")
 	local minlen = math.min(#a, #b)
@@ -119,11 +119,11 @@ local function sort(arr)
 		end
 	end
 	fslist = {}
-	-- Сортируем папки регистронезависимо
+
 	table_sort(dirs, function(a, b)
 		return strCmpIgnoreCase(a, b)
 	end)
-	-- Сортируем файлы регистронезависимо
+
 	table_sort(files, function(a, b)
 		return strCmpIgnoreCase(a, b)
 	end)
